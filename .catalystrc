@@ -1,0 +1,30 @@
+{
+  "defaults": {
+    "project": 1,
+    "env": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "25342000000014733",
+      "name": "files",
+      "domain": {
+        "id": "50037651022",
+        "name": "files-60057482421.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60057482421",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}
