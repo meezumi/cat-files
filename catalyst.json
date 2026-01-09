@@ -1,7 +1,10 @@
 {
   "functions": {
     "targets": [
-      "files_function"
+      "files_function",
+      "fetch_requests_function",
+      "create_request_function",
+      "upload_function"
     ],
     "ignore": [],
     "source": "functions"

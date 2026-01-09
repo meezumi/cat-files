@@ -27,6 +27,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 app.use('/api/upload', uploadRoutes);
 
 // Catch-all for undefined routes
+// Catch-all for undefined routes
 app.all('*', (req, res) => {
     res.status(404).json({ status: 'error', message: `Route ${req.method} ${req.path} not found` });
 });

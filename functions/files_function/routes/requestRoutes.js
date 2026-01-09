@@ -42,6 +42,19 @@ router.get('/', (req, res) => {
     }
 });
 
+// GET /api/requests/:id
+router.get('/:id', (req, res) => {
+    try {
+        const request = requests.find(r => r.id === req.params.id);
+        if (!request) {
+            return res.status(404).json({ status: 'error', message: 'Request not found' });
+        }
+        res.status(200).json({ status: 'success', data: request });
+    } catch (err) {
+         res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // POST /api/requests
 router.post('/', (req, res) => {
     try {

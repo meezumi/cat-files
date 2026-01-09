@@ -1,0 +1,81 @@
+/* Dashboard.module.css */
+
+.container {
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.searchBar {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  width: 300px;
+}
+
+.tableWrapper {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: white;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.tableRow {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.colCheckbox { width: 40px; }
+.colName { width: 20%; font-weight: 500; }
+.colSubject { flex: 1; }
+.colStatus { width: 120px; }
+.colProgress { width: 100px; text-align: right; }
+.colDate { width: 120px; text-align: right; color: var(--color-text-muted); }
+
+/* Status Badges */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badgeDraft { color: var(--color-status-draft); background-color: #fde8e8; }
+.badgeSent { color: var(--color-status-sent); background-color: #e6f7ec; }
+.badgeCompleted { color: white; background-color: var(--color-status-completed); }
+
+.controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
