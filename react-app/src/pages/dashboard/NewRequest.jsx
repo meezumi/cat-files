@@ -44,12 +44,23 @@ const NewRequest = () => {
 
     const handleSubmit = async (status) => {
         try {
-            const payload = { ...formData, status };
-            // In real app: POST /server/files_function/api/requests
+            // Transform flat items list to sections structure for backend
+            const payload = {
+                ...formData,
+                status,
+                sections: [
+                    {
+                        title: 'General Documents',
+                        items: formData.items
+                    }
+                ]
+            };
+
+            // In real app: POST /server/create_request_function/
             console.log('Ranking Request:', payload);
 
             // Mock API call
-            await fetch('/server/files_function/api/requests', {
+            await fetch('/server/create_request_function/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

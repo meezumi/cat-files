@@ -20,7 +20,7 @@ const RequestDetail = () => {
         // Fetch request data
         const fetchRequest = async () => {
             try {
-                const response = await fetch(`/server/files_function/api/requests/${id}`);
+                const response = await fetch(`/server/fetch_requests_function/${id}`);
                 const result = await response.json();
                 if (result.status === 'success') {
                     setRequest(result.data);
@@ -79,33 +79,38 @@ const RequestDetail = () => {
             <div className={styles.content}>
                 <h2>Checklist Items</h2>
                 <div className={styles.checklist}>
-                    {request.items && request.items.map(item => (
-                        <div key={item.id} className={styles.itemCard}>
-                            <div className={styles.itemHeader}>
-                                <h3>{item.title}</h3>
-                                <div className={styles.itemActions}>
-                                    <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
-                                        {item.status}
-                                    </span>
-                                    {/* Actions for Review */}
-                                    {item.status === 'Uploaded' && (
-                                        <>
-                                            <button className={styles.approveBtn} onClick={() => handleStatusChange(item.id, 'Approved')}>
-                                                Approve
-                                            </button>
-                                            <button className={styles.rejectBtn} onClick={() => handleStatusChange(item.id, 'Returned')}>
-                                                Reject
-                                            </button>
-                                        </>
+                    {request.sections && request.sections.map(section => (
+                        <div key={section.id} className={styles.section}>
+                            <h3 className={styles.sectionTitle}>{section.title}</h3>
+                            {section.items && section.items.map(item => (
+                                <div key={item.id} className={styles.itemCard}>
+                                    <div className={styles.itemHeader}>
+                                        <h3>{item.title}</h3>
+                                        <div className={styles.itemActions}>
+                                            <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
+                                                {item.status}
+                                            </span>
+                                            {/* Actions for Review */}
+                                            {item.status === 'Uploaded' && (
+                                                <>
+                                                    <button className={styles.approveBtn} onClick={() => handleStatusChange(section.id, item.id, 'Approved')}>
+                                                        Approve
+                                                    </button>
+                                                    <button className={styles.rejectBtn} onClick={() => handleStatusChange(section.id, item.id, 'Returned')}>
+                                                        Reject
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* Render File Info if exists (Mock) */}
+                                    {item.status !== 'Pending' && (
+                                        <div className={styles.fileInfo}>
+                                            <FilePreview />
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                            {/* Render File Info if exists (Mock) */}
-                            {item.status !== 'Pending' && (
-                                <div className={styles.fileInfo}>
-                                    <FilePreview />
-                                </div>
-                            )}
+                            ))}
                         </div>
                     ))}
                 </div>

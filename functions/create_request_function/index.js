@@ -1,24 +1,41 @@
-'use strict';
+const express = require('express');
+const catalyst = require('zcatalyst-sdk-node');
+const cors = require('cors');
 
-const { IncomingMessage, ServerResponse } = require("http");
+const app = express();
 
-/**
- * 
- * @param {IncomingMessage} req 
- * @param {ServerResponse} res 
- */
-module.exports = (req, res) => {
-	var url = req.url;
+app.use(express.json());
+app.use(cors());
 
-	switch (url) {
-		case '/':
-			res.writeHead(200, { 'Content-Type': 'text/html' });
-			res.write('<h1>Hello from index.js<h1>');
-			break;
-		default:
-			res.writeHead(404);
-			res.write('You might find the page you are looking for at "/" path');
-			break;
-	}
-	res.end();
-};
+// POST / - Create new request
+app.post('/', (req, res) => {
+    try {
+        // In a real implementation we would save to Catalyst Data Store
+        const newRequest = {
+            id: `req_${Date.now()}`,
+            ...req.body,
+            date: new Date().toISOString(),
+            // Ensure payload has sections, or wrap items in default section
+            sections: req.body.sections || [
+                {
+                    id: `sec_${Date.now()}`,
+                    title: 'General',
+                    items: req.body.items || []
+                }
+            ],
+            progress: '0 / ' + (req.body.items ? req.body.items.length : 0)
+        };
+        
+        // Return success with the mock created object
+        res.status(201).json({ status: 'success', data: newRequest });
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// Catch-all
+app.all('*', (req, res) => {
+    res.status(404).json({ status: 'error', message: `Route ${req.method} ${req.path} not found` });
+});
+
+module.exports = app;

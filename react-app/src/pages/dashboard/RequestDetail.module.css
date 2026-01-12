@@ -61,6 +61,18 @@
     border-radius: 6px;
 }
 
+.section {
+    margin-bottom: 24px;
+}
+
+.sectionTitle {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
 .itemHeader {
     display: flex;
     justify-content: space-between;

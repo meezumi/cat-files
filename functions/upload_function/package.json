@@ -4,6 +4,8 @@
 	"main": "index.js",
 	"author": "harsh.kulkarni@itotcloud.in",
 	"dependencies": {
+		"cors": "^2.8.5",
+		"express": "^4.18.2",
 		"zcatalyst-sdk-node": "latest"
 	}
 }

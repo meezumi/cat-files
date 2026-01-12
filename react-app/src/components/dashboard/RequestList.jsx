@@ -12,7 +12,7 @@ const RequestList = ({ filterStatus }) => {
             setLoading(true);
             try {
                 // Build query string
-                let url = '/server/files_function/api/requests';
+                let url = '/server/fetch_requests_function/';
                 if (filterStatus && filterStatus !== 'all') {
                     url += `?status=${filterStatus}`;
                 }
