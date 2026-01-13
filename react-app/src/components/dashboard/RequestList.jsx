@@ -6,15 +6,17 @@ import styles from './Dashboard.module.css';
 const RequestList = ({ filterStatus }) => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [meta, setMeta] = useState({ page: 1, limit: 10 });
 
     useEffect(() => {
         const fetchRequests = async () => {
             setLoading(true);
             try {
                 // Build query string
-                let url = '/server/fetch_requests_function/';
+                let url = `/server/fetch_requests_function/?page=${page}&per_page=10`;
                 if (filterStatus && filterStatus !== 'all') {
-                    url += `?status=${filterStatus}`;
+                    url += `&status=${filterStatus}`;
                 }
 
                 const response = await fetch(url);
@@ -22,6 +24,7 @@ const RequestList = ({ filterStatus }) => {
 
                 if (result.status === 'success') {
                     setRequests(result.data);
+                    if (result.meta) setMeta(result.meta);
                 }
             } catch (error) {
                 console.error('Failed to fetch requests:', error);
@@ -31,7 +34,7 @@ const RequestList = ({ filterStatus }) => {
         };
 
         fetchRequests();
-    }, [filterStatus]);
+    }, [filterStatus, page]);
 
     if (loading) {
         return <div style={{ padding: 24 }}>Loading requests...</div>;
@@ -65,8 +68,28 @@ const RequestList = ({ filterStatus }) => {
                     ))
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px', gap: '8px' }}>
+                <button
+                    className="btn"
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                >
+                    Previous
+                </button>
+                <span style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>Page {page}</span>
+                <button
+                    className="btn"
+                    disabled={requests.length < meta.limit} // Simple check for now
+                    onClick={() => setPage(p => p + 1)}
+                >
+                    Next
+                </button>
+            </div>
         </div>
     );
 };
+
 
 export default RequestList;

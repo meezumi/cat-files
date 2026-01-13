@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from './components/layout/DashboardLayout';
+import GuestLayout from './components/layout/GuestLayout';
+import PublicRequestView from './pages/guest/PublicRequestView';
 import RequestView from './pages/dashboard/RequestView';
 import NewRequest from './pages/dashboard/NewRequest';
 import RequestDetail from './pages/dashboard/RequestDetail';
@@ -26,6 +28,10 @@ function App() {
           <Route path="new" element={<NewRequest />} />
           
           <Route path="profile" element={<div>Profile Page (Coming Soon)</div>} />
+        </Route>
+        {/* Guest Portal Routes */}
+        <Route path="/p" element={<GuestLayout />}>
+           <Route path=":id" element={<PublicRequestView />} />
         </Route>
       </Routes>
     </Router>

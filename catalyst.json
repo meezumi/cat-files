@@ -11,6 +11,12 @@
   },
   "client": {
     "source": "react-app",
-    "plugin": "zcatalyst-cli-plugin-react"
+    "plugin": "zcatalyst-cli-plugin-react",
+    "rewrites": [
+      {
+        "source": "/(.*)",
+        "destination": "/index.html"
+      }
+    ]
   }
 }
