@@ -1,0 +1,11 @@
+{
+	"deployment": {
+		"name": "workflow_function",
+		"stack": "node14",
+		"type": "advancedio",
+		"env_variables": {}
+	},
+	"execution": {
+		"main": "index.js"
+	}
+}
