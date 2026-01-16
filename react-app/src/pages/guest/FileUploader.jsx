@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { UploadCloud, File, X, Check } from 'lucide-react';
 import styles from './FileUploader.module.css';
 
-const FileUploader = ({ onUploadComplete }) => {
+const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -24,7 +24,7 @@ const FileUploader = ({ onUploadComplete }) => {
         if (files.length > 0) {
             await uploadFile(files[0]);
         }
-    }, []);
+    }, [requestId, sectionId, itemId]);
 
     const handleFileSelect = async (e) => {
         if (e.target.files.length > 0) {
@@ -37,10 +37,14 @@ const FileUploader = ({ onUploadComplete }) => {
         setProgress(10);
 
         try {
-            // Mock Upload to backend
-            // In real app: FormData with file
+            // Real FormData for file upload
             const formData = new FormData();
             formData.append('file', file);
+
+            // Add Context Data
+            if (requestId) formData.append('requestId', requestId);
+            if (sectionId) formData.append('sectionId', sectionId);
+            if (itemId) formData.append('itemId', itemId);
 
             // Simulate progress
             const interval = setInterval(() => {
@@ -50,9 +54,12 @@ const FileUploader = ({ onUploadComplete }) => {
                 });
             }, 200);
 
+            // Use fetch with FormData (Advanced IO handles multipart)
             const response = await fetch('/server/upload_function/', {
                 method: 'POST',
-                body: JSON.stringify({ filename: file.name, size: file.size }) // Mock body for now as Advanced IO handles multipart differently or we use SDK
+                body: formData
+                // Note: Do NOT set Content-Type header manually for FormData, 
+                // browser sets it with boundary.
             });
 
             clearInterval(interval);
@@ -60,14 +67,19 @@ const FileUploader = ({ onUploadComplete }) => {
 
             const result = await response.json();
 
-            setTimeout(() => {
-                setUploading(false);
-                if (onUploadComplete) onUploadComplete(result.data);
-            }, 500);
+            if (result.status === 'success') {
+                setTimeout(() => {
+                    setUploading(false);
+                    if (onUploadComplete) onUploadComplete(result.data);
+                }, 500);
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
 
         } catch (error) {
             console.error('Upload failed:', error);
             setUploading(false);
+            alert('Upload failed: ' + error.message);
         }
     };
 

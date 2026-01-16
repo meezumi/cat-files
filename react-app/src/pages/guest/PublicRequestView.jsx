@@ -65,11 +65,15 @@ const PublicRequestView = () => {
 
                                     {/* Upload Area */}
                                     {item.status !== 'Approved' && (
-                                        <FileUploader onUploadComplete={(fileData) => {
-                                            console.log('Uploaded:', fileData);
-                                            // In a real app, update local state or re-fetch
-                                            alert('File uploaded successfully!');
-                                        }} />
+                                        <FileUploader
+                                            requestId={request.id}
+                                            sectionId={section.id}
+                                            itemId={item.id}
+                                            onUploadComplete={(fileData) => {
+                                                console.log('Uploaded:', fileData);
+                                                // In a real app, update local state or re-fetch
+                                                alert('File uploaded successfully!');
+                                            }} />
                                     )}
                                 </div>
                             ))}
