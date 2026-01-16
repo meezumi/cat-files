@@ -1,11 +1,11 @@
 {
-	"name": "create_request_function",
+	"name": "workflow_function",
 	"version": "1.0.0",
 	"main": "index.js",
 	"author": "harsh.kulkarni@itotcloud.in",
 	"dependencies": {
 		"cors": "^2.8.5",
-		"express": "^4.18.2",
+		"express": "^5.2.1",
 		"node-fetch": "^2.7.0",
 		"zcatalyst-sdk-node": "latest"
 	}

@@ -4,7 +4,10 @@
       "files_function",
       "fetch_requests_function",
       "create_request_function",
-      "upload_function"
+      "upload_function",
+      "auth_function",
+      "org_function",
+      "workflow_function"
     ],
     "ignore": [],
     "source": "functions"
