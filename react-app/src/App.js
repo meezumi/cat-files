@@ -8,6 +8,7 @@ import PublicRequestView from './pages/guest/PublicRequestView';
 import RequestView from './pages/dashboard/RequestView';
 import NewRequest from './pages/dashboard/NewRequest';
 import RequestDetail from './pages/dashboard/RequestDetail';
+import ProfilePage from './pages/dashboard/ProfilePage';
 
 function App() {
   return (
@@ -34,7 +35,7 @@ function App() {
             <Route path="requests/:id" element={<RequestDetail />} />
             <Route path="new" element={<NewRequest />} />
             
-            <Route path="profile" element={<div>Profile Page (Coming Soon)</div>} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
           {/* Guest Portal Routes */}
           <Route path="/p" element={<GuestLayout />}>

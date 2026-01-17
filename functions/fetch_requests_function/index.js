@@ -99,7 +99,8 @@ const fetchRequestDetails = async (zcqlHelper, requestId) => {
             type: i.Items.Type,
             status: i.Items.Status,
             isRequired: i.Items.IsRequired,
-            reviewModifiedAt: i.Items.ReviewModifiedAt
+            reviewModifiedAt: i.Items.ReviewModifiedAt,
+            fileId: i.Items.FileID
         }));
 
         sections.push({

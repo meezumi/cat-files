@@ -35,15 +35,33 @@ const RequestDetail = () => {
         fetchRequest();
     }, [id]);
 
-    const handleStatusChange = (itemId, newStatus) => {
-        // In real app: PUT /api/requests/:id/items/:itemId
-        // Here: Optimistic local update
-        setRequest(prev => ({
-            ...prev,
-            items: prev.items.map(item =>
-                item.id === itemId ? { ...item, status: newStatus } : item
-            )
-        }));
+    const handleStatusChange = async (itemId, newStatus) => {
+        try {
+            // Optimistic update
+            setRequest(prev => ({
+                ...prev,
+                sections: prev.sections.map(section => ({
+                    ...section,
+                    items: section.items.map(item =>
+                        item.id === itemId ? { ...item, status: newStatus } : item
+                    )
+                }))
+            }));
+
+            // API Call
+            const response = await fetch(`/server/workflow_function/items/${itemId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (!response.ok) throw new Error("Update failed");
+
+        } catch (error) {
+            console.error("Status update error:", error);
+            // Revert (Simple reload or more complex rollback logic)
+            alert("Failed to update status");
+        }
     };
 
     if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
@@ -90,23 +108,23 @@ const RequestDetail = () => {
                                             <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
                                                 {item.status}
                                             </span>
-                                            {/* Actions for Review */}
+                                            {/* Actions for Review: Only show if Uploaded */}
                                             {item.status === 'Uploaded' && (
                                                 <>
-                                                    <button className={styles.approveBtn} onClick={() => handleStatusChange(section.id, item.id, 'Approved')}>
+                                                    <button className={styles.approveBtn} onClick={() => handleStatusChange(item.id, 'Approved')}>
                                                         Approve
                                                     </button>
-                                                    <button className={styles.rejectBtn} onClick={() => handleStatusChange(section.id, item.id, 'Returned')}>
+                                                    <button className={styles.rejectBtn} onClick={() => handleStatusChange(item.id, 'Returned')}>
                                                         Reject
                                                     </button>
                                                 </>
                                             )}
                                         </div>
                                     </div>
-                                    {/* Render File Info if exists (Mock) */}
-                                    {item.status !== 'Pending' && (
+                                    {/* Render File Info if exists */}
+                                    {item.status !== 'Pending' && item.fileId && (
                                         <div className={styles.fileInfo}>
-                                            <FilePreview />
+                                            <FilePreview fileId={item.fileId} />
                                         </div>
                                     )}
                                 </div>
@@ -119,14 +137,26 @@ const RequestDetail = () => {
     );
 };
 
-// Mock File Preview Component
-const FilePreview = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
-        <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
-        <span>document.pdf</span>
-        <ExternalLink size={14} style={{ cursor: 'pointer' }} />
-        <Download size={14} style={{ cursor: 'pointer' }} />
-    </div>
-);
+// Real File Preview Component
+const FilePreview = ({ fileId }) => {
+    // Construct Download URL
+    // Since we are using function proxying: 
+    // /server/upload_function/:id (GET)
+    const downloadUrl = `/server/upload_function/${fileId}`;
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
+            <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
+            <span>Document (ID: {fileId})</span>
+            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
+                <span style={{ marginLeft: 4 }}>View</span>
+            </a>
+            <a href={downloadUrl} download style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                <Download size={14} style={{ cursor: 'pointer', marginLeft: 8 }} />
+            </a>
+        </div>
+    );
+};
 
 export default RequestDetail;

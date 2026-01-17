@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Inbox,
@@ -17,11 +17,16 @@ import styles from './Layout.module.css';
 
 const Sidebar = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
     return (
         <aside className={styles.sidebar}>
             <div className={styles.newRequestWrapper}>
-                <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                <button
+                    className="btn btn-primary"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={() => navigate('/dashboard/new')}
+                >
                     <Plus size={16} style={{ marginRight: 8 }} />
                     New Request
                 </button>
@@ -75,7 +80,10 @@ const Sidebar = () => {
             {/* User Profile Section */}
             <div style={{ padding: '24px', borderTop: '1px solid var(--color-border)' }}>
                 {user ? (
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                    <div
+                        style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}
+                        onClick={() => navigate('/dashboard/profile')}
+                    >
                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px' }}>
                             <User size={16} color="#64748b" />
                         </div>
