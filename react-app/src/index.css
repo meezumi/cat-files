@@ -42,6 +42,10 @@ body {
   line-height: 1.5;
 }
 
+button, input, select, textarea {
+  font-family: inherit;
+}
+
 a {
   text-decoration: none;
   color: inherit;
