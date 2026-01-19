@@ -1,101 +1,58 @@
 const express = require('express');
 const router = express.Router();
-const fetch = require('node-fetch');
-
-async function getAccessToken(catalystApp) {
-    // Return token strategy (Connector or Env)
-    return process.env.APP_ADMIN_TOKEN || ''; 
-}
+const catalyst = require('zcatalyst-sdk-node');
 
 // PUT /requests/:id/status - Update Request Status
 router.put('/requests/:id/status', async (req, res) => {
-    const requestId = req.params.id; // This is the ROWID
+    const requestId = req.params.id;
     const { status } = req.body;
     
     if (!status) return res.status(400).json({ status: 'error', message: 'Status is required' });
 
-    // TODO: Verify user permission (e.g., only Owner/Admin)
-
     try {
-        const projectId = process.env.APP_PROJECT_ID;
-        const apiDomain = process.env.APP_API_DOMAIN || 'https://api.catalyst.zoho.com';
-        const accessToken = await getAccessToken(req); // Passing req as placeholder if we need catalyst app context later
-
-        // REST API: PUT /baas/v1/project/{project_id}/table/{tableIdentifier}/row
-        const url = `${apiDomain}/baas/v1/project/${projectId}/table/Requests/row`;
+        const catApp = catalyst.initialize(req);
         
-        const payload = [
-            {
-                "ROWID": requestId,
-                "Status": status, // Assuming column name is 'Status'
-                "ModifiedAt": new Date().toISOString() // Logic for timestamp
-            }
-        ];
+        // Use SDK to update Request Row
+        const updateData = {
+            ROWID: requestId,
+            Status: status
+        };
 
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
+        const updatedRow = await catApp.datastore().table('Requests').updateRow(updateData);
+        res.json({ status: 'success', data: updatedRow });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            res.json({ status: 'success', data: data });
-        } else {
-            res.status(response.status).json({ status: 'error', message: 'Failed to update request status', details: data });
-        }
     } catch (err) {
+        console.error("Update Request Error:", err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
 
-// PUT /items/:id/status - Update Item Status (Approved/Returned)
+// PUT /items/:id/status - Update Item Status
 router.put('/items/:id/status', async (req, res) => {
     const itemId = req.params.id;
     const { status, feedback } = req.body;
 
     try {
-        const projectId = process.env.APP_PROJECT_ID;
-        const apiDomain = process.env.APP_API_DOMAIN || 'https://api.catalyst.zoho.com';
-        const accessToken = await getAccessToken(req);
-
-        const url = `${apiDomain}/baas/v1/project/${projectId}/table/Items/row`;
+        const catApp = catalyst.initialize(req);
         
-        const payload = [
-            {
-                "ROWID": itemId,
-                "Status": status,
-                "Feedback": feedback || ""
-            }
-        ];
+        const updateData = {
+            ROWID: itemId,
+            Status: status,
+            Feedback: feedback || ""
+        };
 
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
+        const updatedRow = await catApp.datastore().table('Items').updateRow(updateData);
+        res.json({ status: 'success', data: updatedRow });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            res.json({ status: 'success', data: data });
-        } else {
-            res.status(response.status).json({ status: 'error', message: 'Failed to update item status', details: data });
-        }
     } catch (err) {
+        console.error("Update Item Error:", err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
 
-// POST /requests/:id/remind - Send Reminder (Logic Placeholder)
+// POST /requests/:id/remind
 router.post('/requests/:id/remind', async (req, res) => {
+    // TODO: Implement Email logic via SDK
     res.json({ status: 'success', message: 'Reminder sent (Mock)' });
 });
 

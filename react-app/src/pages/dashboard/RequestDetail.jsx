@@ -64,6 +64,27 @@ const RequestDetail = () => {
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm("Are you sure you want to move this request to Trash?")) return;
+
+        try {
+            const response = await fetch(`/server/workflow_function/requests/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Trash' })
+            });
+
+            if (response.ok) {
+                navigate('/dashboard/trash'); // or inbox
+            } else {
+                alert("Failed to delete request");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Error deleting request");
+        }
+    };
+
     if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
     if (!request) return <div style={{ padding: 24 }}>Request not found</div>;
 
@@ -71,13 +92,17 @@ const RequestDetail = () => {
         <div className={styles.container}>
             <header className={styles.header}>
                 <div className={styles.titleRow}>
-                    <button className={styles.backBtn} onClick={() => navigate(-1)}>
+                    <button className={styles.backBtn} onClick={() => navigate(-1)} title="Go Back">
                         <ArrowLeft size={20} />
                     </button>
                     <h1>{request.subject}</h1>
                     <div className={styles.actions}>
-                        <button className={styles.iconBtn}><Trash2 size={18} /></button>
-                        <button className={styles.iconBtn}><MoreHorizontal size={18} /></button>
+                        <button className={styles.iconBtn} onClick={handleDelete} title="Move to Trash">
+                            <Trash2 size={18} />
+                        </button>
+                        <button className={styles.iconBtn} title="More Options">
+                            <MoreHorizontal size={18} />
+                        </button>
                     </div>
                 </div>
 
