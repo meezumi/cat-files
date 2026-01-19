@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 async function getAccessToken(catalystApp) {
     // Return token strategy (Connector or Env)
-    return process.env.CATALYST_ADMIN_TOKEN || ''; 
+    return process.env.APP_ADMIN_TOKEN || ''; 
 }
 
 // PUT /requests/:id/status - Update Request Status
@@ -17,8 +17,8 @@ router.put('/requests/:id/status', async (req, res) => {
     // TODO: Verify user permission (e.g., only Owner/Admin)
 
     try {
-        const projectId = process.env.CATALYST_PROJECT_ID;
-        const apiDomain = process.env.CATALYST_API_DOMAIN || 'https://api.catalyst.zoho.com';
+        const projectId = process.env.APP_PROJECT_ID;
+        const apiDomain = process.env.APP_API_DOMAIN || 'https://api.catalyst.zoho.com';
         const accessToken = await getAccessToken(req); // Passing req as placeholder if we need catalyst app context later
 
         // REST API: PUT /baas/v1/project/{project_id}/table/{tableIdentifier}/row
@@ -59,8 +59,8 @@ router.put('/items/:id/status', async (req, res) => {
     const { status, feedback } = req.body;
 
     try {
-        const projectId = process.env.CATALYST_PROJECT_ID;
-        const apiDomain = process.env.CATALYST_API_DOMAIN || 'https://api.catalyst.zoho.com';
+        const projectId = process.env.APP_PROJECT_ID;
+        const apiDomain = process.env.APP_API_DOMAIN || 'https://api.catalyst.zoho.com';
         const accessToken = await getAccessToken(req);
 
         const url = `${apiDomain}/baas/v1/project/${projectId}/table/Items/row`;

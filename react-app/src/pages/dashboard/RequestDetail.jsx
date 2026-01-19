@@ -124,7 +124,7 @@ const RequestDetail = () => {
                                     {/* Render File Info if exists */}
                                     {item.status !== 'Pending' && item.fileId && (
                                         <div className={styles.fileInfo}>
-                                            <FilePreview fileId={item.fileId} />
+                                            <FilePreview fileId={item.fileId} folderId={item.folderId} />
                                         </div>
                                     )}
                                 </div>
@@ -138,11 +138,11 @@ const RequestDetail = () => {
 };
 
 // Real File Preview Component
-const FilePreview = ({ fileId }) => {
+const FilePreview = ({ fileId, folderId }) => {
     // Construct Download URL
     // Since we are using function proxying: 
     // /server/upload_function/:id (GET)
-    const downloadUrl = `/server/upload_function/${fileId}`;
+    const downloadUrl = `/server/upload_function/${fileId}${folderId ? `?folderId=${folderId}` : ''}`;
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>

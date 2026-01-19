@@ -5,7 +5,7 @@
       "fetch_requests_function",
       "create_request_function",
       "upload_function",
-      "auth_function",
+      "user_auth",
       "org_function",
       "workflow_function"
     ],
@@ -17,7 +17,7 @@
     "plugin": "zcatalyst-cli-plugin-react",
     "rewrites": [
       {
-        "source": "/(.*)",
+        "source": "^((?!/server).)*$",
         "destination": "/index.html"
       }
     ]

@@ -3,7 +3,7 @@ const router = express.Router();
 const catalyst = require('zcatalyst-sdk-node');
 const fetch = require('node-fetch');
 
-// Helper to get Access Token (simulated or real)
+// Helper to get Access Token (simulated or real) - forcing change
 // In a real scenario, we might use the Connector or a refresh token flow.
 // For now, we'll try to use the SDK's internal token if available, or assume a process.env token for "invite" operations which are admin-only.
 async function getAccessToken(catalystApp) {
@@ -14,21 +14,29 @@ async function getAccessToken(catalystApp) {
     // FALLBACK: In local Dev or specific setups, we might just need to pass the user's token or use the execution context.
     // For Invite (Project Level), we need an Admin Token. 
     // This is a placeholder for the robust token retrieval logic.
-    return process.env.CATALYST_ADMIN_TOKEN || ''; 
+    return process.env.APP_ADMIN_TOKEN || ''; 
 }
 
 // GET /me - Get Current User Details
 router.get('/me', async (req, res) => {
     try {
         const app = catalyst.initialize(req);
-        // Use Native SDK as per plan
         const userConfig = app.user();
-        const userDetails = await userConfig.getCurrentUser();
         
-        // Enhance with Org ID if available in session/cookie or just return what we have
+        // ensure we await the promise
+        let userDetails = null;
+        try {
+            userDetails = await userConfig.getCurrentUser();
+        } catch (authErr) {
+            // SDK throws if no user is logged in or session invalid.
+            // treating this as "Guest" (user: null) instead of System Error (500)
+            console.log("No active session:", authErr.message);
+            // userDetails remains null
+        }
+        
         res.status(200).json({
             status: 'success',
-            data: userDetails
+            data: userDetails // wll be null if guest
         });
     } catch (err) {
         console.error("Error fetching user:", err);
@@ -75,8 +83,8 @@ router.post('/invite', async (req, res) => {
         // We need the project ID. 
         // In Catalyst Functions, it's often in process.env or accessible via SDK?
         // Let's rely on a reliable Env Variable if possible, or extract from context.
-        const projectId = process.env.CATALYST_PROJECT_ID || '4000000006007'; // Fallback/Placeholder
-        const apiDomain = process.env.CATALYST_API_DOMAIN || 'https://api.catalyst.zoho.com';
+        const projectId = process.env.APP_PROJECT_ID || '4000000006007'; // Fallback/Placeholder
+        const apiDomain = process.env.APP_API_DOMAIN || 'https://api.catalyst.zoho.com';
         
         // Note: Signing up a user requires an OAuth Token with 'ZohoCatalyst.projects.users.CREATE' scope.
         // The simple execution token of the function MIGHT NOT have this scope if triggered by a regular user.
@@ -116,7 +124,7 @@ router.post('/invite', async (req, res) => {
 // GET /logout
 router.get('/logout', (req, res) => {
     // Redirect logic handled by Client usually, but if hit directly:
-    const projectId = process.env.CATALYST_PROJECT_ID;
+    const projectId = process.env.APP_PROJECT_ID;
     const appDomain = process.env.CATALYST_APP_DOMAIN || ''; // Needs to be set
     const logoutUrl = `${appDomain}/baas/logout?logout=true&PROJECT_ID=${projectId}`;
     

@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

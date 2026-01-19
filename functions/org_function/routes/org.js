@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 
 // Helper to get Access Token (Placeholder)
 async function getAccessToken(catalystApp) {
-    return process.env.CATALYST_ADMIN_TOKEN || ''; 
+    return process.env.APP_ADMIN_TOKEN || ''; 
 }
 
 // GET / - List User's Organizations (Using SDK)
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
             status: 'success',
             data: [
                 {
-                    id: process.env.CATALYST_PROJECT_ID || 'default_project',
+                    id: process.env.APP_PROJECT_ID || 'default_project',
                     name: 'My Organization',
                     role: 'Admin' // derived
                 }
@@ -37,13 +37,13 @@ router.get('/', async (req, res) => {
 
 // GET /:id/members - List Members (REST API)
 router.get('/:id/members', async (req, res) => {
-    const projectId = req.params.id; // Or use process.env.CATALYST_PROJECT_ID if ID is internal
+    const projectId = req.params.id; // Or use process.env.APP_PROJECT_ID if ID is internal
     
     try {
         const app = catalyst.initialize(req);
         // Confirm user has permission (optional logic here)
 
-        const apiDomain = process.env.CATALYST_API_DOMAIN || 'https://api.catalyst.zoho.com';
+        const apiDomain = process.env.APP_API_DOMAIN || 'https://api.catalyst.zoho.com';
         const accessToken = await getAccessToken(app);
         
         // Pagination params

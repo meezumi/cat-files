@@ -9,30 +9,16 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for logged-in user on mount
-    const checkUser = async () => {
-      try {
-        const response = await fetch('/server/auth_function/me');
-        if (response.ok) {
-          const result = await response.json();
-          // Assuming result.data is the user object
-          if (result.status === 'success' && result.data) {
-              setUser(result.data);
-          } else {
-              setUser(null);
-          }
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Auth check failed", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkUser();
+    // BYPASS AUTH FOR TESTING
+    // Mocking a logged-in user directly
+    console.log("Auth Bypassed: Setting Mock User");
+    setUser({
+        first_name: "Test",
+        last_name: "User",
+        email: "test@example.com",
+        role_details: { role_name: "App Admin" }
+    });
+    setLoading(false);
   }, []);
 
   const login = () => {

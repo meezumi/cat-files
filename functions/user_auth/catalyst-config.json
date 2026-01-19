@@ -1,6 +1,6 @@
 {
 	"deployment": {
-		"name": "auth_function",
+		"name": "user_auth",
 		"stack": "node14",
 		"type": "advancedio",
 		"env_variables": {}

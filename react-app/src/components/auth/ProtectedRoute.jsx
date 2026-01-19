@@ -22,8 +22,23 @@ const ProtectedRoute = ({ children }) => {
         // Since we are inside the App Router, let's force a window location change if we want strict enforcement, 
         // OR render a "Redirecting to Login..." component.
 
-        window.location.href = '/__catalyst/auth/login';
-        return null;
+        // Auto-redirecting here causes an infinite loop if the session isn't established yet 
+        // or if the redirect back from Catalyst Login doesn't immediately set the cookie visible to the API.
+        // Instead of hard redirect, show a Landing/Login page.
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+                <h2>Authentication Required</h2>
+                <p>Please log in to access the dashboard.</p>
+                <button
+                    onClick={() => window.location.href = '/__catalyst/auth/login'}
+                    style={{ padding: '10px 20px', marginTop: '20px', background: '#2eb85c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                >
+                    Log In
+                </button>
+            </div>
+        );
+        // return null;
     }
 
     return children;

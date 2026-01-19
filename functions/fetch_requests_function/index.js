@@ -1,89 +1,17 @@
 const express = require('express');
 const catalyst = require('zcatalyst-sdk-node');
 const cors = require('cors');
-const fetch = require('node-fetch');
 
 const app = express();
 
 app.use(express.json());
-app.use(cors());
-
-// --- REST API HELPERS ---
-
-async function getAccessToken(catalystApp) {
-    return process.env.CATALYST_ADMIN_TOKEN || ''; 
-}
-
-async function executeZCQLRest(query, accessToken, projectId, apiDomain) {
-    // URL: POST /baas/v1/project/{project_id}/zcql
-    // Note: If zcql specific endpoint differs, we usually use the /zcql path. 
-    // If not documented in the provided snippets, we assume standard Catalyst REST structure.
-    const url = `${apiDomain}/baas/v1/project/${projectId}/zcql`;
-    
-    // Payload: { "query": "..." }
-    const payload = { query: query };
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Zoho-oauthtoken ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-
-    const respData = await response.json();
-
-    if (!response.ok) {
-        throw new Error(`ZCQL Failed: ${JSON.stringify(respData)}`);
-    }
-
-    // Success response: { status: 'success', data: [ { TableName: { Col: Val } } ] }
-    return respData.data || [];
-}
-
-async function updateRowRest(tableName, updateData, accessToken, projectId, apiDomain) {
-    // URL: PUT /baas/v1/project/{project_id}/table/{tableIdentifier}/row
-    const url = `${apiDomain}/baas/v1/project/${projectId}/table/${tableName}/row`;
-    
-    const payload = [ updateData ]; // Array of rows
-
-    const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Zoho-oauthtoken ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-
-    const respData = await response.json();
-    if (!response.ok) {
-         throw new Error(`Row Update Failed: ${JSON.stringify(respData)}`);
-    }
-    return respData.data[0];
-}
-
-async function insertRowRest(tableName, dataObj, accessToken, projectId, apiDomain) {
-    const url = `${apiDomain}/baas/v1/project/${projectId}/table/${tableName}/row`;
-    const payload = [ dataObj ];
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    const respData = await response.json();
-    if (!response.ok) throw new Error(`Insert Failed: ${JSON.stringify(respData)}`);
-    return respData.data[0];
-}
-
-// --- LOGIC ---
+app.use(cors({ origin: true, credentials: true }));
 
 // Fetch Details Helper (Recursively fetch Sections and Items)
-const fetchRequestDetails = async (zcqlHelper, requestId) => {
+const fetchRequestDetails = async (catApp, requestId) => {
     // 1. Fetch Sections
     const sectionQuery = `SELECT * FROM Sections WHERE RequestID = '${requestId}' ORDER BY SortOrder ASC`;
-    const sectionRows = await zcqlHelper(sectionQuery);
+    const sectionRows = await catApp.zcql().executeZCQLQuery(sectionQuery);
     
     const sections = [];
     
@@ -91,7 +19,7 @@ const fetchRequestDetails = async (zcqlHelper, requestId) => {
         const sectionData = row.Sections;
         // 2. Fetch Items for Section
         const itemQuery = `SELECT * FROM Items WHERE SectionID = '${sectionData.ROWID}'`;
-        const itemRows = await zcqlHelper(itemQuery);
+        const itemRows = await catApp.zcql().executeZCQLQuery(itemQuery);
         
         const items = itemRows.map(i => ({
             id: i.Items.ROWID,
@@ -100,7 +28,8 @@ const fetchRequestDetails = async (zcqlHelper, requestId) => {
             status: i.Items.Status,
             isRequired: i.Items.IsRequired,
             reviewModifiedAt: i.Items.ReviewModifiedAt,
-            fileId: i.Items.FileID
+            fileId: i.Items.FileID,
+            folderId: i.Items.FolderID
         }));
 
         sections.push({
@@ -118,12 +47,6 @@ const fetchRequestDetails = async (zcqlHelper, requestId) => {
 app.get('/', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
-        const projectId = process.env.CATALYST_PROJECT_ID || '4000000006007';
-        const apiDomain = process.env.CATALYST_API_DOMAIN || 'https://api.catalyst.zoho.com';
-        const accessToken = await getAccessToken(catApp);
-        
-        // ZCQL Wrapper
-        const zcqlExecutor = (q) => executeZCQLRest(q, accessToken, projectId, apiDomain);
         
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.per_page) || 10;
@@ -139,7 +62,7 @@ app.get('/', async (req, res) => {
         
         baseQuery += ` ORDER BY CREATEDTIME DESC LIMIT ${limit} OFFSET ${offset}`;
         
-        const queryResult = await zcqlExecutor(baseQuery);
+        const queryResult = await catApp.zcql().executeZCQLQuery(baseQuery);
         
         const requests = queryResult.map(row => {
             const r = row.Requests;
@@ -170,16 +93,11 @@ app.get('/', async (req, res) => {
 app.get('/:id', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
-        const projectId = process.env.CATALYST_PROJECT_ID || '4000000006007';
-        const apiDomain = process.env.CATALYST_API_DOMAIN || 'https://api.catalyst.zoho.com';
-        const accessToken = await getAccessToken(catApp);
-        const zcqlExecutor = (q) => executeZCQLRest(q, accessToken, projectId, apiDomain);
-
         const requestId = req.params.id;
 
         // 1. Fetch Request
         const requestQuery = `SELECT * FROM Requests WHERE ROWID = '${requestId}'`;
-        const requestResult = await zcqlExecutor(requestQuery);
+        const requestResult = await catApp.zcql().executeZCQLQuery(requestQuery);
         
         if (requestResult.length === 0) {
              return res.status(404).json({ status: 'error', message: 'Request not found' });
@@ -188,22 +106,22 @@ app.get('/:id', async (req, res) => {
         const r = requestResult[0].Requests;
         
         // 2. Fetch Sections and Items
-        const sections = await fetchRequestDetails(zcqlExecutor, requestId);
+        const sections = await fetchRequestDetails(catApp, requestId);
         
         // 3. Visibility Logic
         const isGuest = req.query.view === 'guest';
         if (isGuest && r.Status === 'Sent') {
             try {
-                // Update Row via REST
-                await updateRowRest('Requests', { ROWID: r.ROWID, Status: 'Seen' }, accessToken, projectId, apiDomain);
+                // Update Row via SDK
+                await catApp.datastore().table('Requests').updateRow({ ROWID: r.ROWID, Status: 'Seen' });
                 
-                // Log via REST
-                await insertRowRest('ActivityLog', {
+                // Log via SDK
+                await catApp.datastore().table('ActivityLog').insertRow({
                     RequestID: r.ROWID,
                     Action: 'Viewed',
                     Actor: 'Guest',
                     Details: 'Recipient viewed the request page'
-                }, accessToken, projectId, apiDomain);
+                });
                 
             } catch (logErr) {
                 console.error('Failed to update visibility:', logErr);
