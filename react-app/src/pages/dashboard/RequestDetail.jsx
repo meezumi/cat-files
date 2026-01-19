@@ -6,7 +6,12 @@ import {
     Trash2,
     Clock,
     ExternalLink,
-    Download
+    Download,
+    Share2,
+    Edit,
+    Copy,
+    BookOpen,
+    Archive
 } from 'lucide-react';
 import styles from './RequestDetail.module.css';
 
@@ -15,6 +20,7 @@ const RequestDetail = () => {
     const navigate = useNavigate();
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
         // Fetch request data
@@ -48,7 +54,6 @@ const RequestDetail = () => {
                 }))
             }));
 
-            // API Call
             const response = await fetch(`/server/workflow_function/items/${itemId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -59,30 +64,67 @@ const RequestDetail = () => {
 
         } catch (error) {
             console.error("Status update error:", error);
-            // Revert (Simple reload or more complex rollback logic)
             alert("Failed to update status");
         }
     };
 
-    const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to move this request to Trash?")) return;
-
+    const updateRequestStatus = async (newStatus) => {
         try {
             const response = await fetch(`/server/workflow_function/requests/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'Trash' })
+                body: JSON.stringify({ status: newStatus })
             });
-
             if (response.ok) {
-                navigate('/dashboard/trash'); // or inbox
-            } else {
-                alert("Failed to delete request");
+                if (newStatus === 'Trash') navigate('/dashboard/trash');
+                else {
+                    setRequest(prev => ({ ...prev, status: newStatus }));
+                    setShowDropdown(false);
+                }
             }
         } catch (error) {
-            console.error("Delete error:", error);
-            alert("Error deleting request");
+            console.error("Error updating status:", error);
         }
+    };
+
+    const handleSaveAsTemplate = async () => {
+        try {
+            if (!request) return;
+            // Clean payload for creating new template
+            const payload = {
+                recipientName: '', // Templates don't usually have recipients? Or should we keep it? Let's clear it.
+                recipientEmail: '',
+                subject: request.subject,
+                message: request.description,
+                status: 'Draft',
+                isTemplate: true,
+                sections: request.sections.map(s => ({
+                    title: s.title,
+                    description: '',
+                    items: s.items.map(i => ({ title: i.title, type: i.type }))
+                }))
+            };
+
+            const res = await fetch('/server/create_request_function/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Saved as Template successfully!");
+                setShowDropdown(false);
+            }
+        } catch (err) {
+            console.error("Failed to save template:", err);
+        }
+    };
+
+    const handleShare = () => {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url);
+        alert("Link copied to clipboard!");
+        setShowDropdown(false);
     };
 
     if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
@@ -97,12 +139,51 @@ const RequestDetail = () => {
                     </button>
                     <h1>{request.subject}</h1>
                     <div className={styles.actions}>
-                        <button className={styles.iconBtn} onClick={handleDelete} title="Move to Trash">
+                        <button className={styles.iconBtn} onClick={() => updateRequestStatus('Trash')} title="Move to Trash">
                             <Trash2 size={18} />
                         </button>
-                        <button className={styles.iconBtn} title="More Options">
-                            <MoreHorizontal size={18} />
-                        </button>
+
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                className={styles.iconBtn}
+                                title="More Options"
+                                onClick={() => setShowDropdown(!showDropdown)}
+                            >
+                                <MoreHorizontal size={18} />
+                            </button>
+
+                            {showDropdown && (
+                                <>
+                                    <div className={styles.bgOverlay} onClick={() => setShowDropdown(false)} />
+                                    <div className={styles.dropdownMenu}>
+                                        <button className={styles.dropdownItem} onClick={handleShare}>
+                                            <Share2 size={14} />
+                                            Share Request
+                                        </button>
+                                        <button className={styles.dropdownItem} onClick={() => navigate(`/dashboard/new?templateId=${id}`)}>
+                                            <Edit size={14} />
+                                            Edit Request
+                                        </button>
+                                        <button className={styles.dropdownItem} onClick={handleSaveAsTemplate}>
+                                            <Copy size={14} />
+                                            Save as Template
+                                        </button>
+                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Unread')}>
+                                            <BookOpen size={14} />
+                                            Mark Unread
+                                        </button>
+                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Archived')}>
+                                            <Archive size={14} />
+                                            Archive Request
+                                        </button>
+                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Trash')} style={{ color: '#ef4444' }}>
+                                            <Trash2 size={14} />
+                                            Delete Request
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 

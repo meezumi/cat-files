@@ -68,25 +68,74 @@ app.get('/', async (req, res) => {
         
         const queryResult = await catApp.zcql().executeZCQLQuery(baseQuery);
         
-        const requests = queryResult.map(row => {
-            const r = row.Requests;
-            return {
-                id: r.ROWID,
-                recipient: { name: r.RecipientName, email: r.RecipientEmail },
-                subject: r.Subject,
-                description: r.Description,
-                status: r.Status,
-                progress: r.Progress || '0/0',
-                date: r.CREATEDTIME,
-                dueDate: r.DueDate
-            };
-        });
+        const requests = queryResult.map(row => row.Requests);
+        
+        // Dynamic Progress Calculation
+        // 1. Get all Request IDs
+        const requestIds = requests.map(r => r.ROWID);
+        
+        if (requestIds.length > 0) {
+             const idsStr = requestIds.map(id => `'${id}'`).join(',');
+             
+             // 2. Fetch Sections for these Requests
+             const sectionsQuery = `SELECT ROWID, RequestID FROM Sections WHERE RequestID IN (${idsStr})`;
+             const sectionRows = await catApp.zcql().executeZCQLQuery(sectionsQuery);
+             const sections = sectionRows.map(row => row.Sections);
+             
+             // 3. Status Map: SectionID -> List of Item Statuses
+             const sectionIds = sections.map(s => s.ROWID);
+             const sectionStatusMap = {};
+             
+             if (sectionIds.length > 0) {
+                 const sIdsStr = sectionIds.map(id => `'${id}'`).join(',');
+                 const itemsQuery = `SELECT SectionID, Status FROM Items WHERE SectionID IN (${sIdsStr})`;
+                 const itemRows = await catApp.zcql().executeZCQLQuery(itemsQuery);
+                 
+                 itemRows.forEach(row => {
+                     const item = row.Items;
+                     if (!sectionStatusMap[item.SectionID]) sectionStatusMap[item.SectionID] = [];
+                     sectionStatusMap[item.SectionID].push(item.Status);
+                 });
+             }
+             
+             // 4. Map back to Requests
+             const requestProgressMap = {};
+             sections.forEach(sec => {
+                 const statuses = sectionStatusMap[sec.ROWID] || [];
+                 if (!requestProgressMap[sec.RequestID]) {
+                     requestProgressMap[sec.RequestID] = { total: 0, completed: 0 };
+                 }
+                 requestProgressMap[sec.RequestID].total += statuses.length;
+                 requestProgressMap[sec.RequestID].completed += statuses.filter(s => s !== 'Pending').length;
+             });
 
-        res.status(200).json({ 
-            status: 'success', 
-            data: requests,
-            meta: { page, limit }
-        });
+             // Apply to requests
+             const processedRequests = requests.map(r => {
+                 const prog = requestProgressMap[r.ROWID] || { total: 0, completed: 0 };
+                 return {
+                    id: r.ROWID,
+                    recipient: { name: r.RecipientName, email: r.RecipientEmail },
+                    subject: r.Subject,
+                    description: r.Description,
+                    status: r.Status,
+                    progress: `${prog.completed}/${prog.total}`,
+                    date: r.CREATEDTIME,
+                    dueDate: r.DueDate
+                 };
+             });
+             
+             res.status(200).json({ 
+                status: 'success', 
+                data: processedRequests,
+                meta: { page, limit }
+            });
+        } else {
+            res.status(200).json({ 
+                status: 'success', 
+                data: [],
+                meta: { page, limit }
+            });
+        }
     } catch (err) {
         console.error('Fetch Requests Error:', err);
         res.status(500).json({ status: 'error', message: err.message });
@@ -132,6 +181,16 @@ app.get('/:id', async (req, res) => {
             }
         }
         
+        // Calculate Progress dynamically
+        let totalItems = 0;
+        let completedItems = 0;
+        sections.forEach(sec => {
+            if (sec.items) {
+                totalItems += sec.items.length;
+                completedItems += sec.items.filter(i => i.status !== 'Pending').length;
+            }
+        });
+
         const requestData = {
             id: r.ROWID,
             recipient: { name: r.RecipientName, email: r.RecipientEmail },
@@ -140,7 +199,7 @@ app.get('/:id', async (req, res) => {
             // Return updated status appropriately without extra fetch if we just updated it
             status: (isGuest && r.Status === 'Sent') ? 'Seen' : r.Status,
             metadata: r.Metadata ? JSON.parse(r.Metadata) : {},
-            progress: r.Progress,
+            progress: `${completedItems}/${totalItems}`,
             date: r.CREATEDTIME,
             dueDate: r.DueDate,
             sections: sections
