@@ -67,26 +67,34 @@
   display: flex;
   align-items: center;
   padding: 10px 24px;
-  color: var(--color-text-main);
+  color: var(--color-text-muted);
   font-size: 14px;
   border-left: 3px solid transparent;
   width: 100%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
 }
 
 .navItem svg {
   margin-right: 12px;
   color: var(--color-text-muted);
+  transition: color 0.2s;
 }
 
 .navItem:hover {
-  background-color: #f8f9fa;
+  background-color: #f1f5f9;
+  color: var(--color-text-main);
+}
+
+.navItem:hover svg {
+  color: var(--color-text-main);
 }
 
 .navItem.active {
-  background-color: #e6f7ec;
+  background-color: #ecfdf5; /* Light emerald */
   color: var(--color-primary);
   border-left-color: var(--color-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .navItem.active svg {
