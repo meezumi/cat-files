@@ -27,7 +27,7 @@ app.post('/', async (req, res) => {
             Status: 'Draft',
             DueDate: dueDate ? new Date(dueDate).toISOString().split('T')[0] : null,
             Progress: '0/0',
-            IsTemplateMode: false
+            IsTemplateMode: req.body.isTemplate || false
             // CreatorID: catApp.user().getCurrentUser().id // e.g.
         };
 

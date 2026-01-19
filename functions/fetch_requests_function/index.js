@@ -57,7 +57,11 @@ app.get('/', async (req, res) => {
         let baseQuery = "SELECT * FROM Requests";
         if (status && status !== 'all') {
             const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
-             baseQuery += ` WHERE Status = '${capitalizedStatus}'`;
+             baseQuery += ` WHERE Status = '${capitalizedStatus}' AND IsTemplateMode = false`;
+        } else if (req.query.type === 'template') {
+             baseQuery += ` WHERE IsTemplateMode = true`;
+        } else {
+             baseQuery += ` WHERE IsTemplateMode = false`;
         }
         
         baseQuery += ` ORDER BY CREATEDTIME DESC LIMIT ${limit} OFFSET ${offset}`;

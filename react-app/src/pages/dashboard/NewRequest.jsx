@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, FileText, Calendar, Clock } from 'lucide-react';
-import styles from './NewRequest.module.css'; // We'll create this next
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { User, FileText, Calendar, Clock, Save } from 'lucide-react';
+import styles from './NewRequest.module.css';
 
 const NewRequest = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         recipientName: '',
@@ -15,6 +16,49 @@ const NewRequest = () => {
         dueDate: '',
         reminderFreq: 3
     });
+    const [loading, setLoading] = useState(false);
+
+    // Load Template if present
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const templateId = params.get('templateId');
+
+        if (templateId) {
+            setLoading(true);
+            fetch(`/server/fetch_requests_function/${templateId}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const t = result.data;
+                        // Populate form with template data
+                        // Flatten sections into items for current simple UI
+                        const allItems = [];
+                        if (t.sections) {
+                            t.sections.forEach(sec => {
+                                if (sec.items) {
+                                    sec.items.forEach(item => {
+                                        allItems.push({
+                                            id: Date.now() + Math.random(),
+                                            title: item.title,
+                                            type: item.type
+                                        });
+                                    });
+                                }
+                            });
+                        }
+
+                        setFormData(prev => ({
+                            ...prev,
+                            subject: t.subject, // Template name usually matches subject
+                            message: t.description || '',
+                            items: allItems.length > 0 ? allItems : prev.items
+                        }));
+                    }
+                })
+                .catch(err => console.error("Failed to load template", err))
+                .finally(() => setLoading(false));
+        }
+    }, [location.search]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -42,12 +86,13 @@ const NewRequest = () => {
         }));
     };
 
-    const handleSubmit = async (status) => {
+    const handleSubmit = async (status, isTemplate = false) => {
         try {
             // Transform flat items list to sections structure for backend
             const payload = {
                 ...formData,
-                status,
+                status: isTemplate ? 'Draft' : status, // Templates are effectively drafts but flagged
+                isTemplate: isTemplate,
                 sections: [
                     {
                         title: 'General Documents',
@@ -56,27 +101,29 @@ const NewRequest = () => {
                 ]
             };
 
-            // In real app: POST /server/create_request_function/
-            console.log('Ranking Request:', payload);
-
-            // Mock API call
             await fetch('/server/create_request_function/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            navigate('/dashboard/inbox');
+            if (isTemplate) {
+                alert('Template saved successfully!');
+            } else {
+                navigate('/dashboard/inbox');
+            }
         } catch (error) {
             console.error("Error creating request:", error);
         }
     };
 
+    if (loading) {
+        return <div style={{ padding: 40, textAlign: 'center' }}>Loading template...</div>;
+    }
+
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>New Request</h1>
-
-            {/* Step Indicators would go here */}
 
             <div className={styles.card}>
                 {step === 1 && (
@@ -137,8 +184,11 @@ const NewRequest = () => {
                         <div className={styles.actions}>
                             <button className="btn" onClick={() => setStep(2)}>Back</button>
                             <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="btn" onClick={() => handleSubmit('Draft', true)} style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)', background: 'white' }}>
+                                    <Save size={14} style={{ marginRight: 6 }} />
+                                    Save as Template
+                                </button>
                                 <button className="btn" onClick={() => handleSubmit('Draft')}>Save Draft</button>
-                                <button className="btn" onClick={() => handleSubmit('Scheduled')}>Schedule</button>
                                 <button className="btn btn-primary" onClick={() => handleSubmit('Sent')}>Send Now</button>
                             </div>
                         </div>

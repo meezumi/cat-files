@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+
 import {
     Inbox,
     FileText,
@@ -11,25 +12,99 @@ import {
     Trash2,
     Plus,
     LogOut,
-    User
+    User,
+    ChevronDown
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
 const Sidebar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [showTemplates, setShowTemplates] = React.useState(false);
+    const [templates, setTemplates] = React.useState([]);
+    const [loadingTemplates, setLoadingTemplates] = React.useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
+
+    React.useEffect(() => {
+        if (showTemplates && templates.length === 0) {
+            setLoadingTemplates(true);
+            fetch('/server/fetch_requests_function/?type=template')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        setTemplates(data.data);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch templates", err))
+                .finally(() => setLoadingTemplates(false));
+        }
+    }, [showTemplates, templates.length]);
 
     return (
         <aside className={styles.sidebar}>
             <div className={styles.newRequestWrapper}>
-                <button
-                    className="btn btn-primary"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={() => navigate('/dashboard/new')}
-                >
-                    <Plus size={16} style={{ marginRight: 8 }} />
-                    New Request
-                </button>
+                <div className={styles.newRequestWrapper} style={{ position: 'relative' }}>
+                    <div className={styles.splitBtnContainer}>
+                        <button
+                            className="btn btn-primary"
+                            style={{ flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                            onClick={() => navigate('/dashboard/new')}
+                        >
+                            <Plus size={16} style={{ marginRight: 8 }} />
+                            New Request
+                        </button>
+                        <button
+                            className="btn btn-primary"
+                            style={{
+                                borderTopLeftRadius: 0,
+                                borderBottomLeftRadius: 0,
+                                borderLeft: '1px solid rgba(255,255,255,0.2)',
+                                padding: '0 8px',
+                                width: '32px'
+                            }}
+                            onClick={() => setShowTemplates(!showTemplates)}
+                        >
+                            <ChevronDown size={14} />
+                        </button>
+                    </div>
+
+                    {showTemplates && (
+                        <div className={styles.templateDropdown}>
+                            <div className={styles.templateSearch}>
+                                <input
+                                    placeholder="Search templates..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
+                            <div style={{ padding: '4px 0' }}>
+                                <div className={styles.navLabel} style={{ padding: '4px 12px' }}>Create from Template</div>
+                                {loadingTemplates ? (
+                                    <div style={{ padding: '8px 12px', color: '#999', fontSize: '12px' }}>Loading...</div>
+                                ) : templates.filter(t => t.subject.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                                    <div style={{ padding: '8px 12px', color: '#999', fontSize: '12px' }}>No templates found</div>
+                                ) : (
+                                    templates
+                                        .filter(t => t.subject.toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .map(t => (
+                                            <div
+                                                key={t.id}
+                                                className={styles.templateItem}
+                                                onClick={() => {
+                                                    setShowTemplates(false);
+                                                    navigate(`/dashboard/new?templateId=${t.id}`);
+                                                }}
+                                            >
+                                                <FileText size={12} style={{ marginRight: 6, opacity: 0.7 }} />
+                                                {t.subject}
+                                            </div>
+                                        ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <nav className={styles.nav} style={{ flex: 1 }}>
