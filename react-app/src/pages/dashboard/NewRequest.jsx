@@ -1,82 +1,166 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, FileText, Calendar, Clock } from 'lucide-react';
-import styles from './NewRequest.module.css'; // We'll create this next
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { User, FileText, Calendar, Clock, Save, Plus, Trash2 } from 'lucide-react';
+import styles from './NewRequest.module.css';
 
 const NewRequest = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         recipientName: '',
         recipientEmail: '',
         subject: '',
         message: '',
-        items: [],
+        sections: [{ id: Date.now(), title: 'General Documents', items: [] }],
         dueDate: '',
         reminderFreq: 3
     });
+    const [loading, setLoading] = useState(false);
+
+    // Load Template if present
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const templateId = params.get('templateId');
+
+        if (templateId) {
+            setLoading(true);
+            fetch(`/server/fetch_requests_function/${templateId}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const t = result.data;
+
+                        // Populate form with template data (preserving sections)
+                        const loadedSections = t.sections && t.sections.length > 0 ? t.sections.map(sec => ({
+                            id: sec.id || Date.now() + Math.random(),
+                            title: sec.title,
+                            items: sec.items ? sec.items.map(i => ({
+                                id: Date.now() + Math.random(),
+                                title: i.title,
+                                type: i.type || 'file'
+                            })) : []
+                        })) : [{ id: Date.now(), title: 'General Documents', items: [] }];
+
+                        setFormData(prev => ({
+                            ...prev,
+                            subject: t.subject,
+                            message: t.description || '',
+                            sections: loadedSections
+                        }));
+                    }
+                })
+                .catch(err => console.error("Failed to load template", err))
+                .finally(() => setLoading(false));
+        }
+    }, [location.search]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleAddItem = () => {
+    // Section Management
+    const handleAddSection = () => {
         setFormData(prev => ({
             ...prev,
-            items: [...prev.items, { id: Date.now(), title: '', type: 'file' }]
+            sections: [...prev.sections, { id: Date.now(), title: 'New Section', items: [] }]
         }));
     };
 
-    const handleItemChange = (id, value) => {
+    const handleRemoveSection = (sectionId) => {
+        if (formData.sections.length <= 1) return; // Prevent deleting last section
         setFormData(prev => ({
             ...prev,
-            items: prev.items.map(item => item.id === id ? { ...item, title: value } : item)
+            sections: prev.sections.filter(s => s.id !== sectionId)
         }));
     };
 
-    const handleRemoveItem = (id) => {
+    const handleSectionTitleChange = (sectionId, newTitle) => {
         setFormData(prev => ({
             ...prev,
-            items: prev.items.filter(item => item.id !== id)
+            sections: prev.sections.map(s => s.id === sectionId ? { ...s, title: newTitle } : s)
         }));
     };
 
-    const handleSubmit = async (status) => {
+    // Item Management
+    const handleAddItem = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(s => {
+                if (s.id === sectionId) {
+                    return { ...s, items: [...s.items, { id: Date.now(), title: '', type: 'file' }] };
+                }
+                return s;
+            })
+        }));
+    };
+
+    const handleItemChange = (sectionId, itemId, value) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(s => {
+                if (s.id === sectionId) {
+                    return {
+                        ...s,
+                        items: s.items.map(i => i.id === itemId ? { ...i, title: value } : i)
+                    };
+                }
+                return s;
+            })
+        }));
+    };
+
+    const handleRemoveItem = (sectionId, itemId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(s => {
+                if (s.id === sectionId) {
+                    // Only remove if it's not the last item? No, user can empty a section.
+                    return { ...s, items: s.items.filter(i => i.id !== itemId) };
+                }
+                return s;
+            })
+        }));
+    };
+
+    const handleSubmit = async (status, isTemplate = false) => {
         try {
-            // Transform flat items list to sections structure for backend
+            // Clean payload
             const payload = {
                 ...formData,
-                status,
-                sections: [
-                    {
-                        title: 'General Documents',
-                        items: formData.items
-                    }
-                ]
+                status: isTemplate ? 'Draft' : status,
+                isTemplate: isTemplate,
+                sections: formData.sections.map(s => ({
+                    title: s.title,
+                    description: '',
+                    items: s.items.map(i => ({ title: i.title, type: i.type || 'file' }))
+                }))
             };
 
-            // In real app: POST /server/create_request_function/
-            console.log('Ranking Request:', payload);
-
-            // Mock API call
             await fetch('/server/create_request_function/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            navigate('/dashboard/inbox');
+            if (isTemplate) {
+                alert('Template saved successfully!');
+            } else {
+                navigate('/dashboard/inbox');
+            }
         } catch (error) {
             console.error("Error creating request:", error);
         }
     };
 
+    if (loading) {
+        return <div style={{ padding: 40, textAlign: 'center' }}>Loading template...</div>;
+    }
+
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>New Request</h1>
-
-            {/* Step Indicators would go here */}
 
             <div className={styles.card}>
                 {step === 1 && (
@@ -104,19 +188,42 @@ const NewRequest = () => {
                     <div className={styles.stepContent}>
                         <h2>Build Checklist</h2>
                         <div className={styles.checklist}>
-                            {formData.items.map((item, index) => (
-                                <div key={item.id} className={styles.checklistItem}>
-                                    <span>{index + 1}.</span>
-                                    <input
-                                        value={item.title}
-                                        onChange={(e) => handleItemChange(item.id, e.target.value)}
-                                        placeholder="e.g. Copy of Passport"
-                                        autoFocus
-                                    />
-                                    <button onClick={() => handleRemoveItem(item.id)} className={styles.removeBtn}>×</button>
+                            {formData.sections.map((section, sIndex) => (
+                                <div key={section.id} style={{ marginBottom: 24, padding: 16, border: '1px solid #eee', borderRadius: 8, background: '#fafafa' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                        <input
+                                            value={section.title}
+                                            onChange={(e) => handleSectionTitleChange(section.id, e.target.value)}
+                                            style={{ flex: 1, fontWeight: 'bold', border: 'none', background: 'transparent', fontSize: 16 }}
+                                            placeholder="Section Title"
+                                        />
+                                        {formData.sections.length > 1 && (
+                                            <button onClick={() => handleRemoveSection(section.id)} className={styles.removeBtn} title="Delete Section" style={{ color: '#dc3545' }}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {section.items.map((item, index) => (
+                                        <div key={item.id} className={styles.checklistItem}>
+                                            <span>{index + 1}.</span>
+                                            <input
+                                                value={item.title}
+                                                onChange={(e) => handleItemChange(section.id, item.id, e.target.value)}
+                                                placeholder="Item Name"
+                                                autoFocus
+                                            />
+                                            <button onClick={() => handleRemoveItem(section.id, item.id)} className={styles.removeBtn}>×</button>
+                                        </div>
+                                    ))}
+                                    <button className="btn" onClick={() => handleAddItem(section.id)} style={{ border: '1px dashed #ccc', width: '100%', marginTop: 8, fontSize: 13 }}>+ Add Item to {section.title}</button>
                                 </div>
                             ))}
-                            <button className="btn" onClick={handleAddItem} style={{ border: '1px dashed #ccc', width: '100%' }}>+ Add Item</button>
+
+                            <button className="btn btn-primary" onClick={handleAddSection} style={{ width: '100%', marginBottom: 16, background: 'var(--color-secondary)' }}>
+                                <Plus size={16} style={{ marginRight: 8 }} />
+                                Add New Section
+                            </button>
                         </div>
                         <div className={styles.actions}>
                             <button className="btn" onClick={() => setStep(1)}>Back</button>
@@ -131,14 +238,24 @@ const NewRequest = () => {
                         <div className={styles.summary}>
                             <p><strong>To:</strong> {formData.recipientName} ({formData.recipientEmail})</p>
                             <p><strong>Subject:</strong> {formData.subject}</p>
-                            <p><strong>Items:</strong> {formData.items.length} items requested</p>
+                            <div style={{ marginTop: 16 }}>
+                                <strong>Checklist Structure:</strong>
+                                {formData.sections.map(s => (
+                                    <div key={s.id} style={{ marginLeft: 12, marginTop: 4 }}>
+                                        - {s.title} ({s.items.length} items)
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         <div className={styles.actions}>
                             <button className="btn" onClick={() => setStep(2)}>Back</button>
                             <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="btn" onClick={() => handleSubmit('Draft', true)} style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)', background: 'white' }}>
+                                    <Save size={14} style={{ marginRight: 6 }} />
+                                    Save as Template
+                                </button>
                                 <button className="btn" onClick={() => handleSubmit('Draft')}>Save Draft</button>
-                                <button className="btn" onClick={() => handleSubmit('Scheduled')}>Schedule</button>
                                 <button className="btn btn-primary" onClick={() => handleSubmit('Sent')}>Send Now</button>
                             </div>
                         </div>

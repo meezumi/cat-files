@@ -46,6 +46,69 @@
   padding: 0 24px 24px 24px;
 }
 
+/* Split Button Styles */
+.splitBtnContainer {
+  display: flex;
+  width: 100%;
+}
+
+.splitBtnMain {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.splitBtnArrow {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0 8px;
+  width: 32px;
+}
+
+.templateDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 20;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.templateSearch {
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.templateSearch input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.templateItem {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text-main);
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.templateItem:hover {
+  background-color: #f1f5f9;
+}
+
 .nav {
   display: flex;
   flex-direction: column;
@@ -67,26 +130,34 @@
   display: flex;
   align-items: center;
   padding: 10px 24px;
-  color: var(--color-text-main);
+  color: var(--color-text-muted);
   font-size: 14px;
   border-left: 3px solid transparent;
   width: 100%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
 }
 
 .navItem svg {
   margin-right: 12px;
   color: var(--color-text-muted);
+  transition: color 0.2s;
 }
 
 .navItem:hover {
-  background-color: #f8f9fa;
+  background-color: #f1f5f9;
+  color: var(--color-text-main);
+}
+
+.navItem:hover svg {
+  color: var(--color-text-main);
 }
 
 .navItem.active {
-  background-color: #e6f7ec;
+  background-color: #ecfdf5; /* Light emerald */
   color: var(--color-primary);
   border-left-color: var(--color-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .navItem.active svg {
