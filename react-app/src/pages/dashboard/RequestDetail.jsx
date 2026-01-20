@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Loader from '../../components/common/Loader';
+import Modal from '../../components/common/Modal';
 import {
     ArrowLeft,
     MoreHorizontal,
@@ -25,10 +26,15 @@ const RequestDetail = () => {
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showCompleteModal, setShowCompleteModal] = useState(false);
 
     // Handlers
-    const handleMarkCompleted = async () => {
-        if (!window.confirm("Mark this request as Completed?")) return;
+    const handleMarkCompleted = () => {
+        setShowCompleteModal(true);
+    };
+
+    const confirmMarkCompleted = async () => {
+        setShowCompleteModal(false);
         await updateRequestStatus('Completed');
     };
 
@@ -226,7 +232,10 @@ const RequestDetail = () => {
                         <strong>Recipient:</strong> {request.recipient?.name}
                     </div>
                     <div className={styles.metaItem}>
-                        <strong>Due Date:</strong> {new Date(request.date).toLocaleDateString()}
+                        <strong>Created:</strong> {new Date(request.date).toLocaleDateString()}
+                    </div>
+                    <div className={styles.metaItem}>
+                        <strong>Due Date:</strong> {request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A'}
                     </div>
                     <div className={styles.metaItem}>
                         <strong>Status:</strong> <span className={styles.statusBadge}>{request.status}</span>
@@ -284,6 +293,22 @@ const RequestDetail = () => {
                     ))}
                 </div>
             </div>
+            <Modal
+                isOpen={showCompleteModal}
+                onClose={() => setShowCompleteModal(false)}
+                title="Mark as Completed"
+                actions={
+                    <>
+                        <button className="btn" onClick={() => setShowCompleteModal(false)}>Cancel</button>
+                        <button className="btn btn-primary" onClick={confirmMarkCompleted}>
+                            Yes, Mark Completed
+                        </button>
+                    </>
+                }
+            >
+                <p>Are you sure you want to mark this request as <strong>Completed</strong>?</p>
+                <p>This indicates that all necessary documents have been received and reviewed.</p>
+            </Modal>
         </div>
     );
 };

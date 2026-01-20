@@ -192,6 +192,16 @@ const NewRequest = () => {
                             <label>Subject</label>
                             <input name="subject" value={formData.subject} onChange={handleInputChange} placeholder="e.g. Documents for Tax Return" />
                         </div>
+                        <div className={styles.formGroup}>
+                            <label>Due Date</label>
+                            <input
+                                type="date"
+                                name="dueDate"
+                                value={formData.dueDate}
+                                onChange={handleInputChange}
+                                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                            />
+                        </div>
                         <div className={styles.actions}>
                             <button className="btn btn-primary" onClick={() => setStep(2)}>Next: Checklist</button>
                         </div>
