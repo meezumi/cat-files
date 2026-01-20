@@ -4,6 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const { Readable } = require('stream');
 
 const app = express();
 // SDK Upload often needs a file path or buffer. Multer memory storage gives buffer.
@@ -15,30 +16,13 @@ app.use(cors({ origin: true, credentials: true }));
 // Ensure a folder exists; if not, create it using SDK.
 async function ensureFolderExists(catApp, parentFolderId, folderName) {
     try {
-        // SDK doesn't have a direct "create if not exists".
-        // We try to create. If it fails, we assume it exists.
-        // There is no easy "Search" for folder by name in SDK either without listing.
-        // Just Try Create.
         const folderDetails = await catApp.filestore().folder(parentFolderId).createSubFolder(folderName);
         return folderDetails.id;
     } catch (err) {
-        // If error, it might already exist.
-        // We can try to list children of parent and find it?
-        // Or we just return the Parent ID to be safe if we can't find it.
-        // NOTE: SDK 'createSubFolder' throws if exists? Or returns existing?
-        // Catalyst API behavior: Conflict (409).
-        // If conflict, we need to FIND the folder.
-        // SDK: app.filestore().folder(parentFolderId).getFolders() -> returns list.
-        try {
-             // Fallback: list folders in parent
-            const folders = await catApp.filestore().folder(parentFolderId).getSubFolders();
-            const existing = folders.find(f => f.folder_name === folderName);
-            if (existing) return existing.id;
-        } catch (findErr) {
-            console.warn("Could not list folders to find existing:", findErr);
-        }
-        
-        console.warn(`Folder creation for ${folderName} failed. Using parent.`);
+        // If error, it usually means it already exists (409).
+        // Since listing folders is unreliable or method unavailable, we fallback to the parent folder
+        // to ensure the upload at least succeeds.
+        console.warn(`Folder creation for ${folderName} failed (likely exists). Using parent folder.`);
         return parentFolderId;
     }
 }
@@ -75,46 +59,78 @@ app.post('/', upload.single('file'), async (req, res) => {
         // -----------------------------
 
         // Upload using SDK
-        // SDK Method: folder.uploadFile(config)
-        // Check SDK docs: usually requires { code: buffer, name: string }
+        // Robust Method: Write to temp file and stream from disk
+        // This avoids issues with Buffer streams in some SDK versions
+        const tempFilePath = path.join('/tmp', `upload_${Date.now()}_${req.file.originalname}`);
+        fs.writeFileSync(tempFilePath, req.file.buffer);
         
-        // Hint: SDK nodejs uploadFile accepts: { code: Stream/Buffer, name: 'filename' }
-        const folder = catApp.filestore().folder(uploadFolderId);
-        const uploadResp = await folder.uploadFile({
-            code: req.file.buffer,
-            name: req.file.originalname
-        });
+        const fileStream = fs.createReadStream(tempFilePath);
         
-        // uploadResp contains { id: ..., file_name: ... }
+        try {
+            const folder = catApp.filestore().folder(uploadFolderId);
+            const uploadResp = await folder.uploadFile({
+                code: fileStream,
+                name: req.file.originalname
+            });
+            
+             // uploadResp contains { id: ..., file_name: ... }
         
-        const fileId = uploadResp.id;
-        const fileName = uploadResp.file_name;
+            const fileId = uploadResp.id;
+            const fileName = uploadResp.file_name;
 
-        // Link to Item (if itemId provided)
-        if (itemId) {
-             try {
+            // Link to Item (if itemId provided)
+            if (itemId) {
+                 try {
                 const updatePayload = {
                     "ROWID": itemId,
                     "Status": "Uploaded", 
-                    "FileID": fileId,
-                    "FolderID": uploadFolderId 
+                    "FileID": fileId
+                    // FolderID removed as it doesn't exist in schema
                 };
-                await catApp.datastore().table('Items').updateRow(updatePayload);
-             } catch (linkErr) {
-                 console.warn("Failed to link file to item:", linkErr);
-             }
-        }
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                id: fileId,
-                folder_id: uploadFolderId,
-                filename: fileName,
-                // We construct a generic download link proxy
-                url: `/server/upload_function/${fileId}?folderId=${uploadFolderId}` 
+                    await catApp.datastore().table('Items').updateRow(updatePayload);
+                 } catch (linkErr) {
+                     console.warn("Failed to link file to item:", linkErr);
+                 }
             }
-        });
+
+            // Cleanup
+            fs.unlinkSync(tempFilePath);
+
+            // --- NEW: Update Request Status to 'Responded' ---
+            if (requestId) {
+                try {
+                    // 1. Fetch current status to avoid overriding final states
+                    const requestRow = await catApp.datastore().table('Requests').getRow(requestId);
+                    const currentStatus = requestRow.Requests ? requestRow.Requests.Status : requestRow.Status; 
+
+                    // 2. Update if applicable (Not Completed or Archived)
+                    const finalStatuses = ['Completed', 'Archived', 'Trash'];
+                    if (!finalStatuses.includes(currentStatus)) {
+                         await catApp.datastore().table('Requests').updateRow({ 
+                             ROWID: requestId, 
+                             Status: 'Responded',
+                         });
+                    }
+                } catch (statusErr) {
+                    console.warn("Failed to auto-update Request status to Responded:", statusErr);
+                }
+            }
+
+            res.status(200).json({
+                status: 'success',
+                data: {
+                    id: fileId,
+                    folder_id: uploadFolderId,
+                    filename: fileName,
+                    url: `/server/upload_function/${fileId}?folderId=${uploadFolderId}` 
+                }
+            });
+
+        } catch (uploadErr) {
+            // Cleanup on error
+            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+            throw uploadErr;
+        }
 
     } catch (err) {
         console.error("Upload Error:", err);

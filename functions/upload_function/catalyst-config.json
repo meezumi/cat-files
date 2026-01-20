@@ -3,7 +3,9 @@
 		"name": "upload_function",
 		"stack": "node14",
 		"type": "advancedio",
-		"env_variables": {}
+		"env_variables": {
+			"UPLOAD_FOLDER_ID": "25342000000022301"
+		}
 	},
 	"execution": {
 		"main": "index.js"

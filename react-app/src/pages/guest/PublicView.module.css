@@ -118,3 +118,55 @@
     color: var(--color-primary);
     background: #f0fdf4;
 }
+
+/* Uploaded State */
+.uploadedFile {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fileName {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.uploadSuccess {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-success); /* e.g. #2eb85c */
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.submitBtn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.submitBtn:hover {
+    filter: brightness(0.95);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}

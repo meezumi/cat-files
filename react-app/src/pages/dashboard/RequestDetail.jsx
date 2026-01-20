@@ -139,9 +139,11 @@ const RequestDetail = () => {
     };
 
     const handleShare = () => {
-        const url = window.location.href;
+        // Construct Public Guest URL
+        // origin + /app/p/ + requestID
+        const url = `${window.location.origin}/app/p/${id}`;
         navigator.clipboard.writeText(url);
-        alert("Link copied to clipboard!");
+        alert("Guest Portal Link copied to clipboard!");
         setShowDropdown(false);
     };
 
