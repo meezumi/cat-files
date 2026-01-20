@@ -126,9 +126,16 @@ const NewRequest = () => {
         }));
     };
 
+    // State for UI UX
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+
+    // ... (useEffect remains same) ...
+
+    // ... (handlers remain same) ...
+
     const handleSubmit = async (status, isTemplate = false) => {
         try {
-            // Clean payload
             const payload = {
                 ...formData,
                 status: isTemplate ? 'Draft' : status,
@@ -147,7 +154,8 @@ const NewRequest = () => {
             });
 
             if (isTemplate) {
-                alert('Template saved successfully!');
+                setIsTemplateSaved(true);
+                setShowSuccessModal(true);
             } else {
                 navigate('/dashboard/inbox');
             }
@@ -157,6 +165,12 @@ const NewRequest = () => {
     };
 
     if (loading) return <Loader text="Loading template..." />;
+
+    const modalActions = (
+        <button className="btn btn-primary" onClick={() => setShowSuccessModal(false)}>
+            Close
+        </button>
+    );
 
     return (
         <div className={styles.container}>
@@ -251,9 +265,29 @@ const NewRequest = () => {
                         <div className={styles.actions}>
                             <button className="btn" onClick={() => setStep(2)}>Back</button>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <button className="btn" onClick={() => handleSubmit('Draft', true)} style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)', background: 'white' }}>
-                                    <Save size={14} style={{ marginRight: 6 }} />
-                                    Save as Template
+                                <button
+                                    className="btn"
+                                    onClick={() => !isTemplateSaved && handleSubmit('Draft', true)}
+                                    style={{
+                                        border: '1px solid var(--color-primary)',
+                                        color: isTemplateSaved ? 'var(--color-success)' : 'var(--color-primary)',
+                                        borderColor: isTemplateSaved ? 'var(--color-success)' : 'var(--color-primary)',
+                                        background: 'white',
+                                        cursor: isTemplateSaved ? 'default' : 'pointer',
+                                        opacity: isTemplateSaved ? 0.8 : 1
+                                    }}
+                                >
+                                    {isTemplateSaved ? (
+                                        <>
+                                            <Check size={14} style={{ marginRight: 6 }} />
+                                            Saved
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={14} style={{ marginRight: 6 }} />
+                                            Save as Template
+                                        </>
+                                    )}
                                 </button>
                                 <button className="btn" onClick={() => handleSubmit('Draft')}>Save Draft</button>
                                 <button className="btn btn-primary" onClick={() => handleSubmit('Sent')}>Send Now</button>
@@ -262,6 +296,16 @@ const NewRequest = () => {
                     </div>
                 )}
             </div>
+
+            <Modal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                title="Template Saved"
+                actions={modalActions}
+            >
+                <p><strong>{formData.subject}</strong> has been saved as a template successfully.</p>
+                <p>You can now use this template when creating new requests to save time.</p>
+            </Modal>
         </div>
     );
 };
