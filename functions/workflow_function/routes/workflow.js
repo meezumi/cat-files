@@ -56,4 +56,24 @@ router.post('/requests/:id/remind', async (req, res) => {
     res.json({ status: 'success', message: 'Reminder sent (Mock)' });
 });
 
+// DELETE /trash - Parmanently delete all requests in Trash
+router.delete('/trash', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        
+        // Use ZCQL to delete all requests with Status = 'Trash'
+        // Note: Delete only works on ROWID usually in SDK, but ZCQL supports conditions.
+        const query = "DELETE FROM Requests WHERE Status = 'Trash'";
+        
+        // executeZCQLQuery for DELETE returns the deleted rows usually or generic response
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        
+        res.json({ status: 'success', message: 'Trash emptied successfully', data: result });
+
+    } catch (err) {
+        console.error("Empty Trash Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 module.exports = router;
