@@ -148,20 +148,20 @@ app.get('/:id', async (req, res) => {
         if (!folderId) return res.status(400).send("Missing Folder ID");
 
         // Download using SDK
-        // SDK: folder(id).file(id).download() -> returns Promise<Buffer> or Stream?
+        // 1. Get File Details to retrieve the original filename
+        const folder = catApp.filestore().folder(folderId);
         
-        const fileObj = catApp.filestore().folder(folderId).file(fileId);
-        const fileStream = await fileObj.download(); // Usually returns stream in recent SDK, or buffer.
+        // SDK Method might be getFileDetails(fileId) or similar. 
+        // Based on docs, folder instance usually has methods to manage its files.
+        const fileDetails = await folder.getFileDetails(fileId);
+        const fileName = fileDetails.file_name || `downloaded_file_${fileId}`;
+
+        // 2. Download Content
+        const fileContent = await folder.downloadFile(fileId);
         
-        // If buffer, send it. If stream, pipe.
-        // SDK documentation says download() returns `client.request()` promise which is body.
-        // It might be blob or buffer.
-        
-        // Safe bet: set headers and send.
-        // In Node SDK, download() might return the file content directly.
-        
-        res.setHeader('Content-Disposition', `attachment; filename="downloaded_file"`); // SDK might not give name easily here without extra fetch
-        res.send(fileStream);
+        // 3. Serve with correct name
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.send(fileContent);
 
     } catch (err) {
         console.error("Download Error:", err);
