@@ -6,12 +6,17 @@ const RequestItem = ({ request }) => {
     const navigate = useNavigate();
 
     const getStatusBadge = (status) => {
-        switch (status.toLowerCase()) {
-            case 'draft': return styles.badgeDraft;
-            case 'sent': return styles.badgeSent;
-            case 'completed': return styles.badgeCompleted;
-            default: return '';
-        }
+        const s = status.toLowerCase().replace(' ', ''); // Handle 'In Review' -> 'inreview' if needed, or just match exact
+        if (s === 'draft') return styles.badgeDraft;
+        if (s === 'sent') return styles.badgeSent;
+        if (s === 'completed') return styles.badgeCompleted;
+        if (s === 'trash') return styles.badgeTrash;
+        if (s === 'seen') return styles.badgeSeen;
+        if (s === 'responded') return styles.badgeResponded;
+        if (s === 'inreview' || s === 'in review') return styles.badgeInReview;
+        if (s === 'expired') return styles.badgeExpired;
+        if (s === 'archived') return styles.badgeArchived;
+        return '';
     };
 
     return (

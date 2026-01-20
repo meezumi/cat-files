@@ -11,7 +11,10 @@ import {
     Edit,
     Copy,
     BookOpen,
-    Archive
+    Archive,
+    CheckCircle,
+    Check,
+    X
 } from 'lucide-react';
 import styles from './RequestDetail.module.css';
 
@@ -21,6 +24,21 @@ const RequestDetail = () => {
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
+
+    // Handlers
+    const handleMarkCompleted = async () => {
+        if (!window.confirm("Mark this request as Completed?")) return;
+        await updateRequestStatus('Completed');
+    };
+
+    const handleSendReminder = async () => {
+        try {
+            const res = await fetch(`/server/workflow_function/requests/${id}/remind`, { method: 'POST' });
+            if (res.ok) alert("Reminder sent successfully!");
+        } catch (err) {
+            console.error("Failed to send reminder", err);
+        }
+    };
 
     useEffect(() => {
         // Fetch request data
@@ -139,6 +157,17 @@ const RequestDetail = () => {
                     </button>
                     <h1>{request.subject}</h1>
                     <div className={styles.actions}>
+                        <div className={styles.headerActions}>
+                            <button className={styles.actionBtn} onClick={handleSendReminder}>
+                                <Clock size={16} style={{ marginRight: 6 }} />
+                                Send Reminder
+                            </button>
+                            <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={handleMarkCompleted}>
+                                <CheckCircle size={16} style={{ marginRight: 6 }} />
+                                Mark Completed
+                            </button>
+                        </div>
+
                         <button className={styles.iconBtn} onClick={() => updateRequestStatus('Trash')} title="Move to Trash">
                             <Trash2 size={18} />
                         </button>
@@ -214,16 +243,27 @@ const RequestDetail = () => {
                                             <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
                                                 {item.status}
                                             </span>
-                                            {/* Actions for Review: Only show if Uploaded */}
-                                            {item.status === 'Uploaded' && (
-                                                <>
-                                                    <button className={styles.approveBtn} onClick={() => handleStatusChange(item.id, 'Approved')}>
+
+                                            {/* Approve/Reject visible ONLY if not already decided (Approved or Returned) */}
+                                            {item.status !== 'Approved' && item.status !== 'Returned' && (
+                                                <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
+                                                    <button
+                                                        className={styles.approveBtn}
+                                                        onClick={() => handleStatusChange(item.id, 'Approved')}
+                                                        title="Approve Item"
+                                                    >
+                                                        <Check size={14} />
                                                         Approve
                                                     </button>
-                                                    <button className={styles.rejectBtn} onClick={() => handleStatusChange(item.id, 'Returned')}>
+                                                    <button
+                                                        className={styles.rejectBtn}
+                                                        onClick={() => handleStatusChange(item.id, 'Returned')}
+                                                        title="Reject/Return Item"
+                                                    >
+                                                        <X size={14} />
                                                         Reject
                                                     </button>
-                                                </>
+                                                </div>
                                             )}
                                         </div>
                                     </div>

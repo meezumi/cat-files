@@ -37,8 +37,8 @@ router.put('/items/:id/status', async (req, res) => {
         
         const updateData = {
             ROWID: itemId,
-            Status: status,
-            Feedback: feedback || ""
+            Status: status
+            // Feedback: feedback || "" // Feedback column does not exist in schema yet
         };
 
         const updatedRow = await catApp.datastore().table('Items').updateRow(updateData);

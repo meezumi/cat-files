@@ -74,6 +74,13 @@
 .badgeSent { color: var(--color-status-sent); background-color: #e6f7ec; }
 .badgeCompleted { color: white; background-color: var(--color-status-completed); }
 
+.badgeTrash { color: #fff; background-color: #ef4444; }
+.badgeSeen { color: #0369a1; background-color: #e0f2fe; }
+.badgeResponded { color: #7e22ce; background-color: #f3e8ff; }
+.badgeInReview { color: #c2410c; background-color: #ffedd5; }
+.badgeExpired { color: #b91c1c; background-color: #fee2e2; }
+.badgeArchived { color: #475569; background-color: #e2e8f0; }
+
 .controls {
     display: flex;
     gap: 12px;

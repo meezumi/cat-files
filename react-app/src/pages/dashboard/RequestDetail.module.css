@@ -66,6 +66,16 @@
     color: #475569;
 }
 
+.badgeDraft { color: var(--color-status-draft); background-color: #fde8e8; }
+.badgeSent { color: var(--color-status-sent); background-color: #e6f7ec; }
+.badgeCompleted { color: white; background-color: var(--color-status-completed); }
+.badgeTrash { color: #fff; background-color: #ef4444; }
+.badgeSeen { color: #0369a1; background-color: #e0f2fe; }
+.badgeResponded { color: #7e22ce; background-color: #f3e8ff; }
+.badgeInReview { color: #c2410c; background-color: #ffedd5; }
+.badgeExpired { color: #b91c1c; background-color: #fee2e2; }
+.badgeArchived { color: #475569; background-color: #e2e8f0; }
+
 .content {
     background: white;
     border: 1px solid var(--color-border);
@@ -118,10 +128,45 @@
     color: var(--color-text-main);
 }
 
+.headerActions {
+    display: flex;
+    gap: 12px;
+    margin-right: 16px;
+}
+
+.actionBtn {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    background: white;
+    color: var(--color-text-main);
+    transition: all 0.2s;
+}
+
+.actionBtn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.actionBtnPrimary {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.actionBtnPrimary:hover {
+    background-color: var(--color-primary-hover);
+}
+
 .itemActions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .badge {
@@ -136,22 +181,33 @@
 .returned { background: #fef2f2; color: #ef4444; }
 
 .approveBtn, .rejectBtn {
-    padding: 4px 12px;
+    padding: 6px 12px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    border: none;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .approveBtn {
-    background-color: #dcfce7;
+    background-color: white;
+    border-color: #dcfce7;
     color: #166534;
+}
+.approveBtn:hover {
+    background-color: #f0fdf4;
 }
 
 .rejectBtn {
-    background-color: #fee2e2;
+    background-color: white;
+    border-color: #fee2e2;
     color: #991b1b;
+}
+.rejectBtn:hover {
+    background-color: #fef2f2;
 }
 
 .fileInfo {
