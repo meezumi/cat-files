@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import styles from '../../components/dashboard/Dashboard.module.css'; // Reusing dashboard styles for simplicity
+import Loader from '../../components/common/Loader';
 
 const ProfilePage = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState({ sent: 0, completed: 0 });
+    const [loading, setLoading] = useState(true); // Introduce loading state
 
     useEffect(() => {
         // Mock stats or fetch from backend if available
         setStats({ sent: 12, completed: 5 });
-    }, []);
+        // Set loading to false once user data is available or fetched
+        if (user) {
+            setLoading(false);
+        }
+    }, [user]); // Depend on user to update loading state
 
-    if (!user) return <div>Loading...</div>;
+    if (loading || !user) return <Loader text="Loading profile..." />; // Use loading state and user check
 
     return (
         <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Loader from '../../components/common/Loader';
 import {
     ArrowLeft,
     MoreHorizontal,
@@ -147,7 +148,9 @@ const RequestDetail = () => {
         setShowDropdown(false);
     };
 
-    if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
+    // ...
+
+    if (loading) return <Loader text="Loading request details..." />;
     if (!request) return <div style={{ padding: 24 }}>Request not found</div>;
 
     return (

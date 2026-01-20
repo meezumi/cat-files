@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { User, FileText, Calendar, Clock, Save, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { ArrowLeft, Save, Plus, Trash2, Sliders, Check } from 'lucide-react';
 import styles from './NewRequest.module.css';
+import Loader from '../../components/common/Loader';
+import Modal from '../../components/common/Modal';
 
 const NewRequest = () => {
     const navigate = useNavigate();
@@ -154,9 +156,7 @@ const NewRequest = () => {
         }
     };
 
-    if (loading) {
-        return <div style={{ padding: 40, textAlign: 'center' }}>Loading template...</div>;
-    }
+    if (loading) return <Loader text="Loading template..." />;
 
     return (
         <div className={styles.container}>

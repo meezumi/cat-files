@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { CheckCircle, Clock, FileText } from 'lucide-react';
 import FileUploader from './FileUploader';
 import styles from './PublicView.module.css';
+import Loader from '../../components/common/Loader';
 
 const PublicRequestView = () => {
     const { id } = useParams();
@@ -27,7 +28,11 @@ const PublicRequestView = () => {
         fetchRequest();
     }, [id]);
 
-    if (loading) return <div className="loading-spinner">Loading...</div>;
+    if (loading) return <Loader text="Loading..." />;
+    if (!request) return <div className="error-message">Request not found or expired.</div>;
+
+    // ...
+    if (loading) return <Loader text="Loading..." />;
     if (!request) return <div className="error-message">Request not found or expired.</div>;
 
     const handleUploadDefault = (sectionId, itemId, fileData) => {

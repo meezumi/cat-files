@@ -3,6 +3,7 @@ import { Filter, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RequestItem from './RequestItem';
 import styles from './Dashboard.module.css';
+import Loader from '../common/Loader';
 
 const RequestList = ({ filterStatus }) => {
     const navigate = useNavigate();
@@ -57,9 +58,7 @@ const RequestList = ({ filterStatus }) => {
         navigate(route);
     };
 
-    if (loading) {
-        return <div style={{ padding: 24 }}>Loading requests...</div>;
-    }
+    if (loading) return <Loader text="Loading requests..." />;
 
     return (
         <div className={styles.container}>
