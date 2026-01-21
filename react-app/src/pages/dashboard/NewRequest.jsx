@@ -143,7 +143,7 @@ const NewRequest = () => {
                 sections: formData.sections.map(s => ({
                     title: s.title,
                     description: '',
-                    items: s.items.map(i => ({ title: i.title, type: i.type || 'file' }))
+                    items: s.items.map(i => ({ title: i.title, type: i.type || 'file', allowedFileTypes: i.allowedFileTypes }))
                 }))
             };
 
@@ -277,12 +277,33 @@ const NewRequest = () => {
                                     {section.items.map((item, index) => (
                                         <div key={item.id} className={styles.checklistItem}>
                                             <span>{index + 1}.</span>
-                                            <input
-                                                value={item.title}
-                                                onChange={(e) => handleItemChange(section.id, item.id, e.target.value)}
-                                                placeholder="Item Name"
-                                                autoFocus
-                                            />
+                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                <input
+                                                    value={item.title}
+                                                    onChange={(e) => handleItemChange(section.id, item.id, e.target.value)}
+                                                    placeholder="Item Name"
+                                                    autoFocus
+                                                    style={{ width: '100%' }}
+                                                />
+                                                <input
+                                                    value={item.allowedFileTypes || ''}
+                                                    onChange={(e) => {
+                                                        const newVal = e.target.value;
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            sections: prev.sections.map(s => {
+                                                                if (s.id !== section.id) return s;
+                                                                return {
+                                                                    ...s,
+                                                                    items: s.items.map(i => i.id === item.id ? { ...i, allowedFileTypes: newVal } : i)
+                                                                };
+                                                            })
+                                                        }));
+                                                    }}
+                                                    placeholder="Allowed Types (e.g. .pdf, .png) - Optional"
+                                                    style={{ fontSize: 12, padding: 4, border: '1px solid #eee', borderRadius: 4, color: '#666' }}
+                                                />
+                                            </div>
                                             <button onClick={() => handleRemoveItem(section.id, item.id)} className={styles.removeBtn}>×</button>
                                         </div>
                                     ))}

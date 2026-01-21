@@ -61,7 +61,8 @@ app.post('/', async (req, res) => {
                     Title: item.title,
                     Type: item.type || 'File',
                     Status: 'Pending',
-                    IsRequired: true
+                    IsRequired: true,
+                    AllowedFileTypes: item.allowedFileTypes || ''
                 }));
                 // Bulk Insert Items for efficiency
                 const itemRows = await catApp.datastore().table('Items').insertRows(itemsData);

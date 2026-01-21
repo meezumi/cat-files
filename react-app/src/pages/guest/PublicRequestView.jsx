@@ -114,6 +114,7 @@ const PublicRequestView = () => {
                                                 requestId={request.id}
                                                 sectionId={section.id}
                                                 itemId={item.id}
+                                                allowedFileTypes={item.AllowedFileTypes}
                                                 onUploadComplete={(fileData) => handleUploadDefault(section.id, item.id, fileData)}
                                             />
                                         )
@@ -127,6 +128,7 @@ const PublicRequestView = () => {
                                                 requestId={request.id}
                                                 sectionId={section.id}
                                                 itemId={item.id}
+                                                allowedFileTypes={item.AllowedFileTypes}
                                                 onUploadComplete={(fileData) => handleUploadDefault(section.id, item.id, fileData)}
                                             />
                                         </div>

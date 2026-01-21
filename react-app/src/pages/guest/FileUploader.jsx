@@ -1,39 +1,34 @@
 import React, { useCallback, useState } from 'react';
-import { UploadCloud, File, X, Check } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import styles from './FileUploader.module.css';
 
-const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId }) => {
+const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedFileTypes }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
 
-    const handleDragOver = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
+    const validateFile = useCallback((file) => {
+        if (!allowedFileTypes || allowedFileTypes.trim() === '') return true;
 
-    const handleDragLeave = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    }, []);
+        const validTypes = allowedFileTypes.split(',').map(t => t.trim().toLowerCase());
+        // Extract extension with dot
+        const extension = '.' + file.name.split('.').pop().toLowerCase();
+        // Check against extension (e.g. .pdf) or mime type (e.g. application/pdf)
+        const isValid = validTypes.some(type => {
+            if (type.startsWith('.')) return type === extension;
+            return file.type.match(new RegExp(type.replace('*', '.*'))); // Simple mime match
+        });
 
-    const handleDrop = useCallback(async (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            await uploadFile(files[0]);
+        if (!isValid) {
+            alert(`Invalid file type. Allowed types: ${allowedFileTypes}`);
+            return false;
         }
-    }, [requestId, sectionId, itemId]);
+        return true;
+    }, [allowedFileTypes]);
 
-    const handleFileSelect = async (e) => {
-        if (e.target.files.length > 0) {
-            await uploadFile(e.target.files[0]);
-        }
-    };
-
-    const uploadFile = async (file) => {
+    const uploadFile = useCallback(async (file) => {
         setUploading(true);
+        // ... (rest of upload logic) ...
         setProgress(10);
 
         try {
@@ -81,6 +76,35 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId }) => {
             setUploading(false);
             alert('Upload failed: ' + error.message);
         }
+    }, [requestId, sectionId, itemId, onUploadComplete]);
+
+    const handleDragOver = useCallback((e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e) => {
+        e.preventDefault();
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback(async (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            if (validateFile(files[0])) {
+                await uploadFile(files[0]);
+            }
+        }
+    }, [validateFile, uploadFile]);
+
+    const handleFileSelect = async (e) => {
+        if (e.target.files.length > 0) {
+            if (validateFile(e.target.files[0])) {
+                await uploadFile(e.target.files[0]);
+            }
+        }
     };
 
     if (uploading) {
@@ -94,23 +118,27 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId }) => {
         );
     }
 
+    // Prepare accept attribute for file input
+    const acceptAttr = allowedFileTypes ? allowedFileTypes : undefined;
+
     return (
         <div
             className={`${styles.dropZone} ${isDragging ? styles.dragging : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => document.getElementById('fileInput').click()}
+            onClick={() => document.getElementById(`fileInput-${itemId}`).click()}
         >
             <input
                 type="file"
-                id="fileInput"
+                id={`fileInput-${itemId}`}
                 style={{ display: 'none' }}
                 onChange={handleFileSelect}
+                accept={acceptAttr}
             />
             <UploadCloud size={24} className={styles.icon} />
             <span className={styles.text}>
-                {isDragging ? 'Drop file here' : 'Drag & drop or Click to Upload'}
+                {isDragging ? 'Drop file here' : (allowedFileTypes ? `Upload ${allowedFileTypes}` : 'Drag & drop or Click to Upload')}
             </span>
         </div>
     );
