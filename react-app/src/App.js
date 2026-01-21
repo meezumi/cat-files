@@ -47,7 +47,7 @@ function App() {
           <Route path="/p" element={<GuestLayout />}>
              <Route path=":id" element={<PublicRequestView />} />
           </Route>
-          <Route path="/documentation" element={<APIDocs />} />
+          <Route path="/api/v1/documentation" element={<APIDocs />} />
         </Routes>
       </AuthProvider>
     </Router>
