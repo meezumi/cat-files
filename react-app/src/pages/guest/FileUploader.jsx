@@ -1,26 +1,27 @@
 import React, { useCallback, useState } from 'react';
 import { UploadCloud } from 'lucide-react';
 import styles from './FileUploader.module.css';
+import Modal from '../../components/common/Modal';
 
 const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedFileTypes }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [error, setError] = useState(null); // State for error modal
 
     const validateFile = useCallback((file) => {
         if (!allowedFileTypes || allowedFileTypes.trim() === '') return true;
 
         const validTypes = allowedFileTypes.split(',').map(t => t.trim().toLowerCase());
-        // Extract extension with dot
         const extension = '.' + file.name.split('.').pop().toLowerCase();
-        // Check against extension (e.g. .pdf) or mime type (e.g. application/pdf)
+
         const isValid = validTypes.some(type => {
             if (type.startsWith('.')) return type === extension;
-            return file.type.match(new RegExp(type.replace('*', '.*'))); // Simple mime match
+            return file.type.match(new RegExp(type.replace('*', '.*')));
         });
 
         if (!isValid) {
-            alert(`Invalid file type. Allowed types: ${allowedFileTypes}`);
+            setError(`Invalid file type. Allowed types: ${allowedFileTypes}`);
             return false;
         }
         return true;
@@ -28,20 +29,16 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
 
     const uploadFile = useCallback(async (file) => {
         setUploading(true);
-        // ... (rest of upload logic) ...
         setProgress(10);
 
         try {
-            // Real FormData for file upload
             const formData = new FormData();
             formData.append('file', file);
 
-            // Add Context Data
             if (requestId) formData.append('requestId', requestId);
             if (sectionId) formData.append('sectionId', sectionId);
             if (itemId) formData.append('itemId', itemId);
 
-            // Simulate progress
             const interval = setInterval(() => {
                 setProgress(prev => {
                     if (prev >= 90) return prev;
@@ -49,12 +46,9 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
                 });
             }, 200);
 
-            // Use fetch with FormData (Advanced IO handles multipart)
             const response = await fetch('/server/upload_function/', {
                 method: 'POST',
                 body: formData
-                // Note: Do NOT set Content-Type header manually for FormData, 
-                // browser sets it with boundary.
             });
 
             clearInterval(interval);
@@ -74,7 +68,7 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
         } catch (error) {
             console.error('Upload failed:', error);
             setUploading(false);
-            alert('Upload failed: ' + error.message);
+            setError('Upload failed: ' + error.message);
         }
     }, [requestId, sectionId, itemId, onUploadComplete]);
 
@@ -118,29 +112,39 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
         );
     }
 
-    // Prepare accept attribute for file input
     const acceptAttr = allowedFileTypes ? allowedFileTypes : undefined;
 
     return (
-        <div
-            className={`${styles.dropZone} ${isDragging ? styles.dragging : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById(`fileInput-${itemId}`).click()}
-        >
-            <input
-                type="file"
-                id={`fileInput-${itemId}`}
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-                accept={acceptAttr}
-            />
-            <UploadCloud size={24} className={styles.icon} />
-            <span className={styles.text}>
-                {isDragging ? 'Drop file here' : (allowedFileTypes ? `Upload ${allowedFileTypes}` : 'Drag & drop or Click to Upload')}
-            </span>
-        </div>
+        <>
+            <div
+                className={`${styles.dropZone} ${isDragging ? styles.dragging : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById(`fileInput-${itemId}`).click()}
+            >
+                <input
+                    type="file"
+                    id={`fileInput-${itemId}`}
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                    accept={acceptAttr}
+                />
+                <UploadCloud size={24} className={styles.icon} />
+                <span className={styles.text}>
+                    {isDragging ? 'Drop file here' : (allowedFileTypes ? `Upload ${allowedFileTypes}` : 'Drag & drop or Click to Upload')}
+                </span>
+            </div>
+
+            <Modal
+                isOpen={!!error}
+                onClose={() => setError(null)}
+                title="Upload Error"
+                actions={<button onClick={() => setError(null)} className={styles.modalCloseBtn}>OK</button>}
+            >
+                <p>{error}</p>
+            </Modal>
+        </>
     );
 };
 

@@ -54,3 +54,19 @@
     background: var(--color-primary);
     transition: width 0.3s ease;
 }
+
+.modalCloseBtn {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.modalCloseBtn:hover {
+    background-color: #269647; /* Slightly darker shade of primary */
+}
