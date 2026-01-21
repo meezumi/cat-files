@@ -5,6 +5,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import GuestLayout from './components/layout/GuestLayout';
 import PublicRequestView from './pages/guest/PublicRequestView';
+import APIDocs from './pages/docs/APIDocs';
 import RequestView from './pages/dashboard/RequestView';
 import NewRequest from './pages/dashboard/NewRequest';
 import RequestDetail from './pages/dashboard/RequestDetail';
@@ -46,6 +47,7 @@ function App() {
           <Route path="/p" element={<GuestLayout />}>
              <Route path=":id" element={<PublicRequestView />} />
           </Route>
+          <Route path="/documentation" element={<APIDocs />} />
         </Routes>
       </AuthProvider>
     </Router>
