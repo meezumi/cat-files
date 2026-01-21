@@ -13,7 +13,8 @@ import {
     Plus,
     LogOut,
     User,
-    ChevronDown
+    ChevronDown,
+    Building2
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -112,6 +113,10 @@ const Sidebar = () => {
                     <NavLink to="/dashboard/inbox" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
                         <Inbox size={18} />
                         <span>Inbox</span>
+                    </NavLink>
+                    <NavLink to="/dashboard/organisations" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+                        <Building2 size={18} />
+                        <span>Organisations</span>
                     </NavLink>
                 </div>
 

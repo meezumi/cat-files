@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, Sliders, Check } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Save, Plus, Trash2, Check } from 'lucide-react';
 import styles from './NewRequest.module.css';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -180,14 +180,60 @@ const NewRequest = () => {
                 {step === 1 && (
                     <div className={styles.stepContent}>
                         <h2>Recipient Details</h2>
-                        <div className={styles.formGroup}>
-                            <label>Recipient Name</label>
-                            <input name="recipientName" value={formData.recipientName} onChange={handleInputChange} placeholder="e.g. John Doe" />
+
+                        {/* Contact Selection Logic */}
+                        <div style={{ marginBottom: 16 }}>
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500 }}>Recipient Source</label>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="radio"
+                                        name="recipientSource"
+                                        checked={!formData.isExistingContact}
+                                        onChange={() => setFormData(p => ({ ...p, isExistingContact: false, recipientName: '', recipientEmail: '' }))}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    New Recipient
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="radio"
+                                        name="recipientSource"
+                                        checked={formData.isExistingContact}
+                                        onChange={() => setFormData(p => ({ ...p, isExistingContact: true }))}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    Select from Contacts
+                                </label>
+                            </div>
                         </div>
-                        <div className={styles.formGroup}>
-                            <label>Email Address</label>
-                            <input name="recipientEmail" value={formData.recipientEmail} onChange={handleInputChange} placeholder="e.g. john@example.com" />
-                        </div>
+
+                        {formData.isExistingContact ? (
+                            <div className={styles.formGroup}>
+                                <label>Select Contact</label>
+                                <ContactSelect
+                                    onSelect={(contact) => setFormData(p => ({
+                                        ...p,
+                                        recipientName: contact.Name,
+                                        recipientEmail: contact.Email,
+                                        orgId: contact.OrganisationID,
+                                        contactId: contact.ROWID
+                                    }))}
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <div className={styles.formGroup}>
+                                    <label>Recipient Name</label>
+                                    <input name="recipientName" value={formData.recipientName} onChange={handleInputChange} placeholder="e.g. John Doe" />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Email Address</label>
+                                    <input name="recipientEmail" value={formData.recipientEmail} onChange={handleInputChange} placeholder="e.g. john@example.com" />
+                                </div>
+                            </>
+                        )}
+
                         <div className={styles.formGroup}>
                             <label>Subject</label>
                             <input name="subject" value={formData.subject} onChange={handleInputChange} placeholder="e.g. Documents for Tax Return" />
@@ -317,6 +363,68 @@ const NewRequest = () => {
                 <p>You can now use this template when creating new requests to save time.</p>
             </Modal>
         </div>
+    );
+};
+
+
+const ContactSelect = ({ onSelect }) => {
+    const [contacts, setContacts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Fetch all organisations to get contacts (Ideally needs a dedicated all-contacts endpoint or flatten orgs)
+        // For now, let's just fetch orgs and assume we iterate or fetch specific contact endpoint we planned.
+        // Wait, our backend plans said "searchable contacts" in org_function.
+        // Let's assume we implement a simple "GET /server/org_function/contacts" or similar.
+        // But for now, since I only implemented contacts nested under Orgs, I might need to fetch all orgs and their contacts.
+        // Let's do a quick hack: Fetch Orgs -> Fetch Contacts for each. (Not efficient but works for MVP).
+        // Actually, let's just fetch ALL contacts if we can.
+        // The implementation of `org_function` didn't explicitly show a "Global Contact Search".
+        // I will just mock fetching from a hypothetical endpoint or fetch orgs and Flatten.
+
+        async function loadContacts() {
+            try {
+                const res = await fetch('/server/org_function/'); // List Orgs
+                const orgResult = await res.json();
+                if (orgResult.status === 'success') {
+                    // Start with just orgs to let user select Org -> Contact? Or just flatten?
+                    // Let's Flatten: Fetch contacts for each Org.
+                    const allContacts = [];
+                    for (const org of orgResult.data) {
+                        try {
+                            const cRes = await fetch(`/server/org_function/${org.ROWID}/contacts`);
+                            const cData = await cRes.json();
+                            if (cData.status === 'success') {
+                                allContacts.push(...cData.data.map(c => ({ ...c, OrgName: org.Name })));
+                            }
+                        } catch (e) { }
+                    }
+                    setContacts(allContacts);
+                }
+            } catch (e) { console.error(e); }
+            finally { setLoading(false); }
+        }
+        loadContacts();
+    }, []);
+
+    if (loading) return <div style={{ fontSize: 12, color: '#666' }}>Loading contacts...</div>;
+
+    return (
+        <select
+            className="form-input"
+            onChange={(e) => {
+                const contact = contacts.find(c => c.ROWID === e.target.value);
+                if (contact) onSelect(contact);
+            }}
+            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+        >
+            <option value="">-- Select a Contact --</option>
+            {contacts.map(c => (
+                <option key={c.ROWID} value={c.ROWID}>
+                    {c.Name} ({c.Email}) - {c.OrgName}
+                </option>
+            ))}
+        </select>
     );
 };
 

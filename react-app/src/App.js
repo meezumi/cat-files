@@ -9,6 +9,8 @@ import RequestView from './pages/dashboard/RequestView';
 import NewRequest from './pages/dashboard/NewRequest';
 import RequestDetail from './pages/dashboard/RequestDetail';
 import ProfilePage from './pages/dashboard/ProfilePage';
+import OrganisationList from './pages/dashboard/OrganisationList';
+import OrganisationDetail from './pages/dashboard/OrganisationDetail';
 
 function App() {
   return (
@@ -35,6 +37,9 @@ function App() {
             <Route path="requests/:id" element={<RequestDetail />} />
             <Route path="new" element={<NewRequest />} />
             
+            <Route path="organisations" element={<OrganisationList />} />
+            <Route path="organisations/:id" element={<OrganisationDetail />} />
+
             <Route path="profile" element={<ProfilePage />} />
           </Route>
           {/* Guest Portal Routes */}
