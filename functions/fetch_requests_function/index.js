@@ -29,7 +29,8 @@ const fetchRequestDetails = async (catApp, requestId) => {
             isRequired: i.Items.IsRequired,
             reviewModifiedAt: i.Items.ReviewModifiedAt,
             fileId: i.Items.FileID,
-            folderId: i.Items.FolderID
+            folderId: i.Items.FolderID,
+            allowedFileTypes: i.Items.AllowedFileTypes || ''
         }));
 
         sections.push({
