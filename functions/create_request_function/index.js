@@ -7,6 +7,48 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 
+// GET /tags - List all tags
+app.get('/tags', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const query = 'SELECT * FROM Tags';
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        const tags = result.map(row => row.Tags);
+        res.status(200).json({ status: 'success', data: tags });
+    } catch (err) {
+        console.error('Fetch Tags Error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// POST /tags - Create a new tag
+app.post('/tags', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const { name, color, type } = req.body;
+
+        // Check duplicates
+        const query = `SELECT * FROM Tags WHERE Name = '${name}'`;
+        const existing = await catApp.zcql().executeZCQLQuery(query);
+        
+        if (existing.length > 0) {
+             return res.status(200).json({ status: 'success', data: existing[0].Tags });
+        }
+
+        const tagData = {
+            Name: name,
+            Color: color || '#2eb85c',
+            Type: type || 'User'
+        };
+
+        const row = await catApp.datastore().table('Tags').insertRow(tagData);
+        res.status(201).json({ status: 'success', data: { ...tagData, ROWID: row.ROWID } });
+    } catch (err) {
+        console.error('Create Tag Error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // POST / - Create new request
 app.post('/', async (req, res) => {
     try {
@@ -14,7 +56,7 @@ app.post('/', async (req, res) => {
         const catApp = catalyst.initialize(req);
         
         // Input
-        const { recipientName, recipientEmail, subject, description, message, metadata, dueDate, items, sections } = req.body;
+        const { recipientName, recipientEmail, subject, description, message, metadata, dueDate, items, sections, tags } = req.body;
 
         // 1. Insert Request
         const requestData = {
@@ -79,6 +121,21 @@ app.post('/', async (req, res) => {
                 title: section.title,
                 items: processedItems
             });
+        }
+
+
+
+        // 2b. Insert Request Tags
+        if (tags && tags.length > 0) {
+            try {
+                const tagRows = tags.map(tagId => ({
+                    RequestID: requestId,
+                    TagID: tagId
+                }));
+                await catApp.datastore().table('RequestTags').insertRows(tagRows);
+            } catch (tagErr) {
+                console.warn('Failed to link tags:', tagErr);
+            }
         }
 
         // 3. Log Activity

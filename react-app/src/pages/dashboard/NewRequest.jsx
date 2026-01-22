@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, Plus, Trash2, Check } from 'lucide-react';
+import CreatableSelect from 'react-select/creatable';
 import styles from './NewRequest.module.css';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -16,8 +17,10 @@ const NewRequest = () => {
         message: '',
         sections: [{ id: Date.now(), title: 'General Documents', items: [] }],
         dueDate: '',
-        reminderFreq: 3
+        reminderFreq: 3,
+        tags: [] // Array of {value, label}
     });
+    const [availableTags, setAvailableTags] = useState([]); // Array of {value, label, color}
     const [loading, setLoading] = useState(false);
 
     // Load Template if present
@@ -56,6 +59,39 @@ const NewRequest = () => {
                 .finally(() => setLoading(false));
         }
     }, [location.search]);
+
+    // Fetch Tags
+    useEffect(() => {
+        fetch('/server/create_request_function/tags')
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    setAvailableTags(result.data.map(t => ({ value: t.ROWID, label: t.Name, color: t.Color })));
+                }
+            })
+            .catch(err => console.error("Failed to fetch tags", err));
+    }, []);
+
+    const handleCreateTag = async (inputValue) => {
+        setLoading(true);
+        try {
+            const res = await fetch('/server/create_request_function/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: inputValue })
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                const newTag = { value: result.data.ROWID, label: result.data.Name, color: result.data.Color };
+                setAvailableTags(prev => [...prev, newTag]);
+                setFormData(prev => ({ ...prev, tags: [...prev.tags, newTag] }));
+            }
+        } catch (error) {
+            console.error("Failed to create tag", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -144,7 +180,8 @@ const NewRequest = () => {
                     title: s.title,
                     description: '',
                     items: s.items.map(i => ({ title: i.title, type: i.type || 'file', allowedFileTypes: i.allowedFileTypes }))
-                }))
+                })),
+                tags: formData.tags.map(t => t.value)
             };
 
             await fetch('/server/create_request_function/', {
@@ -233,6 +270,20 @@ const NewRequest = () => {
                                 </div>
                             </>
                         )}
+
+                        <div className={styles.formGroup}>
+                            <label>Tags</label>
+                            <CreatableSelect
+                                isMulti
+                                options={availableTags}
+                                value={formData.tags}
+                                onChange={(newValue) => setFormData(prev => ({ ...prev, tags: newValue || [] }))}
+                                onCreateOption={handleCreateTag}
+                                placeholder="Select or create tags..."
+                                isDisabled={loading}
+                                classNamePrefix="react-select"
+                            />
+                        </div>
 
                         <div className={styles.formGroup}>
                             <label>Subject</label>
