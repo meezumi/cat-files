@@ -7,9 +7,9 @@
   --color-secondary: #0f172a; /* Darker slate */
   --color-text-main: #1e293b;
   --color-text-muted: #64748b;
-  --color-bg-page: #f8fafc;
-  --color-bg-card: #ffffff;
-  --color-border: #e2e8f0;
+  --color-bg-page: #f0f4f8; /* Brighter fallback */
+  --color-bg-card: rgba(255, 255, 255, 0.95); /* Slight transparency for glass effect */
+  --color-border: rgba(226, 232, 240, 0.8);
   
   /* Status Colors */
   --color-status-draft: #ef4444;
@@ -38,8 +38,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-bg-page);
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+  background-attachment: fixed; /* Keeps gradient meaningful on scroll */
+  background-size: 100% 100%;
   color: var(--color-text-main);
   line-height: 1.5;
+  min-height: 100vh;
 }
 
 button, input, select, textarea {
@@ -89,8 +96,40 @@ a {
 
 .card {
   background: var(--color-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 12px; /* Slightly more rounded for premium feel */
   padding: var(--spacing-md);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Global Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger delays for children if needed */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+

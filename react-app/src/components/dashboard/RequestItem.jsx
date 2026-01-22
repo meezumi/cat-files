@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 
-const RequestItem = ({ request }) => {
+const RequestItem = ({ request, index }) => {
     const navigate = useNavigate();
 
     const getStatusBadge = (status) => {
@@ -19,8 +19,14 @@ const RequestItem = ({ request }) => {
         return '';
     };
 
+    const animationDelay = `${index * 50}ms`;
+
     return (
-        <div className={styles.tableRow} onClick={() => navigate(`/dashboard/requests/${request.id}`)}>
+        <div
+            className={`${styles.tableRow} animate-slide-up`}
+            style={{ animationDelay, opacity: 0, animationFillMode: 'forwards' }} // Start invisible
+            onClick={() => navigate(`/dashboard/requests/${request.id}`)}
+        >
             <div className={styles.colCheckbox}>
                 <input type="checkbox" onClick={(e) => e.stopPropagation()} />
             </div>

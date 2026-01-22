@@ -156,8 +156,8 @@ const RequestList = ({ filterStatus }) => {
                         {filterStatus === 'trash' ? 'Trash is empty.' : 'No requests found.'}
                     </div>
                 ) : (
-                    requests.map(req => (
-                        <RequestItem key={req.id} request={req} />
+                    requests.map((req, index) => (
+                        <RequestItem key={req.id} request={req} index={index} />
                     ))
                 )}
             </div>
