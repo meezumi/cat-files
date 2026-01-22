@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, Plus, Trash2, Check } from 'lucide-react';
 import CreatableSelect from 'react-select/creatable';
+import Select from 'react-select';
 import styles from './NewRequest.module.css';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -221,24 +222,24 @@ const NewRequest = () => {
                         {/* Contact Selection Logic */}
                         <div style={{ marginBottom: 16 }}>
                             <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500 }}>Recipient Source</label>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <div style={{ display: 'flex', gap: 24 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px' }}>
                                     <input
                                         type="radio"
                                         name="recipientSource"
                                         checked={!formData.isExistingContact}
                                         onChange={() => setFormData(p => ({ ...p, isExistingContact: false, recipientName: '', recipientEmail: '' }))}
-                                        style={{ marginRight: 6 }}
+                                        style={{ marginRight: 8, width: 16, height: 16 }}
                                     />
                                     New Recipient
                                 </label>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px' }}>
                                     <input
                                         type="radio"
                                         name="recipientSource"
                                         checked={formData.isExistingContact}
                                         onChange={() => setFormData(p => ({ ...p, isExistingContact: true }))}
-                                        style={{ marginRight: 6 }}
+                                        style={{ marginRight: 8, width: 16, height: 16 }}
                                     />
                                     Select from Contacts
                                 </label>
@@ -282,6 +283,33 @@ const NewRequest = () => {
                                 placeholder="Select or create tags..."
                                 isDisabled={loading}
                                 classNamePrefix="react-select"
+                                styles={{
+                                    control: (base) => ({
+                                        ...base,
+                                        minHeight: '42px',
+                                        borderColor: '#e2e8f0',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        boxShadow: 'none',
+                                        '&:hover': {
+                                            borderColor: '#cbd5e1'
+                                        }
+                                    }),
+                                    multiValue: (base) => ({
+                                        ...base,
+                                        backgroundColor: '#e2e8f0',
+                                        borderRadius: '4px'
+                                    }),
+                                    multiValueLabel: (base) => ({
+                                        ...base,
+                                        color: '#334155',
+                                        fontSize: '12px'
+                                    }),
+                                    menu: (base) => ({
+                                        ...base,
+                                        fontSize: '14px'
+                                    })
+                                }}
                             />
                         </div>
 
@@ -296,7 +324,15 @@ const NewRequest = () => {
                                 name="dueDate"
                                 value={formData.dueDate}
                                 onChange={handleInputChange}
-                                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                className="form-input"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '4px',
+                                    border: '1px solid var(--color-border)',
+                                    fontSize: '14px',
+                                    color: '#334155'
+                                }}
                             />
                         </div>
                         <div className={styles.actions}>
@@ -481,22 +517,36 @@ const ContactSelect = ({ onSelect }) => {
 
     if (loading) return <div style={{ fontSize: 12, color: '#666' }}>Loading contacts...</div>;
 
+    const options = contacts.map(c => ({
+        value: c.ROWID,
+        label: `${c.Name} (${c.Email}) - ${c.OrgName}`,
+        contact: c
+    }));
+
     return (
-        <select
-            className="form-input"
-            onChange={(e) => {
-                const contact = contacts.find(c => c.ROWID === e.target.value);
-                if (contact) onSelect(contact);
+        <Select
+            options={options}
+            onChange={(option) => onSelect(option.contact)}
+            placeholder="Search for a contact..."
+            classNamePrefix="react-select"
+            styles={{
+                control: (base) => ({
+                    ...base,
+                    minHeight: '42px',
+                    borderColor: '#e2e8f0',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        borderColor: '#cbd5e1'
+                    }
+                }),
+                menu: (base) => ({
+                    ...base,
+                    fontSize: '14px'
+                })
             }}
-            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
-        >
-            <option value="">-- Select a Contact --</option>
-            {contacts.map(c => (
-                <option key={c.ROWID} value={c.ROWID}>
-                    {c.Name} ({c.Email}) - {c.OrgName}
-                </option>
-            ))}
-        </select>
+        />
     );
 };
 
