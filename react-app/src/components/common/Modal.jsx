@@ -1,11 +1,12 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import styles from './Modal.module.css';
 
 const Modal = ({ isOpen, onClose, title, children, actions, size = 'medium' }) => {
     if (!isOpen) return null;
 
-    return (
+    return ReactDOM.createPortal(
         <div className={styles.overlay}>
             <div className={`${styles.modal} ${styles[size]}`}>
                 <div className={styles.header}>
@@ -19,7 +20,8 @@ const Modal = ({ isOpen, onClose, title, children, actions, size = 'medium' }) =
                 </div>
                 {actions && <div className={styles.actions}>{actions}</div>}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
