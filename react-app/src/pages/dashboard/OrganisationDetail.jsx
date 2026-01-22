@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import { ArrowLeft, Building2, User, Plus, Trash2 } from 'lucide-react';
-import styles from '../../components/dashboard/Dashboard.module.css';
+import styles from './OrganisationDetail.module.css';
 
 const OrganisationDetail = () => {
+    // ... (state hooks remain same)
     const { id } = useParams();
     const navigate = useNavigate();
     const [org, setOrg] = useState(null);
@@ -17,7 +18,7 @@ const OrganisationDetail = () => {
     const [contactForm, setContactForm] = useState({ Name: '', Email: '', Role: '', Phone: '' });
 
     useEffect(() => {
-        if (id === 'new') return; // Handled separately or redirect? Ideally separate create page or modal.
+        if (id === 'new') return;
 
         const fetchData = async () => {
             setLoading(true);
@@ -52,7 +53,6 @@ const OrganisationDetail = () => {
             });
             const result = await res.json();
             if (result.status === 'success') {
-                // Refresh contacts
                 const contactRes = await fetch(`/server/org_function/${id}/contacts`);
                 const contactData = await contactRes.json();
                 setContacts(contactData.data);
@@ -78,7 +78,6 @@ const OrganisationDetail = () => {
 
     if (loading && id !== 'new') return <Loader text="Loading organisation details..." />;
 
-    // Placeholder for Create New Org View if ID is 'new' (Ideally separate, but handling here for now)
     if (id === 'new') {
         return <OrganisationForm isNew={true} />;
     }
@@ -89,60 +88,70 @@ const OrganisationDetail = () => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <button className="btn" onClick={() => navigate('/dashboard/organisations')} style={{ marginRight: 16 }}>
-                    <ArrowLeft size={16} />
+                    <ArrowLeft size={20} />
                 </button>
                 <h1>{org.Name}</h1>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
+            <div className={styles.grid}>
                 {/* Org Info Card */}
                 <div className={styles.card} style={{ height: 'fit-content' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-                        <div style={{ width: 60, height: 60, borderRadius: 8, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                    <div className={styles.cardHeader}>
+                        <h3>Organisation Details</h3>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+                        <div className={styles.orgIcon}>
                             <Building2 size={32} />
                         </div>
-                        <div style={{ marginLeft: 16 }}>
-                            <h3 style={{ margin: 0 }}>{org.Name}</h3>
-                            <a href={`http://${org.Domain}`} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#3b82f6' }}>{org.Domain}</a>
+                        <div>
+                            <h3 style={{ margin: '0 0 4px 0', fontSize: 18 }}>{org.Name}</h3>
+                            <a href={`http://${org.Domain}`} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: '#3b82f6' }}>{org.Domain || 'No Domain'}</a>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ fontSize: 14 }}><strong>Phone:</strong> {org.Phone || '--'}</div>
-                        <div style={{ fontSize: 14 }}><strong>Address:</strong> {org.Address || '--'}</div>
+                    <div className={styles.infoList}>
+                        <div className={styles.row}>
+                            <span className={styles.label}>Phone:</span>
+                            <span>{org.Phone || '--'}</span>
+                        </div>
+                        <div className={styles.row}>
+                            <span className={styles.label}>Address:</span>
+                            <span>{org.Address || '--'}</span>
+                        </div>
                     </div>
                 </div>
 
                 {/* Contacts List */}
                 <div className={styles.card}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <h3 style={{ margin: 0 }}>Contacts / Recipients</h3>
+                    <div className={styles.cardHeader}>
+                        <h3>Contacts / Recipients</h3>
                         <button className="btn btn-sm" onClick={() => setShowContactModal(true)}>
                             <Plus size={14} style={{ marginRight: 6 }} /> Add Contact
                         </button>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
                         {contacts.map(contact => (
-                            <div key={contact.ROWID} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', border: '1px solid #f1f5f9', borderRadius: 8 }}>
+                            <div key={contact.ROWID} className={styles.contactItem}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#ffedd5', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                                        <User size={16} />
+                                    <div className={styles.contactAvatar}>
+                                        <User size={18} />
                                     </div>
                                     <div>
-                                        <div style={{ fontWeight: 500 }}>{contact.Name}</div>
-                                        <div style={{ fontSize: 12, color: '#666' }}>{contact.Email}</div>
+                                        <div style={{ fontWeight: 500, fontSize: 14, color: '#1e293b' }}>{contact.Name}</div>
+                                        <div style={{ fontSize: 13, color: '#64748b' }}>{contact.Email}</div>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <span style={{ fontSize: 12, background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>{contact.Role || 'Member'}</span>
-                                    <button onClick={() => handleDeleteContact(contact.ROWID)} style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}>
-                                        <Trash2 size={14} />
+                                    <span className={styles.contactRole}>{contact.Role || 'Member'}</span>
+                                    <button onClick={() => handleDeleteContact(contact.ROWID)} style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: 4, display: 'flex' }} title="Remove Contact">
+                                        <Trash2 size={15} />
                                     </button>
                                 </div>
                             </div>
                         ))}
-                        {contacts.length === 0 && <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>No contacts added yet.</div>}
+                        {contacts.length === 0 && <div className={styles.emptyState}>No contacts added yet.</div>}
                     </div>
                 </div>
             </div>

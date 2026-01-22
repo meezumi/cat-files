@@ -2,12 +2,12 @@ import React from 'react';
 import { X } from 'lucide-react';
 import styles from './Modal.module.css';
 
-const Modal = ({ isOpen, onClose, title, children, actions }) => {
+const Modal = ({ isOpen, onClose, title, children, actions, size = 'medium' }) => {
     if (!isOpen) return null;
 
     return (
         <div className={styles.overlay}>
-            <div className={styles.modal}>
+            <div className={`${styles.modal} ${styles[size]}`}>
                 <div className={styles.header}>
                     <h3>{title}</h3>
                     <button onClick={onClose} className={styles.closeBtn}>
