@@ -10,7 +10,7 @@ const OrganisationList = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/server/org_function/')
+        fetch('/server/fetch_requests_function/orgs')
             .then(res => res.json())
             .then(result => {
                 if (result.status === 'success') {

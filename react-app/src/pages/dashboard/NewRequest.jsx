@@ -492,7 +492,7 @@ const ContactSelect = ({ onSelect }) => {
 
         async function loadContacts() {
             try {
-                const res = await fetch('/server/org_function/'); // List Orgs
+                const res = await fetch('/server/fetch_requests_function/orgs'); // List Orgs
                 const orgResult = await res.json();
                 if (orgResult.status === 'success') {
                     // Start with just orgs to let user select Org -> Contact? Or just flatten?
@@ -500,7 +500,7 @@ const ContactSelect = ({ onSelect }) => {
                     const allContacts = [];
                     for (const org of orgResult.data) {
                         try {
-                            const cRes = await fetch(`/server/org_function/${org.ROWID}/contacts`);
+                            const cRes = await fetch(`/server/fetch_requests_function/orgs/${org.ROWID}/contacts`);
                             const cData = await cRes.json();
                             if (cData.status === 'success') {
                                 allContacts.push(...cData.data.map(c => ({ ...c, OrgName: org.Name })));

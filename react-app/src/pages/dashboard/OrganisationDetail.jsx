@@ -24,8 +24,8 @@ const OrganisationDetail = () => {
             setLoading(true);
             try {
                 const [orgRes, contactRes] = await Promise.all([
-                    fetch(`/server/org_function/${id}`),
-                    fetch(`/server/org_function/${id}/contacts`)
+                    fetch(`/server/fetch_requests_function/orgs/${id}`),
+                    fetch(`/server/fetch_requests_function/orgs/${id}/contacts`)
                 ]);
 
                 const orgData = await orgRes.json();
@@ -46,14 +46,14 @@ const OrganisationDetail = () => {
         if (!contactForm.Name || !contactForm.Email) return alert("Name and Email are required");
 
         try {
-            const res = await fetch(`/server/org_function/${id}/contacts`, {
+            const res = await fetch(`/server/fetch_requests_function/orgs/${id}/contacts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(contactForm)
             });
             const result = await res.json();
             if (result.status === 'success') {
-                const contactRes = await fetch(`/server/org_function/${id}/contacts`);
+                const contactRes = await fetch(`/server/fetch_requests_function/orgs/${id}/contacts`);
                 const contactData = await contactRes.json();
                 setContacts(contactData.data);
                 setShowContactModal(false);
@@ -69,7 +69,7 @@ const OrganisationDetail = () => {
     const handleDeleteContact = async (contactId) => {
         if (!window.confirm("Delete this contact?")) return;
         try {
-            await fetch(`/server/org_function/contacts/${contactId}`, { method: 'DELETE' });
+            await fetch(`/server/fetch_requests_function/orgs/contacts/${contactId}`, { method: 'DELETE' });
             setContacts(prev => prev.filter(c => c.ROWID !== contactId));
         } catch (err) {
             console.error(err);
@@ -200,7 +200,7 @@ const OrganisationForm = () => {
 
     const handleSubmit = async () => {
         try {
-            const res = await fetch('/server/org_function/', {
+            const res = await fetch('/server/fetch_requests_function/orgs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

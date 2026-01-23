@@ -39,12 +39,12 @@ const endpoints = [
     {
         category: "Organisations",
         items: [
-            { name: "List Orgs", method: "GET", path: "/server/org_function/", desc: "List organisations related to the user." },
-            { name: "Create Org", method: "POST", path: "/server/org_function/", desc: "Create a new Organisation." },
-            { name: "Update Org", method: "PUT", path: "/server/org_function/:id", desc: "Update Organisation details." },
-            { name: "Delete Org", method: "DELETE", path: "/server/org_function/:id", desc: "Remove an Organisation." },
-            { name: "Get Org Contacts", method: "GET", path: "/server/org_function/:id/contacts", desc: "List contacts within an organisation." },
-            { name: "Create Contact", method: "POST", path: "/server/org_function/:id/contacts", desc: "Add a new contact to an organisation." }
+            { name: "List Orgs", method: "GET", path: "/server/fetch_requests_function/orgs", desc: "List organisations related to the user." },
+            { name: "Create Org", method: "POST", path: "/server/fetch_requests_function/orgs", desc: "Create a new Organisation." },
+            { name: "Update Org", method: "PUT", path: "/server/fetch_requests_function/orgs/:id", desc: "Update Organisation details." },
+            { name: "Delete Org", method: "DELETE", path: "/server/fetch_requests_function/orgs/:id", desc: "Remove an Organisation." },
+            { name: "Get Org Contacts", method: "GET", path: "/server/fetch_requests_function/orgs/:id/contacts", desc: "List contacts within an organisation." },
+            { name: "Create Contact", method: "POST", path: "/server/fetch_requests_function/orgs/:id/contacts", desc: "Add a new contact to an organisation." }
         ]
     }
 ];

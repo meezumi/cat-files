@@ -76,15 +76,17 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Call the logout endpoint to clear session
-      await fetch('/server/fetch_requests_function/auth/logout', {
-        credentials: 'include'
-      });
+      console.log('Logging out...');
+      // Clear local user state first
+      setUser(null);
+      
+      // Redirect to logout endpoint which will clear the Catalyst session
+      // Using full page redirect to ensure session is properly cleared
+      window.location.href = '/server/fetch_requests_function/auth/logout';
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      // Redirect to Catalyst logout page which will clear the session
-      window.location.href = '/__catalyst/auth/logout';
+      // Force redirect anyway
+      window.location.href = '/server/fetch_requests_function/auth/logout';
     }
   };
 
