@@ -14,6 +14,13 @@ app.use(cors({ origin: true, credentials: true }));
 // GET /auth/me - Get current authenticated user
 app.get('/auth/me', async (req, res) => {
     try {
+        // Prevent caching of auth responses
+        res.set({
+            'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+        
         console.log('=== AUTH /me REQUEST ===');
         
         // Check for Catalyst user headers
@@ -26,32 +33,18 @@ app.get('/auth/me', async (req, res) => {
         }
         
         const catApp = catalyst.initialize(req);
-        let userDetails = null;
         
         try {
             // Get full user details from Catalyst User Management
             const userManagement = catApp.userManagement();
-            userDetails = await userManagement.getUserDetails(userId);
+            const userDetails = await userManagement.getUserDetails(userId);
             console.log('✓ Got user via getUserDetails:', userDetails.email_id);
             
             res.status(200).json({ status: 'success', data: userDetails });
         } catch (err) {
-            console.log('✗ getUserDetails failed, using header data:', err.message);
-            
-            // Fallback: Use header information
-            userDetails = {
-                user_id: userId,
-                email_id: req.headers['x-zc-user-email'] || 'user@example.com',
-                first_name: req.headers['x-zc-user-firstname'] || 'User',
-                last_name: req.headers['x-zc-user-lastname'] || '',
-                user_type: req.headers['x-zc-user-type'],
-                role_details: {
-                    role_name: req.headers['x-zc-user-type'] === 'admin' ? 'App Admin' : 'User'
-                }
-            };
-            console.log('✓ Using user from headers');
-            
-            res.status(200).json({ status: 'success', data: userDetails });
+            console.log('✗ getUserDetails failed - treating as logged out:', err.message);
+            // If we can't get user details, treat as not authenticated
+            res.status(200).json({ status: 'success', data: null });
         }
     } catch (err) {
         console.error('Critical error in /auth/me:', err);
@@ -59,18 +52,90 @@ app.get('/auth/me', async (req, res) => {
     }
 });
 
-// GET /auth/logout - Redirect to Catalyst logout
-app.get('/auth/logout', (req, res) => {
+// POST /auth/logout - Clear session
+app.post('/auth/logout', async (req, res) => {
+    // Prevent caching
+    res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
+    
+    console.log('=== LOGOUT REQUEST START ===');
+    
     try {
-        // Catalyst logout URL format
-        const projectId = process.env.CATALYST_PROJECT_ID || '25342000000014733';
-        const logoutUrl = `/baas/v1/project/${projectId}/user/logout`;
+        const catApp = catalyst.initialize(req);
         
-        console.log('Logout redirect to:', logoutUrl);
-        res.redirect(logoutUrl);
+        // Sign out using Catalyst SDK to invalidate session
+        // This MUST complete before we respond
+        console.log('Calling signOutUser()...');
+        await catApp.userManagement().signOutUser();
+        console.log('✓✓✓ User signed out via SDK - session invalidated ✓✓✓');
+        
+        // Clear all Catalyst session cookies
+        const cookiesToClear = [
+            'ZCATALYST_SESSION',
+            'catalyst-auth',
+            'JSESSIONID',
+            'ZD_CSRF_TOKEN',
+            'ZCNEWUISESSIONID',
+            '_zcsr_tmp',
+            '_iamadt_client_50037651022',
+            '_iambdt_client_50037651022',
+            '__Secure-iamsdt_client_50037651022'
+        ];
+        
+        cookiesToClear.forEach(cookieName => {
+            res.clearCookie(cookieName, { 
+                path: '/',
+                domain: '.catalystserverless.in'
+            });
+            res.clearCookie(cookieName, { path: '/' });
+        });
+        
+        console.log('✓ Cookies cleared from response');
+        console.log('=== LOGOUT REQUEST END - SUCCESS ===');
+        
+        // Only respond after everything is done
+        res.json({ status: 'success', message: 'Logged out successfully', sessionInvalidated: true });
+        
+    } catch (err) {
+        console.error('✗✗✗ Error during logout:', err);
+        console.error('Error details:', err.message, err.stack);
+        console.log('=== LOGOUT REQUEST END - ERROR ===');
+        
+        // Still try to clear cookies even if signOut fails
+        res.clearCookie('ZCATALYST_SESSION', { path: '/' });
+        res.clearCookie('catalyst-auth', { path: '/' });
+        
+        res.status(500).json({ 
+            status: 'error', 
+            message: err.message,
+            sessionInvalidated: false 
+        });
+    }
+});
+
+// GET /auth/logout - Redirect-based logout fallback
+app.get('/auth/logout', async (req, res) => {
+    try {
+        console.log('Logout requested (GET)');
+        
+        const catApp = catalyst.initialize(req);
+        
+        // Try to sign out using Catalyst SDK
+        try {
+            await catApp.userManagement().signOutUser();
+            console.log('✓ User signed out via SDK');
+        } catch (err) {
+            console.log('Note: SDK signout not available:', err.message);
+        }
+        
+        // Redirect to login with a flag to prevent auto-login
+        res.redirect('/login');
     } catch (err) {
         console.error('Error in /auth/logout:', err);
-        res.status(500).json({ status: 'error', message: err.message });
+        res.redirect('/login');
     }
 });
 

@@ -75,19 +75,65 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log('=== CLIENT LOGOUT START ===');
+    
+    // Clear local user state immediately
+    setUser(null);
+    
+    // Clear session storage and local storage first
+    sessionStorage.clear();
+    localStorage.clear();
+    console.log('✓ Local storage cleared');
+    
+    // Call logout endpoint and WAIT for server-side session invalidation to complete
+    // Do NOT redirect until the server confirms the session is invalidated
     try {
-      console.log('Logging out...');
-      // Clear local user state first
-      setUser(null);
+      console.log('Calling server logout endpoint (waiting for SDK signout)...');
+      const response = await fetch('/server/fetch_requests_function/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
       
-      // Redirect to logout endpoint which will clear the Catalyst session
-      // Using full page redirect to ensure session is properly cleared
-      window.location.href = '/server/fetch_requests_function/auth/logout';
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force redirect anyway
-      window.location.href = '/server/fetch_requests_function/auth/logout';
+      const result = await response.json();
+      console.log('✓ Server logout response:', result);
+      
+      if (result.sessionInvalidated) {
+        console.log('✓✓✓ Session successfully invalidated on server ✓✓✓');
+      } else {
+        console.warn('⚠ Session may not be fully invalidated');
+      }
+      
+      // Wait an additional moment to ensure all server-side operations are complete
+      console.log('Waiting 1 second for complete cleanup...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (err) {
+      console.error('✗ Logout endpoint error:', err);
+      // Still wait even if it fails
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+    
+    // Clear all cookies from the browser (even though they're HTTP-only, try anyway)
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.catalystserverless.in";
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+    }
+    
+    console.log('✓ Browser cookies cleared');
+    console.log('=== CLIENT LOGOUT COMPLETE - Redirecting ===');
+    
+    // NOW redirect after everything is confirmed complete
+    window.location.replace('/app/index.html?logout=' + Date.now());
   };
 
   return (
