@@ -12,6 +12,7 @@ import RequestDetail from './pages/dashboard/RequestDetail';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import OrganisationList from './pages/dashboard/OrganisationList';
 import OrganisationDetail from './pages/dashboard/OrganisationDetail';
+import LoginPage from './pages/auth/LoginPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard/inbox" replace />} />
           <Route path="/index.html" element={<Navigate to="/dashboard/inbox" replace />} />
+          <Route path="/login" element={<LoginPage />} />
           
           <Route path="/dashboard" element={
             <ProtectedRoute>

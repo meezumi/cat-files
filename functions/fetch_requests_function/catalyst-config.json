@@ -3,7 +3,8 @@
 		"name": "fetch_requests_function",
 		"stack": "node14",
 		"type": "advancedio",
-		"env_variables": {}
+		"env_variables": {},
+		"access": "authenticated"
 	},
 	"execution": {
 		"main": "index.js"

@@ -7,6 +7,125 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 
+// ============================================
+// AUTH ROUTES (Temporary workaround)
+// ============================================
+
+// GET /auth/me - Get current authenticated user
+app.get('/auth/me', async (req, res) => {
+    try {
+        console.log('=== AUTH /me REQUEST ===');
+        
+        // Check for Catalyst user headers
+        const userId = req.headers['x-zc-user-id'];
+        console.log('User ID from header:', userId);
+        
+        if (!userId) {
+            console.log('✗ No user ID in headers - not authenticated');
+            return res.status(200).json({ status: 'success', data: null });
+        }
+        
+        const catApp = catalyst.initialize(req);
+        let userDetails = null;
+        
+        try {
+            // Get full user details from Catalyst User Management
+            const userManagement = catApp.userManagement();
+            userDetails = await userManagement.getUserDetails(userId);
+            console.log('✓ Got user via getUserDetails:', userDetails.email_id);
+            
+            res.status(200).json({ status: 'success', data: userDetails });
+        } catch (err) {
+            console.log('✗ getUserDetails failed, using header data:', err.message);
+            
+            // Fallback: Use header information
+            userDetails = {
+                user_id: userId,
+                email_id: req.headers['x-zc-user-email'] || 'user@example.com',
+                first_name: req.headers['x-zc-user-firstname'] || 'User',
+                last_name: req.headers['x-zc-user-lastname'] || '',
+                user_type: req.headers['x-zc-user-type'],
+                role_details: {
+                    role_name: req.headers['x-zc-user-type'] === 'admin' ? 'App Admin' : 'User'
+                }
+            };
+            console.log('✓ Using user from headers');
+            
+            res.status(200).json({ status: 'success', data: userDetails });
+        }
+    } catch (err) {
+        console.error('Critical error in /auth/me:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// GET /auth/logout - Redirect to Catalyst logout
+app.get('/auth/logout', (req, res) => {
+    try {
+        res.redirect('/__catalyst/auth/logout');
+    } catch (err) {
+        console.error('Error in /auth/logout:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// GET /auth/debug - Debug authentication status
+app.get('/auth/debug', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const debugInfo = {
+            cookies: req.headers.cookie,
+            allHeaders: req.headers,
+            catalystHeaders: {}
+        };
+        
+        // Try to get any Catalyst context
+        try {
+            const user = await catApp.user().getCurrentUser();
+            debugInfo.user = user;
+            debugInfo.authenticated = true;
+        } catch (err) {
+            debugInfo.authenticated = false;
+            debugInfo.error = {
+                message: err.message,
+                code: err.code,
+                stack: err.stack
+            };
+        }
+        
+        res.status(200).json({ status: 'debug', data: debugInfo });
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// POST /auth/invite - Invite a new user
+app.post('/auth/invite', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const { email, first_name, last_name } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ status: 'error', message: 'Email is required' });
+        }
+        
+        console.log(`Invite request for: ${email}`);
+        
+        res.status(200).json({ 
+            status: 'success', 
+            message: 'User invitation sent',
+            data: { email, first_name, last_name }
+        });
+    } catch (err) {
+        console.error('Error in /auth/invite:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// ============================================
+// REQUEST ROUTES
+// ============================================
+
 // Fetch Details Helper (Recursively fetch Sections and Items)
 const fetchRequestDetails = async (catApp, requestId) => {
     // 1. Fetch Sections

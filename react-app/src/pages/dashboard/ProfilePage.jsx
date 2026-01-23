@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { LogOut } from 'lucide-react';
 import Loader from '../../components/common/Loader';
 
 const ProfilePage = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [stats, setStats] = useState({ sent: 0, completed: 0 });
     const [loading, setLoading] = useState(true); // Introduce loading state
 
@@ -61,6 +62,33 @@ const ProfilePage = () => {
                 </div>
                 <div style={{ padding: '24px' }}>
                     <p><strong>Org ID:</strong> {user.org_id || 'N/A'}</p>
+                </div>
+            </div>
+
+            <div style={{ marginTop: '32px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                <div style={{ padding: '24px' }}>
+                    <button 
+                        onClick={logout}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 20px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#dc2626'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#ef4444'}
+                    >
+                        <LogOut size={16} />
+                        Log Out
+                    </button>
                 </div>
             </div>
         </div>

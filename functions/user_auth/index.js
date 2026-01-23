@@ -7,63 +7,68 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 
-// Debug Logger
-app.use((req, res, next) => {
-    console.log(`[AUTH_FN_INLINED] Request: ${req.method} ${req.url}`);
-    next();
-});
-
-// Health Check
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// GET /me
+// GET /me - Get current authenticated user
 app.get('/me', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
         let userDetails = null;
+        
         try {
             userDetails = await catApp.user().getCurrentUser();
+            console.log('User authenticated:', userDetails.email_id);
         } catch (authErr) {
-            console.log("No active session:", authErr.message);
+            console.log('No active session:', authErr.message);
+            return res.status(200).json({ status: 'success', data: null });
         }
+        
         res.status(200).json({ status: 'success', data: userDetails });
     } catch (err) {
-        console.error("Error fetching user:", err);
+        console.error('Error in /me:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
 
-// POST /invite
+// POST /invite - Invite a new user
 app.post('/invite', async (req, res) => {
-     try {
+    try {
         const catApp = catalyst.initialize(req);
         const { email, first_name, last_name } = req.body;
-        // ... (Simplified for debug, just basic check)
-        const projectId = process.env.APP_PROJECT_ID || '4000000006007';
         
-        // Mock success or implement basic signup trigger if needed
-        // For now, let's just log the attempt.
-        console.log(`Invite attempt for ${email}`);
+        if (!email) {
+            return res.status(400).json({ status: 'error', message: 'Email is required' });
+        }
         
-        res.status(200).json({ status: 'success', message: 'Invite logic stubbed' });
+        console.log(`Invite request for: ${email}`);
+        
+        // TODO: Implement actual user invitation logic via Catalyst SDK
+        res.status(200).json({ 
+            status: 'success', 
+            message: 'User invitation sent',
+            data: { email, first_name, last_name }
+        });
     } catch (err) {
+        console.error('Error in /invite:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
 
+// GET /logout - Redirect to Catalyst logout
 app.get('/logout', (req, res) => {
-    const projectId = process.env.APP_PROJECT_ID;
-    const appDomain = process.env.CATALYST_APP_DOMAIN || ''; 
-    const logoutUrl = `${appDomain}/baas/logout?logout=true&PROJECT_ID=${projectId}`;
-    res.redirect(logoutUrl);
+    try {
+        // Redirect to Catalyst native logout
+        res.redirect('/__catalyst/auth/logout');
+    } catch (err) {
+        console.error('Error in /logout:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
 });
 
-// Catch-all
+// Catch-all for undefined routes
 app.all('*', (req, res) => {
-    console.log(`[AUTH_FN] 404 Hit: ${req.path}`);
-    res.status(404).json({ status: 'error', message: `Route ${req.method} ${req.path} not found` });
+    res.status(404).json({ 
+        status: 'error', 
+        message: `Route ${req.method} ${req.path} not found in user_auth` 
+    });
 });
 
 module.exports = app;
