@@ -23,6 +23,20 @@
     animation: slideUp 0.2s ease-out;
 }
 
+.small {
+    max-width: 480px;
+}
+
+.small .header,
+.small .content,
+.small .actions {
+    padding: 12px 24px;
+}
+
+.large {
+    max-width: 800px;
+}
+
 .header {
     padding: 16px 24px;
     border-bottom: 1px solid #eee;

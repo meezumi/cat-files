@@ -145,12 +145,16 @@ const RequestDetail = () => {
         }
     };
 
+    const [showShareModal, setShowShareModal] = useState(false);
+
+    // ...
+
     const handleShare = () => {
         // Construct Public Guest URL
         // origin + /app/p/ + requestID
         const url = `${window.location.origin}/app/p/${id}`;
         navigator.clipboard.writeText(url);
-        alert("Guest Portal Link copied to clipboard!");
+        setShowShareModal(true);
         setShowDropdown(false);
     };
 
@@ -258,8 +262,8 @@ const RequestDetail = () => {
                                                 {item.status}
                                             </span>
 
-                                            {/* Approve/Reject visible ONLY if not already decided (Approved or Returned) */}
-                                            {item.status !== 'Approved' && item.status !== 'Returned' && (
+                                            {/* Approve/Reject visible ONLY if file is uploaded (Not Pending) and not already decided */}
+                                            {item.status !== 'Approved' && item.status !== 'Returned' && item.status !== 'Pending' && (
                                                 <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
                                                     <button
                                                         className={styles.approveBtn}
@@ -308,6 +312,24 @@ const RequestDetail = () => {
             >
                 <p>Are you sure you want to mark this request as <strong>Completed</strong>?</p>
                 <p>This indicates that all necessary documents have been received and reviewed.</p>
+            </Modal>
+
+            <Modal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                title="Link Copied"
+                size="small"
+                actions={
+                    <button className="btn btn-primary" onClick={() => setShowShareModal(false)}>
+                        OK
+                    </button>
+                }
+            >
+                <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                    <CheckCircle size={32} color="var(--color-success)" style={{ marginBottom: 12 }} />
+                    <p>The Guest Portal link has been copied to your clipboard.</p>
+                    <p style={{ fontSize: 13, color: '#666', marginTop: 8 }}>You can now share it with the recipient.</p>
+                </div>
             </Modal>
         </div>
     );

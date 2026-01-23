@@ -13,9 +13,20 @@ const endpoints = [
     {
         category: "Requests",
         items: [
-            { name: "List Requests", method: "GET", path: "/server/fetch_requests_function/?page=1&per_page=10", desc: "Fetch paginated list of requests." },
-            { name: "Get Request", method: "GET", path: "/server/fetch_requests_function/:id", desc: "Get full details of a specific request." },
-            { name: "Create Request", method: "POST", path: "/server/create_request_function/", desc: "Create a new Data Collection Request." }
+            { name: "List Requests", method: "GET", path: "/server/fetch_requests_function/?page=1&per_page=10&search=query", desc: "Fetch paginated list of requests. Supports 'status' and 'search' filters." },
+            { name: "Get Request", method: "GET", path: "/server/fetch_requests_function/:id", desc: "Get full details including sections and items." },
+            { name: "Create Request", method: "POST", path: "/server/create_request_function/", desc: "Create a new Data Collection Request." },
+            { name: "List Tags", method: "GET", path: "/server/create_request_function/tags", desc: "Retrieve all available tags." },
+            { name: "Create Tag", method: "POST", path: "/server/create_request_function/tags", desc: "Create a new tag." }
+        ]
+    },
+    {
+        category: "Workflow",
+        items: [
+            { name: "Update Request Status", method: "PUT", path: "/server/workflow_function/requests/:id/status", desc: "Update status (e.g., 'Sent', 'Completed')." },
+            { name: "Update Item Status", method: "PUT", path: "/server/workflow_function/items/:id/status", desc: "Approve or Reject specific items." },
+            { name: "Send Reminder", method: "POST", path: "/server/workflow_function/requests/:id/remind", desc: "Trigger an email reminder to the recipient." },
+            { name: "Empty Trash", method: "DELETE", path: "/server/workflow_function/trash", desc: "Permanently delete all requests in Trash." }
         ]
     },
     {
@@ -29,7 +40,11 @@ const endpoints = [
         category: "Organisations",
         items: [
             { name: "List Orgs", method: "GET", path: "/server/org_function/", desc: "List organisations related to the user." },
-            { name: "Get Org Contacts", method: "GET", path: "/server/org_function/:id/contacts", desc: "List contacts within an organisation." }
+            { name: "Create Org", method: "POST", path: "/server/org_function/", desc: "Create a new Organisation." },
+            { name: "Update Org", method: "PUT", path: "/server/org_function/:id", desc: "Update Organisation details." },
+            { name: "Delete Org", method: "DELETE", path: "/server/org_function/:id", desc: "Remove an Organisation." },
+            { name: "Get Org Contacts", method: "GET", path: "/server/org_function/:id/contacts", desc: "List contacts within an organisation." },
+            { name: "Create Contact", method: "POST", path: "/server/org_function/:id/contacts", desc: "Add a new contact to an organisation." }
         ]
     }
 ];

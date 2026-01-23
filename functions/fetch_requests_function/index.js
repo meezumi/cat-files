@@ -54,16 +54,31 @@ app.get('/', async (req, res) => {
         const offset = (page - 1) * limit;
         const status = req.query.status;
 
+        const search = req.query.search;
+
         // Build Query
-        let baseQuery = "SELECT * FROM Requests";
+        let baseQuery = "SELECT * FROM Requests WHERE";
+        const conditions = [];
+
+        // 1. Template Mode
+        if (req.query.type === 'template') {
+            conditions.push("IsTemplateMode = true");
+        } else {
+            conditions.push("IsTemplateMode = false");
+        }
+
+        // 2. Status Filter
         if (status && status !== 'all') {
             const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
-             baseQuery += ` WHERE Status = '${capitalizedStatus}' AND IsTemplateMode = false`;
-        } else if (req.query.type === 'template') {
-             baseQuery += ` WHERE IsTemplateMode = true`;
-        } else {
-             baseQuery += ` WHERE IsTemplateMode = false`;
+            conditions.push(`Status = '${capitalizedStatus}'`);
         }
+
+        // 3. Search Filter
+        if (search) {
+            conditions.push(`(Subject LIKE '%${search}%' OR RecipientName LIKE '%${search}%' OR RecipientEmail LIKE '%${search}%')`);
+        }
+
+        baseQuery += " " + conditions.join(" AND ");
         
         baseQuery += ` ORDER BY CREATEDTIME DESC LIMIT ${limit} OFFSET ${offset}`;
         

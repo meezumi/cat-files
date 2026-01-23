@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, Plus, Trash2, Check } from 'lucide-react';
+import CreatableSelect from 'react-select/creatable';
+import Select from 'react-select';
 import styles from './NewRequest.module.css';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -16,8 +18,10 @@ const NewRequest = () => {
         message: '',
         sections: [{ id: Date.now(), title: 'General Documents', items: [] }],
         dueDate: '',
-        reminderFreq: 3
+        reminderFreq: 3,
+        tags: [] // Array of {value, label}
     });
+    const [availableTags, setAvailableTags] = useState([]); // Array of {value, label, color}
     const [loading, setLoading] = useState(false);
 
     // Load Template if present
@@ -56,6 +60,39 @@ const NewRequest = () => {
                 .finally(() => setLoading(false));
         }
     }, [location.search]);
+
+    // Fetch Tags
+    useEffect(() => {
+        fetch('/server/create_request_function/tags')
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    setAvailableTags(result.data.map(t => ({ value: t.ROWID, label: t.Name, color: t.Color })));
+                }
+            })
+            .catch(err => console.error("Failed to fetch tags", err));
+    }, []);
+
+    const handleCreateTag = async (inputValue) => {
+        setLoading(true);
+        try {
+            const res = await fetch('/server/create_request_function/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: inputValue })
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                const newTag = { value: result.data.ROWID, label: result.data.Name, color: result.data.Color };
+                setAvailableTags(prev => [...prev, newTag]);
+                setFormData(prev => ({ ...prev, tags: [...prev.tags, newTag] }));
+            }
+        } catch (error) {
+            console.error("Failed to create tag", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -144,7 +181,8 @@ const NewRequest = () => {
                     title: s.title,
                     description: '',
                     items: s.items.map(i => ({ title: i.title, type: i.type || 'file', allowedFileTypes: i.allowedFileTypes }))
-                }))
+                })),
+                tags: formData.tags.map(t => t.value)
             };
 
             await fetch('/server/create_request_function/', {
@@ -184,24 +222,24 @@ const NewRequest = () => {
                         {/* Contact Selection Logic */}
                         <div style={{ marginBottom: 16 }}>
                             <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500 }}>Recipient Source</label>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <div style={{ display: 'flex', gap: 24 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px' }}>
                                     <input
                                         type="radio"
                                         name="recipientSource"
                                         checked={!formData.isExistingContact}
                                         onChange={() => setFormData(p => ({ ...p, isExistingContact: false, recipientName: '', recipientEmail: '' }))}
-                                        style={{ marginRight: 6 }}
+                                        style={{ marginRight: 8, width: 16, height: 16 }}
                                     />
                                     New Recipient
                                 </label>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px' }}>
                                     <input
                                         type="radio"
                                         name="recipientSource"
                                         checked={formData.isExistingContact}
                                         onChange={() => setFormData(p => ({ ...p, isExistingContact: true }))}
-                                        style={{ marginRight: 6 }}
+                                        style={{ marginRight: 8, width: 16, height: 16 }}
                                     />
                                     Select from Contacts
                                 </label>
@@ -235,6 +273,47 @@ const NewRequest = () => {
                         )}
 
                         <div className={styles.formGroup}>
+                            <label>Tags</label>
+                            <CreatableSelect
+                                isMulti
+                                options={availableTags}
+                                value={formData.tags}
+                                onChange={(newValue) => setFormData(prev => ({ ...prev, tags: newValue || [] }))}
+                                onCreateOption={handleCreateTag}
+                                placeholder="Select or create tags..."
+                                isDisabled={loading}
+                                classNamePrefix="react-select"
+                                styles={{
+                                    control: (base) => ({
+                                        ...base,
+                                        minHeight: '42px',
+                                        borderColor: '#e2e8f0',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        boxShadow: 'none',
+                                        '&:hover': {
+                                            borderColor: '#cbd5e1'
+                                        }
+                                    }),
+                                    multiValue: (base) => ({
+                                        ...base,
+                                        backgroundColor: '#e2e8f0',
+                                        borderRadius: '4px'
+                                    }),
+                                    multiValueLabel: (base) => ({
+                                        ...base,
+                                        color: '#334155',
+                                        fontSize: '12px'
+                                    }),
+                                    menu: (base) => ({
+                                        ...base,
+                                        fontSize: '14px'
+                                    })
+                                }}
+                            />
+                        </div>
+
+                        <div className={styles.formGroup}>
                             <label>Subject</label>
                             <input name="subject" value={formData.subject} onChange={handleInputChange} placeholder="e.g. Documents for Tax Return" />
                         </div>
@@ -245,7 +324,15 @@ const NewRequest = () => {
                                 name="dueDate"
                                 value={formData.dueDate}
                                 onChange={handleInputChange}
-                                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                className="form-input"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '4px',
+                                    border: '1px solid var(--color-border)',
+                                    fontSize: '14px',
+                                    color: '#334155'
+                                }}
                             />
                         </div>
                         <div className={styles.actions}>
@@ -430,22 +517,36 @@ const ContactSelect = ({ onSelect }) => {
 
     if (loading) return <div style={{ fontSize: 12, color: '#666' }}>Loading contacts...</div>;
 
+    const options = contacts.map(c => ({
+        value: c.ROWID,
+        label: `${c.Name} (${c.Email}) - ${c.OrgName}`,
+        contact: c
+    }));
+
     return (
-        <select
-            className="form-input"
-            onChange={(e) => {
-                const contact = contacts.find(c => c.ROWID === e.target.value);
-                if (contact) onSelect(contact);
+        <Select
+            options={options}
+            onChange={(option) => onSelect(option.contact)}
+            placeholder="Search for a contact..."
+            classNamePrefix="react-select"
+            styles={{
+                control: (base) => ({
+                    ...base,
+                    minHeight: '42px',
+                    borderColor: '#e2e8f0',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        borderColor: '#cbd5e1'
+                    }
+                }),
+                menu: (base) => ({
+                    ...base,
+                    fontSize: '14px'
+                })
             }}
-            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
-        >
-            <option value="">-- Select a Contact --</option>
-            {contacts.map(c => (
-                <option key={c.ROWID} value={c.ROWID}>
-                    {c.Name} ({c.Email}) - {c.OrgName}
-                </option>
-            ))}
-        </select>
+        />
     );
 };
 

@@ -48,7 +48,13 @@ const Sidebar = () => {
                     <div className={styles.splitBtnContainer}>
                         <button
                             className="btn btn-primary"
-                            style={{ flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                            style={{
+                                flex: 1,
+                                borderTopRightRadius: 0,
+                                borderBottomRightRadius: 0,
+                                padding: '12px 16px',
+                                whiteSpace: 'nowrap'
+                            }}
                             onClick={() => navigate('/dashboard/new')}
                         >
                             <Plus size={16} style={{ marginRight: 8 }} />

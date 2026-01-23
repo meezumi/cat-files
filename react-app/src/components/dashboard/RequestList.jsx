@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Filter, ChevronDown, Trash2, AlertTriangle } from 'lucide-react';
+import { Filter, ChevronDown, Trash2, AlertTriangle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RequestItem from './RequestItem';
 import styles from './Dashboard.module.css';
@@ -14,6 +14,8 @@ const RequestList = ({ filterStatus }) => {
     const [meta, setMeta] = useState({ page: 1, limit: 10 });
     const [showFilter, setShowFilter] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const filterRef = useRef(null);
 
     // ... (useEffect for click outside remains same) ...
@@ -25,6 +27,9 @@ const RequestList = ({ filterStatus }) => {
                 let url = `/server/fetch_requests_function/?page=${page}&per_page=10`;
                 if (filterStatus && filterStatus !== 'all') {
                     url += `&status=${filterStatus}`;
+                }
+                if (debouncedSearch) {
+                    url += `&search=${encodeURIComponent(debouncedSearch)}`;
                 }
 
                 const response = await fetch(url);
@@ -42,7 +47,13 @@ const RequestList = ({ filterStatus }) => {
         };
 
         fetchRequests();
-    }, [filterStatus, page]);
+    }, [filterStatus, page, debouncedSearch]);
+
+    // Debounce Search
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const handleFilterClick = (status) => {
         setShowFilter(false);
@@ -77,7 +88,7 @@ const RequestList = ({ filterStatus }) => {
         }
     };
 
-    if (loading) return <Loader text="Loading requests..." />;
+
 
     const deleteModalActions = (
         <>
@@ -141,6 +152,27 @@ const RequestList = ({ filterStatus }) => {
                 )}
             </div>
 
+            {/* Search Bar */}
+            <div style={{ padding: '0 16px 16px 16px' }}>
+                <div style={{ position: 'relative' }}>
+                    <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: '#94a3b8' }} />
+                    <input
+                        type="text"
+                        placeholder="Search requests by subject or recipient..."
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                        style={{
+                            width: '100%',
+                            padding: '10px 10px 10px 40px',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            outline: 'none'
+                        }}
+                    />
+                </div>
+            </div>
+
             <div className={styles.tableWrapper}>
                 <div className={styles.tableHeader}>
                     <div className={styles.colCheckbox}><input type="checkbox" /></div>
@@ -151,13 +183,17 @@ const RequestList = ({ filterStatus }) => {
                     <div className={styles.colDate}>Date</div>
                 </div>
 
-                {requests.length === 0 ? (
+                {loading ? (
+                    <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
+                        <Loader text="Loading requests..." />
+                    </div>
+                ) : requests.length === 0 ? (
                     <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
                         {filterStatus === 'trash' ? 'Trash is empty.' : 'No requests found.'}
                     </div>
                 ) : (
-                    requests.map(req => (
-                        <RequestItem key={req.id} request={req} />
+                    requests.map((req, index) => (
+                        <RequestItem key={req.id} request={req} index={index} />
                     ))
                 )}
             </div>
