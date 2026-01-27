@@ -168,15 +168,15 @@ const OrganisationDetail = () => {
 
                     {/* Tab Content */}
                     {activeTab === 'contacts' ? (
-                        <div>
-                            <div className={styles.cardHeader} style={{ borderBottom: 'none' }}>
-                                <h3>Contacts / Recipients</h3>
+                        <div style={{ padding: 24 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b' }}>All Contacts</h3>
                                 <button className="btn btn-sm" onClick={() => setShowContactModal(true)}>
                                     <Plus size={14} style={{ marginRight: 6 }} /> Add Contact
                                 </button>
                             </div>
 
-                            <div style={{ padding: '0 24px 24px' }}>
+                            <div>
                                 {contacts.map(contact => (
                                     <div key={contact.ROWID} className={styles.contactItem}>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -196,7 +196,20 @@ const OrganisationDetail = () => {
                                         </div>
                                     </div>
                                 ))}
-                                {contacts.length === 0 && <div className={styles.emptyState}>No contacts added yet.</div>}
+                                {contacts.length === 0 && (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '48px 24px',
+                                        color: '#94a3b8',
+                                        background: '#f8fafc',
+                                        borderRadius: 8,
+                                        border: '1px dashed #e2e8f0'
+                                    }}>
+                                        <User size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+                                        <p style={{ margin: 0, fontSize: 14 }}>No contacts added yet</p>
+                                        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#cbd5e1' }}>Add contacts to send them data requests</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
