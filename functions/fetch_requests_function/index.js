@@ -268,6 +268,7 @@ app.get('/orgs/:id', async (req, res) => {
     }
 });
 
+
 // POST /orgs - Create organisation
 app.post('/orgs', async (req, res) => {
     try {
@@ -275,8 +276,42 @@ app.post('/orgs', async (req, res) => {
         if (!Name) return res.status(400).json({ status: 'error', message: 'Name is required' });
 
         const catApp = catalyst.initialize(req);
-        const rowData = { Name, Domain, Website, Address, Phone, LogoURL };
+        const userId = req.headers['x-zc-user-id'];
+        
+        if (!userId) {
+            return res.status(401).json({ status: 'error', message: 'Authentication required' });
+        }
+
+        // Create organisation
+        const rowData = { 
+            Name, 
+            Domain, 
+            Website, 
+            Address, 
+            Phone, 
+            LogoURL, 
+            OwnerID: userId, 
+            MemberCount: 1,
+            Status: 'Active'  // Default status for new organisations
+        };
         const result = await catApp.datastore().table('Organisations').insertRow(rowData);
+        const orgId = result.ROWID;
+
+        // Auto-add creator as Super Admin
+        try {
+            await catApp.datastore().table('OrganisationMembers').insertRow({
+                OrganisationID: orgId,
+                UserID: userId,
+                Role: 'Super Admin',
+                Status: 'Active',
+                JoinedAt: new Date().toISOString()
+            });
+            console.log('✓ Added creator as Super Admin for org:', orgId);
+        } catch (memberErr) {
+            console.error('Failed to add creator as member:', memberErr);
+            // Continue anyway - org is created
+        }
+
         res.json({ status: 'success', data: result });
     } catch (err) {
         console.error("Create Org Error:", err);

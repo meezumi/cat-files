@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import { Building2, Plus, Phone, Globe, MapPin } from 'lucide-react';
 import styles from '../../components/dashboard/Dashboard.module.css';
 
 const OrganisationList = () => {
     const navigate = useNavigate();
+    const { hasOrganisation } = useAuth();
     const [orgs, setOrgs] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -27,10 +29,12 @@ const OrganisationList = () => {
         <div className={styles.container}>
             <div className={styles.header} style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ fontSize: 24, margin: 0 }}>Organisations</h1>
-                <button className="btn btn-primary" onClick={() => navigate('/dashboard/organisations/new')}>
-                    <Plus size={16} style={{ marginRight: 8 }} />
-                    Add Organisation
-                </button>
+                {!hasOrganisation() && (
+                    <button className="btn btn-primary" onClick={() => navigate('/dashboard/organisations/new')}>
+                        <Plus size={16} style={{ marginRight: 8 }} />
+                        Add Organisation
+                    </button>
+                )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>

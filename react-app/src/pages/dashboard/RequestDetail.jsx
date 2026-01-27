@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import {
@@ -23,6 +24,7 @@ import styles from './RequestDetail.module.css';
 const RequestDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isViewer } = useAuth();
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -181,24 +183,26 @@ const RequestDetail = () => {
                                 </button>
                             </div>
                         ) : (
-                            // Active requests show normal action buttons
-                            <div className={styles.headerActions}>
-                                <button className={styles.actionBtn} onClick={handleShare}>
-                                    <Share2 size={16} style={{ marginRight: 6 }} />
-                                    Share Request
-                                </button>
-                                <button className={styles.actionBtn} onClick={handleSendReminder}>
-                                    <Clock size={16} style={{ marginRight: 6 }} />
-                                    Send Reminder
-                                </button>
-                                {/* Only show Mark Completed if status is NOT Draft and NOT already Completed */}
-                                {request.status !== 'Draft' && request.status !== 'Completed' && (
-                                    <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={handleMarkCompleted}>
-                                        <CheckCircle size={16} style={{ marginRight: 6 }} />
-                                        Mark Completed
+                            // Active requests show normal action buttons (hidden for Viewers)
+                            !isViewer() && (
+                                <div className={styles.headerActions}>
+                                    <button className={styles.actionBtn} onClick={handleShare}>
+                                        <Share2 size={16} style={{ marginRight: 6 }} />
+                                        Share Request
                                     </button>
-                                )}
-                            </div>
+                                    <button className={styles.actionBtn} onClick={handleSendReminder}>
+                                        <Clock size={16} style={{ marginRight: 6 }} />
+                                        Send Reminder
+                                    </button>
+                                    {/* Only show Mark Completed if status is NOT Draft and NOT already Completed */}
+                                    {request.status !== 'Draft' && request.status !== 'Completed' && (
+                                        <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={handleMarkCompleted}>
+                                            <CheckCircle size={16} style={{ marginRight: 6 }} />
+                                            Mark Completed
+                                        </button>
+                                    )}
+                                </div>
+                            )
                         )}
 
                         <button className={styles.iconBtn} onClick={() => updateRequestStatus('Trash')} title="Move to Trash">
