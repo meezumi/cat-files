@@ -84,8 +84,8 @@ app.post('/', upload.single('file'), async (req, res) => {
                 const updatePayload = {
                     "ROWID": itemId,
                     "Status": "Uploaded", 
-                    "FileID": fileId
-                    // FolderID removed as it doesn't exist in schema
+                    "FileID": fileId,
+                    "FileName": fileName
                 };
                     await catApp.datastore().table('Items').updateRow(updatePayload);
                  } catch (linkErr) {

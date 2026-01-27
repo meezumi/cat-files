@@ -55,8 +55,27 @@ app.post('/', async (req, res) => {
         // Initialize SDK
         const catApp = catalyst.initialize(req);
         
+        // Get authenticated user ID
+        const userId = req.headers['x-zc-user-id'];
+        if (!userId) {
+            return res.status(401).json({ status: 'error', message: 'Authentication required' });
+        }
+        
         // Input
         const { recipientName, recipientEmail, subject, description, message, metadata, dueDate, items, sections, tags } = req.body;
+
+        // Get user's organisation (auto-assign)
+        let organisationId = null;
+        try {
+            const orgQuery = `SELECT OrganisationID FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active' LIMIT 1`;
+            const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
+            if (orgResult.length > 0) {
+                organisationId = orgResult[0].OrganisationMembers.OrganisationID;
+                console.log('✓ Auto-assigned request to organisation:', organisationId);
+            }
+        } catch (orgErr) {
+            console.warn('Could not fetch user organisation:', orgErr.message);
+        }
 
         // 1. Insert Request
         const requestData = {
@@ -69,8 +88,10 @@ app.post('/', async (req, res) => {
             Status: 'Draft',
             DueDate: dueDate ? new Date(dueDate).toISOString().split('T')[0] : null,
             Progress: '0/0',
-            IsTemplateMode: req.body.isTemplate || false
-            // CreatorID: catApp.user().getCurrentUser().id // e.g.
+            IsTemplateMode: req.body.isTemplate || false,
+            // AUTO-ASSIGN CREATOR & ORGANISATION
+            OrganisationID: organisationId
+            // CREATORID is auto-populated by Catalyst
         };
 
         const requestRow = await catApp.datastore().table('Requests').insertRow(requestData);

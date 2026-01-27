@@ -12,11 +12,37 @@ router.put('/requests/:id/status', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
         
-        // Use SDK to update Request Row
-        const updateData = {
+        // If archiving, first fetch current status to store it
+        let updateData = {
             ROWID: requestId,
             Status: status
         };
+
+        if (status === 'Archived') {
+            // Fetch current request to save its status before archiving
+            const query = `SELECT * FROM Requests WHERE ROWID = '${requestId}'`;
+            const result = await catApp.zcql().executeZCQLQuery(query);
+            if (result.length > 0) {
+                const currentRequest = result[0].Requests;
+                // Store previous status in Metadata field (as JSON)
+                const metadata = currentRequest.Metadata ? JSON.parse(currentRequest.Metadata) : {};
+                metadata.previousStatus = currentRequest.Status;
+                updateData.Metadata = JSON.stringify(metadata);
+            }
+        } else if (status === 'Unarchived') {
+            // Restore from archive - get previous status from metadata
+            const query = `SELECT * FROM Requests WHERE ROWID = '${requestId}'`;
+            const result = await catApp.zcql().executeZCQLQuery(query);
+            if (result.length > 0) {
+                const currentRequest = result[0].Requests;
+                const metadata = currentRequest.Metadata ? JSON.parse(currentRequest.Metadata) : {};
+                // Restore to previous status, or default to 'Sent'
+                updateData.Status = metadata.previousStatus || 'Sent';
+                // Clear the previousStatus from metadata
+                delete metadata.previousStatus;
+                updateData.Metadata = JSON.stringify(metadata);
+            }
+        }
 
         const updatedRow = await catApp.datastore().table('Requests').updateRow(updateData);
         res.json({ status: 'success', data: updatedRow });
