@@ -709,6 +709,7 @@ app.get('/:id', async (req, res) => {
             recipient: { name: r.RecipientName, email: r.RecipientEmail },
             subject: r.Subject,
             description: r.Description,
+            ccRecipients: r.CCRecipients ? JSON.parse(r.CCRecipients) : [],
             // Return updated status appropriately without extra fetch if we just updated it
             status: (isGuest && r.Status === 'Sent') ? 'Seen' : r.Status,
             metadata: r.Metadata ? JSON.parse(r.Metadata) : {},

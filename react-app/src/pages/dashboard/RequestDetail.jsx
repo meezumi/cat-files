@@ -30,6 +30,11 @@ const RequestDetail = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCompleteModal, setShowCompleteModal] = useState(false);
 
+    // CC Recipient State
+    const [showCCInput, setShowCCInput] = useState(false);
+    const [ccName, setCcName] = useState('');
+    const [ccEmail, setCcEmail] = useState('');
+
     // Handlers
     const handleMarkCompleted = () => {
         setShowCompleteModal(true);
@@ -46,6 +51,33 @@ const RequestDetail = () => {
             if (res.ok) alert("Reminder sent successfully!");
         } catch (err) {
             console.error("Failed to send reminder", err);
+        }
+    };
+
+    const handleAddCC = async () => {
+        try {
+            const response = await fetch(`/server/workflow_function/requests/${id}/cc`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: ccName, email: ccEmail })
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                // Update local state
+                setRequest(prev => ({
+                    ...prev,
+                    ccRecipients: result.data
+                }));
+                // Reset form
+                setCcName('');
+                setCcEmail('');
+                setShowCCInput(false);
+            } else {
+                alert('Failed to add CC: ' + result.message);
+            }
+        } catch (err) {
+            console.error('Add CC Error:', err);
         }
     };
 
@@ -266,6 +298,53 @@ const RequestDetail = () => {
             </header>
 
             <div className={styles.content}>
+                {/* Recipients Section */}
+                <div className={styles.recipientsSection}>
+                    <h2>Recipients</h2>
+                    <div className={styles.recipientsList}>
+                        {/* Primary Recipient */}
+                        <div className={styles.recipientPill}>
+                            <span title={request.recipient?.email}>{request.recipient?.name}</span>
+                            <span style={{ fontSize: 11, opacity: 0.7 }}>Primary</span>
+                        </div>
+
+                        {/* CC Recipients */}
+                        {request.ccRecipients && request.ccRecipients.map((cc, idx) => (
+                            <div key={idx} className={`${styles.recipientPill} ${styles.secondaryPill}`}>
+                                <span title={cc.email}>{cc.name}</span>
+                                <span style={{ fontSize: 11, opacity: 0.7 }}>CC</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {!showCCInput ? (
+                        !isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
+                            <button className="btn btn-sm btn-outline" onClick={() => setShowCCInput(true)}>
+                                + Add CC Recipient
+                            </button>
+                        )
+                    ) : (
+                        <div className={styles.ccInputRow}>
+                            <input
+                                className={styles.ccInput}
+                                placeholder="Name"
+                                value={ccName}
+                                onChange={(e) => setCcName(e.target.value)}
+                            />
+                            <input
+                                className={styles.ccInput}
+                                placeholder="Email"
+                                value={ccEmail}
+                                onChange={(e) => setCcEmail(e.target.value)}
+                            />
+                            <div className={styles.ccActions}>
+                                <button className="btn btn-sm btn-primary" onClick={handleAddCC} disabled={!ccName || !ccEmail}>Add</button>
+                                <button className="btn btn-sm" onClick={() => setShowCCInput(false)}>Cancel</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <h2>Checklist Items</h2>
                 <div className={styles.checklist}>
                     {request.sections && request.sections.map(section => (

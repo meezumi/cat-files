@@ -221,6 +221,7 @@
 }
 
 /* Dropdown Styles */
+/* Dropdown Styles */
 .dropdownMenu {
     position: absolute;
     top: 100%;
@@ -265,4 +266,55 @@
     right: 0;
     bottom: 0;
     z-index: 40;
+}
+
+.recipientsSection {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.recipientsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.recipientPill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--color-text);
+}
+
+.secondaryPill {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.ccInputRow {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    align-items: center;
+}
+
+.ccInput {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 14px;
+    flex: 1;
+}
+
+.ccActions {
+    display: flex;
+    gap: 8px;
 }

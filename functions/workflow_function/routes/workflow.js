@@ -53,6 +53,58 @@ router.put('/requests/:id/status', async (req, res) => {
     }
 });
 
+// POST /requests/:id/cc - Add CC Recipient
+router.post('/requests/:id/cc', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const { name, email } = req.body;
+        const requestId = req.params.id;
+
+        if (!name || !email) return res.status(400).json({ status: 'error', message: 'Name and email are required' });
+
+        // 1. Fetch current request to get existing CCs
+        const query = `SELECT CCRecipients, Subject, RecipientName FROM Requests WHERE ROWID = '${requestId}'`;
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        
+        if (result.length === 0) return res.status(404).json({ status: 'error', message: 'Request not found' });
+
+        const request = result[0].Requests;
+        
+        // 2. Parse existing CCs
+        let ccList = [];
+        try {
+            if (request.CCRecipients) {
+                ccList = JSON.parse(request.CCRecipients);
+            }
+        } catch (e) {
+            ccList = [];
+        }
+
+        // 3. Add new CC
+        const newCC = {
+            id: Date.now().toString(),
+            name,
+            email,
+            addedAt: new Date().toISOString()
+        };
+        ccList.push(newCC);
+
+        // 4. Update Database
+        await catApp.datastore().table('Requests').updateRow({
+            ROWID: requestId,
+            CCRecipients: JSON.stringify(ccList)
+        });
+
+        // 5. TODO: Trigger Email Notification to new recipient
+        
+        res.json({ status: 'success', data: ccList, message: 'CC Recipient added successfully' });
+
+    } catch (err) {
+        console.error('Add CC Error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // PUT /items/:id/status - Update Item Status
 router.put('/items/:id/status', async (req, res) => {
     const itemId = req.params.id;

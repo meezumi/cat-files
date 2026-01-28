@@ -7,6 +7,14 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 
+// Middleware to strip function prefix if present (Catalyst specific fix)
+app.use((req, res, next) => {
+    if (req.url.startsWith('/server/workflow_function')) {
+        req.url = req.url.replace('/server/workflow_function', '');
+    }
+    next();
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error("Global Error (Workflow):", err);
