@@ -353,10 +353,18 @@ const RequestDetail = () => {
                                 {!isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
                                     <button
                                         onClick={() => setIsEditingDueDate(true)}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 6, opacity: 0.6 }}
+                                        className={styles.iconBtn}
+                                        style={{
+                                            width: 24,
+                                            height: 24,
+                                            marginLeft: 8,
+                                            border: 'none',
+                                            background: 'transparent',
+                                            display: 'inline-flex'
+                                        }}
                                         title="Edit Due Date"
                                     >
-                                        <Edit size={12} />
+                                        <Edit size={14} />
                                     </button>
                                 )}
                             </>

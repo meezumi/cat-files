@@ -57,6 +57,11 @@
     padding-left: 52px; /* Align with title */
 }
 
+.metaItem {
+    display: flex;
+    align-items: center;
+}
+
 .statusBadge {
     display: inline-block;
     padding: 2px 8px;
