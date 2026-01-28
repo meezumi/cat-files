@@ -35,6 +35,10 @@ const RequestDetail = () => {
     const [ccName, setCcName] = useState('');
     const [ccEmail, setCcEmail] = useState('');
 
+    // Editing State
+    const [isEditingDueDate, setIsEditingDueDate] = useState(false);
+    const [dueDate, setDueDate] = useState('');
+
     // Handlers
     const handleMarkCompleted = () => {
         setShowCompleteModal(true);
@@ -81,6 +85,30 @@ const RequestDetail = () => {
         }
     };
 
+    const handleUpdateDueDate = async () => {
+        try {
+            const response = await fetch(`/server/workflow_function/requests/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dueDate: dueDate })
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                setRequest(prev => ({
+                    ...prev,
+                    dueDate: dueDate
+                }));
+                setIsEditingDueDate(false);
+            } else {
+                alert('Failed to update due date: ' + result.message);
+            }
+        } catch (err) {
+            console.error("Update Due Date Error:", err);
+            alert("Failed to update due date");
+        }
+    };
+
     useEffect(() => {
         // Fetch request data
         const fetchRequest = async () => {
@@ -89,6 +117,11 @@ const RequestDetail = () => {
                 const result = await response.json();
                 if (result.status === 'success') {
                     setRequest(result.data);
+                    // Initialize editing state
+                    if (result.data.dueDate) {
+                        // Ensure format is YYYY-MM-DD
+                        setDueDate(new Date(result.data.dueDate).toISOString().split('T')[0]);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch request:', error);
@@ -270,6 +303,12 @@ const RequestDetail = () => {
                                             <Archive size={14} />
                                             Archive Request
                                         </button>
+
+                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Expired')}>
+                                            <Clock size={14} />
+                                            Expire Request
+                                        </button>
+
                                         <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Trash')} style={{ color: '#ef4444' }}>
                                             <Trash2 size={14} />
                                             Delete Request
@@ -289,7 +328,39 @@ const RequestDetail = () => {
                         <strong>Created:</strong> {new Date(request.date).toLocaleDateString()}
                     </div>
                     <div className={styles.metaItem}>
-                        <strong>Due Date:</strong> {request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A'}
+                        <strong>Due Date:</strong>
+                        {isEditingDueDate ? (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 8, gap: 4 }}>
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
+                                    style={{
+                                        padding: '2px 4px',
+                                        fontSize: '13px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '4px'
+                                    }}
+                                />
+                                <button className="btn btn-xs btn-primary" onClick={handleUpdateDueDate} style={{ padding: '2px 6px' }}>Save</button>
+                                <button className="btn btn-xs" onClick={() => setIsEditingDueDate(false)} style={{ padding: '2px 6px' }}>X</button>
+                            </div>
+                        ) : (
+                            <>
+                                <span style={{ marginLeft: 4 }}>
+                                    {request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A'}
+                                </span>
+                                {!isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
+                                    <button
+                                        onClick={() => setIsEditingDueDate(true)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 6, opacity: 0.6 }}
+                                        title="Edit Due Date"
+                                    >
+                                        <Edit size={12} />
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                     <div className={styles.metaItem}>
                         <strong>Status:</strong> <span className={styles.statusBadge}>{request.status}</span>

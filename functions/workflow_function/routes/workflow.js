@@ -53,6 +53,33 @@ router.put('/requests/:id/status', async (req, res) => {
     }
 });
 
+// PUT /requests/:id - Update General Request Details (DueDate, etc.)
+router.put('/requests/:id', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const updateData = {
+            ROWID: req.params.id,
+            ...req.body
+        };
+        
+        // Remove restricted fields just in case
+        delete updateData.CREATORID;
+        delete updateData.CREATEDTIME;
+        
+        // If updating DueDate, ensure valid key
+        if (req.body.dueDate) {
+            updateData.DueDate = new Date(req.body.dueDate).toISOString().split('T')[0];
+        }
+
+        const updatedRow = await catApp.datastore().table('Requests').updateRow(updateData);
+        res.json({ status: 'success', data: updatedRow });
+
+    } catch (err) {
+        console.error("Update Request General Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // POST /requests/:id/cc - Add CC Recipient
 router.post('/requests/:id/cc', async (req, res) => {
     try {
