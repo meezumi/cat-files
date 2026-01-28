@@ -18,12 +18,18 @@ const MembersTab = ({ orgId }) => {
 
     const fetchMembers = async () => {
         try {
+            console.log('Fetching members for org:', orgId);
             const res = await fetch(`/server/fetch_requests_function/orgs/${orgId}/members`, {
                 credentials: 'include'
             });
+            console.log('Response status:', res.status);
             const result = await res.json();
+            console.log('Members result:', result);
             if (result.status === 'success') {
+                console.log('✓ Setting', result.data.length, 'members');
                 setMembers(result.data);
+            } else {
+                console.error('Failed to fetch members:', result.message);
             }
         } catch (err) {
             console.error('Failed to fetch members:', err);

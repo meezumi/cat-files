@@ -67,10 +67,30 @@ app.get('/auth/me', async (req, res) => {
                         domain: org.Domain,
                         logoURL: org.LogoURL
                     };
-                    console.log('✓ User belongs to organisation:', org.Name, '(Role:', membership.Role + ')');
+                    console.log('✓ User belongs to organisation (Member):', org.Name, '(Role:', membership.Role + ')');
                 }
             } else {
-                console.log('ℹ User has no organisation membership');
+                // FALLBACK: Check if user is an OWNER of an organisation (even if member record is missing)
+                console.log('ℹ User has no direct membership, checking ownership...');
+                const ownerQuery = `SELECT * FROM Organisations WHERE OwnerID = '${userId}'`;
+                const ownerRows = await catApp.zcql().executeZCQLQuery(ownerQuery);
+
+                if (ownerRows.length > 0) {
+                    const org = ownerRows[0].Organisations;
+                    // Auto-grant Super Admin role context for owner
+                    organisationInfo = {
+                        id: org.ROWID,
+                        name: org.Name,
+                        role: 'Super Admin',
+                        status: 'Active',
+                        joinedAt: org.CREATEDTIME,
+                        domain: org.Domain,
+                        logoURL: org.LogoURL
+                    };
+                    console.log('✓ User belongs to organisation (Owner):', org.Name, '(Role: Super Admin)');
+                } else {
+                    console.log('ℹ User has no organisation membership or ownership');
+                }
             }
             
             res.status(200).json({ 
@@ -244,10 +264,41 @@ app.use('/', membersRoutes);
 app.get('/orgs', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
-        const query = "SELECT * FROM Organisations";
-        const result = await catApp.zcql().executeZCQLQuery(query);
-        const orgs = result.map(row => row.Organisations);
-        res.json({ status: 'success', data: orgs });
+        const userId = req.headers['x-zc-user-id'];
+        
+        if (!userId) {
+            return res.status(401).json({ status: 'error', message: 'Authentication required' });
+        }
+
+        // 1. Get orgs where user is Owner
+        const ownerQuery = `SELECT * FROM Organisations WHERE OwnerID = '${userId}'`;
+        const ownerResult = await catApp.zcql().executeZCQLQuery(ownerQuery);
+        const ownedOrgs = ownerResult.map(row => row.Organisations);
+
+        // 2. Get orgs where user is a Member
+        const memberQuery = `SELECT OrganisationID FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active'`;
+        const memberResult = await catApp.zcql().executeZCQLQuery(memberQuery);
+        
+        let memberOrgIds = [];
+        if (memberResult.length > 0) {
+            memberOrgIds = memberResult.map(m => m.OrganisationMembers.OrganisationID);
+        }
+
+        // Filter out orgs we already have from owner list
+        const ownedOrgIds = ownedOrgs.map(o => o.ROWID);
+        const newOrgIds = memberOrgIds.filter(id => !ownedOrgIds.includes(id));
+
+        let memberOrgs = [];
+        if (newOrgIds.length > 0) {
+            const orgQuery = `SELECT * FROM Organisations WHERE ROWID IN (${newOrgIds.map(id => `'${id}'`).join(',')})`;
+            const result = await catApp.zcql().executeZCQLQuery(orgQuery);
+            memberOrgs = result.map(row => row.Organisations);
+        }
+
+        // Combine
+        const allOrgs = [...ownedOrgs, ...memberOrgs];
+        
+        res.json({ status: 'success', data: allOrgs });
     } catch (err) {
         console.error("List Orgs Error:", err);
         res.status(500).json({ status: 'error', message: err.message });
@@ -298,18 +349,26 @@ app.post('/orgs', async (req, res) => {
         const orgId = result.ROWID;
 
         // Auto-add creator as Super Admin
+        console.log('=== AUTO-ADD CREATOR AS SUPER ADMIN ===');
+        console.log('Org ID:', orgId);
+        console.log('User ID:', userId);
         try {
-            await catApp.datastore().table('OrganisationMembers').insertRow({
-                OrganisationID: orgId,
-                UserID: userId,
+            const memberData = {
+                OrganisationID: String(orgId),
+                UserID: String(userId),
                 Role: 'Super Admin',
-                Status: 'Active',
-                JoinedAt: new Date().toISOString()
-            });
-            console.log('✓ Added creator as Super Admin for org:', orgId);
+                Status: 'Active'
+            };
+            console.log('Inserting member:', JSON.stringify(memberData, null, 2));
+            const memberResult = await catApp.datastore().table('OrganisationMembers').insertRow(memberData);
+            console.log('✓ MEMBER CREATED:', memberResult);
+            console.log('Member ROWID:', memberResult.ROWID);
         } catch (memberErr) {
-            console.error('Failed to add creator as member:', memberErr);
-            // Continue anyway - org is created
+            console.error('❌ FAILED TO ADD CREATOR AS MEMBER:', memberErr);
+            console.error('Error details:', JSON.stringify(memberErr, null, 2));
+            console.error('Error message:', memberErr.message);
+            console.error('Error stack:', memberErr.stack);
+            // Don't fail org creation, but log extensively
         }
 
         res.json({ status: 'success', data: result });

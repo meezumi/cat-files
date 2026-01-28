@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import MembersTab from '../../components/organisation/MembersTab';
@@ -9,10 +9,15 @@ import styles from './OrganisationDetail.module.css';
 const OrganisationDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [org, setOrg] = useState(null);
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('contacts');
+
+    // Support ?tab=members query param
+    const searchParams = new URLSearchParams(location.search);
+    const initialTab = searchParams.get('tab') || 'contacts';
+    const [activeTab, setActiveTab] = useState(initialTab);
 
     // Add Contact Modal State
     const [showContactModal, setShowContactModal] = useState(false);
