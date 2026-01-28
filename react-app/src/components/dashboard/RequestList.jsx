@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Filter, ChevronDown, Trash2, AlertTriangle, Search } from 'lucide-react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Filter, ChevronDown, Trash2, AlertTriangle, Search, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RequestItem from './RequestItem';
 import styles from './Dashboard.module.css';
@@ -16,38 +16,42 @@ const RequestList = ({ filterStatus }) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const filterRef = useRef(null);
 
     // ... (useEffect for click outside remains same) ...
 
-    useEffect(() => {
-        const fetchRequests = async () => {
-            setLoading(true);
-            try {
-                let url = `/server/fetch_requests_function/?page=${page}&per_page=10`;
-                if (filterStatus && filterStatus !== 'all') {
-                    url += `&status=${filterStatus}`;
-                }
-                if (debouncedSearch) {
-                    url += `&search=${encodeURIComponent(debouncedSearch)}`;
-                }
+    const fetchRequests = useCallback(async (showLoader = true) => {
+        if (showLoader) setLoading(true);
+        else setIsRefreshing(true);
 
-                const response = await fetch(url);
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    setRequests(result.data);
-                    if (result.meta) setMeta(result.meta);
-                }
-            } catch (error) {
-                console.error('Failed to fetch requests:', error);
-            } finally {
-                setLoading(false);
+        try {
+            let url = `/server/fetch_requests_function/?page=${page}&per_page=10`;
+            if (filterStatus && filterStatus !== 'all') {
+                url += `&status=${filterStatus}`;
             }
-        };
+            if (debouncedSearch) {
+                url += `&search=${encodeURIComponent(debouncedSearch)}`;
+            }
 
-        fetchRequests();
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                setRequests(result.data);
+                if (result.meta) setMeta(result.meta);
+            }
+        } catch (error) {
+            console.error('Failed to fetch requests:', error);
+        } finally {
+            setLoading(false);
+            setIsRefreshing(false);
+        }
     }, [filterStatus, page, debouncedSearch]);
+
+    useEffect(() => {
+        fetchRequests(true);
+    }, [fetchRequests]);
 
     // Debounce Search
     useEffect(() => {
@@ -71,12 +75,8 @@ const RequestList = ({ filterStatus }) => {
             const result = await response.json();
             if (result.status === 'success') {
                 // Refresh list
-                setPage(1); // Reset to page 1
-                // Trigger re-fetch by toggling a dependency or calling fetchRequests directly if it was extracted.
-                // Since fetchRequests is inside useEffect depending on [filterStatus, page], 
-                // and we just setPage(1), it might not trigger if page was already 1.
-                // We'll just force a reload by momentarily clearing requests or using a refresh trigger.
-                window.location.reload();
+                setPage(1);
+                fetchRequests(true);
             } else {
                 alert('Failed to empty trash: ' + result.message);
             }
@@ -87,8 +87,6 @@ const RequestList = ({ filterStatus }) => {
             setLoading(false);
         }
     };
-
-
 
     const deleteModalActions = (
         <>
@@ -102,36 +100,55 @@ const RequestList = ({ filterStatus }) => {
     return (
         <div className={styles.container}>
             <div className={styles.controls} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ position: 'relative' }} ref={filterRef}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ position: 'relative' }} ref={filterRef}>
+                        <button
+                            className="btn"
+                            style={{ border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center' }}
+                            onClick={() => setShowFilter(!showFilter)}
+                        >
+                            <Filter size={14} style={{ marginRight: 8 }} />
+                            Filter Requests: <strong>{filterStatus ? filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) : 'All'}</strong>
+                            <ChevronDown size={14} style={{ marginLeft: 8 }} />
+                        </button>
+                        {showFilter && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                marginTop: 4,
+                                background: 'white',
+                                border: '1px solid #eee',
+                                borderRadius: 6,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                zIndex: 10,
+                                minWidth: 160
+                            }}>
+                                <div className={styles.dropdownItem} onClick={() => handleFilterClick('all')}>All Requests</div>
+                                <div className={styles.dropdownItem} onClick={() => handleFilterClick('drafts')}>Drafts</div>
+                                <div className={styles.dropdownItem} onClick={() => handleFilterClick('sent')}>Sent</div>
+                                <div className={styles.dropdownItem} onClick={() => handleFilterClick('completed')}>Completed</div>
+                                <div className={styles.dropdownItem} onClick={() => handleFilterClick('trash')}>Trash</div>
+                            </div>
+                        )}
+                    </div>
+
                     <button
                         className="btn"
-                        style={{ border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center' }}
-                        onClick={() => setShowFilter(!showFilter)}
-                    >
-                        <Filter size={14} style={{ marginRight: 8 }} />
-                        Filter Requests: <strong>{filterStatus ? filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) : 'All'}</strong>
-                        <ChevronDown size={14} style={{ marginLeft: 8 }} />
-                    </button>
-                    {showFilter && (
-                        <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            marginTop: 4,
+                        onClick={() => fetchRequests(false)}
+                        title="Refresh List"
+                        style={{
+                            border: '1px solid #ddd',
                             background: 'white',
-                            border: '1px solid #eee',
-                            borderRadius: 6,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            zIndex: 10,
-                            minWidth: 160
-                        }}>
-                            <div className={styles.dropdownItem} onClick={() => handleFilterClick('all')}>All Requests</div>
-                            <div className={styles.dropdownItem} onClick={() => handleFilterClick('drafts')}>Drafts</div>
-                            <div className={styles.dropdownItem} onClick={() => handleFilterClick('sent')}>Sent</div>
-                            <div className={styles.dropdownItem} onClick={() => handleFilterClick('completed')}>Completed</div>
-                            <div className={styles.dropdownItem} onClick={() => handleFilterClick('trash')}>Trash</div>
-                        </div>
-                    )}
+                            padding: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                        disabled={loading || isRefreshing}
+                    >
+                        <RefreshCw size={16} className={isRefreshing ? styles.spin : ''} />
+                    </button>
                 </div>
 
                 {filterStatus === 'trash' && requests.length > 0 && (
