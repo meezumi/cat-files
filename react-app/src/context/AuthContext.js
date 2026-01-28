@@ -44,6 +44,9 @@ export const AuthProvider = ({ children }) => {
         if (result.status === 'success' && result.data) {
           // User is authenticated
           console.log('✓ User authenticated:', result.data.email_id);
+          if (result.data.organisation) {
+            console.log('✓ User belongs to organisation:', result.data.organisation.name, '(Role:', result.data.organisation.role + ')');
+          }
           setUser(result.data);
         } else {
           // No active session
@@ -136,8 +139,47 @@ export const AuthProvider = ({ children }) => {
     window.location.replace('/app/index.html?logout=' + Date.now());
   };
 
+  // Helper methods for organisation access
+  const hasOrganisation = () => {
+    return user && user.organisation !== null;
+  };
+
+  const getOrganisation = () => {
+    return user?.organisation || null;
+  };
+
+  const getUserRole = () => {
+    return user?.organisation?.role || null;
+  };
+
+  const canManageMembers = () => {
+    const role = getUserRole();
+    return role === 'Super Admin' || role === 'Admin';
+  };
+
+  const canViewAllRequests = () => {
+    const role = getUserRole();
+    return role === 'Super Admin' || role === 'Admin' || role === 'Viewer';
+  };
+
+  const isViewer = () => {
+    return getUserRole() === 'Viewer';
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout,
+      // Organisation helpers
+      hasOrganisation,
+      getOrganisation,
+      getUserRole,
+      canManageMembers,
+      canViewAllRequests,
+      isViewer
+    }}>
       {children}
     </AuthContext.Provider>
   );

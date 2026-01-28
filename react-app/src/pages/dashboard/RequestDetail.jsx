@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import {
@@ -23,6 +24,7 @@ import styles from './RequestDetail.module.css';
 const RequestDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isViewer } = useAuth();
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -172,16 +174,36 @@ const RequestDetail = () => {
                     </button>
                     <h1>{request.subject}</h1>
                     <div className={styles.actions}>
-                        <div className={styles.headerActions}>
-                            <button className={styles.actionBtn} onClick={handleSendReminder}>
-                                <Clock size={16} style={{ marginRight: 6 }} />
-                                Send Reminder
-                            </button>
-                            <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={handleMarkCompleted}>
-                                <CheckCircle size={16} style={{ marginRight: 6 }} />
-                                Mark Completed
-                            </button>
-                        </div>
+                        {request.status === 'Archived' ? (
+                            // Archived requests only show Restore button
+                            <div className={styles.headerActions}>
+                                <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={() => updateRequestStatus('Unarchived')}>
+                                    <Archive size={16} style={{ marginRight: 6 }} />
+                                    Restore from Archive
+                                </button>
+                            </div>
+                        ) : (
+                            // Active requests show normal action buttons (hidden for Viewers)
+                            !isViewer() && (
+                                <div className={styles.headerActions}>
+                                    <button className={styles.actionBtn} onClick={handleShare}>
+                                        <Share2 size={16} style={{ marginRight: 6 }} />
+                                        Share Request
+                                    </button>
+                                    <button className={styles.actionBtn} onClick={handleSendReminder}>
+                                        <Clock size={16} style={{ marginRight: 6 }} />
+                                        Send Reminder
+                                    </button>
+                                    {/* Only show Mark Completed if status is NOT Draft and NOT already Completed */}
+                                    {request.status !== 'Draft' && request.status !== 'Completed' && (
+                                        <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={handleMarkCompleted}>
+                                            <CheckCircle size={16} style={{ marginRight: 6 }} />
+                                            Mark Completed
+                                        </button>
+                                    )}
+                                </div>
+                            )
+                        )}
 
                         <button className={styles.iconBtn} onClick={() => updateRequestStatus('Trash')} title="Move to Trash">
                             <Trash2 size={18} />
@@ -200,10 +222,6 @@ const RequestDetail = () => {
                                 <>
                                     <div className={styles.bgOverlay} onClick={() => setShowDropdown(false)} />
                                     <div className={styles.dropdownMenu}>
-                                        <button className={styles.dropdownItem} onClick={handleShare}>
-                                            <Share2 size={14} />
-                                            Share Request
-                                        </button>
                                         <button className={styles.dropdownItem} onClick={() => navigate(`/dashboard/new?templateId=${id}`)}>
                                             <Edit size={14} />
                                             Edit Request
@@ -288,7 +306,7 @@ const RequestDetail = () => {
                                     {/* Render File Info if exists */}
                                     {item.status !== 'Pending' && item.fileId && (
                                         <div className={styles.fileInfo}>
-                                            <FilePreview fileId={item.fileId} folderId={item.folderId} />
+                                            <FilePreview fileId={item.fileId} fileName={item.fileName} folderId={item.folderId} />
                                         </div>
                                     )}
                                 </div>
@@ -336,16 +354,19 @@ const RequestDetail = () => {
 };
 
 // Real File Preview Component
-const FilePreview = ({ fileId, folderId }) => {
+const FilePreview = ({ fileId, fileName, folderId }) => {
     // Construct Download URL
     // Since we are using function proxying: 
     // /server/upload_function/:id (GET)
     const downloadUrl = `/server/upload_function/${fileId}${folderId ? `?folderId=${folderId}` : ''}`;
 
+    // Display filename if available, otherwise fall back to showing ID
+    const displayName = fileName || `Document (ID: ${fileId})`;
+
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
             <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
-            <span>Document (ID: {fileId})</span>
+            <span>{displayName}</span>
             <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
                 <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
                 <span style={{ marginLeft: 4 }}>View</span>

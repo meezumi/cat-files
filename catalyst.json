@@ -17,7 +17,7 @@
     "plugin": "zcatalyst-cli-plugin-react",
     "rewrites": [
       {
-        "source": "^((?!/server).)*$",
+        "source": "/(.*)",
         "destination": "/index.html"
       }
     ]
