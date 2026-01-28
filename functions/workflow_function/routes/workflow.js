@@ -154,4 +154,66 @@ router.delete('/trash', async (req, res) => {
     }
 });
 
+// POST /cron/expire-requests - Check and expire overdue requests
+router.post('/cron/expire-requests', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        
+        // Get today's start of day string (YYYY-MM-DD)
+        // Requests with DueDate < Today are expired
+        const today = new Date().toISOString().split('T')[0];
+        
+        console.log(`Running Expiry Job. Checking for requests due before: ${today}`);
+        
+        // Fetch candidates: Active requests with DueDate strictly less than today
+        // Exclude already Expired, Completed, Archived, or Draft (assuming drafts don't expire?)
+        // Actually, Drafts might have due dates, but usually we expire "Sent" or "In Review" requests.
+        // Let's stick to expiring anything that isn't final.
+        // Final statuses: Completed, Archived, Expired, Trash.
+        
+        const query = `SELECT ROWID, DueDate, Status FROM Requests WHERE DueDate < '${today}' AND Status != 'Expired' AND Status != 'Completed' AND Status != 'Archived' AND Status != 'Trash'`;
+        
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        const expiredIds = [];
+        
+        if (result.length > 0) {
+            console.log(`Found ${result.length} overdue requests.`);
+            
+            const updatePromises = result.map(async row => {
+                const r = row.Requests;
+                expiredIds.push(r.ROWID);
+                
+                // Update Status
+                await catApp.datastore().table('Requests').updateRow({
+                    ROWID: r.ROWID,
+                    Status: 'Expired'
+                });
+                
+                // Log Activity
+                await catApp.datastore().table('ActivityLog').insertRow({
+                    RequestID: r.ROWID,
+                    Action: 'Expired',
+                    Actor: 'System', 
+                    Details: `Request expired automatically (Due Date: ${r.DueDate})`
+                });
+            });
+            
+            await Promise.all(updatePromises);
+        } else {
+            console.log('No overdue requests found.');
+        }
+        
+        res.json({ 
+            status: 'success', 
+            message: `Expired ${expiredIds.length} requests`, 
+            expiredCount: expiredIds.length,
+            expiredIds 
+        });
+
+    } catch (err) {
+        console.error("Expire Requests Cron Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 module.exports = router;

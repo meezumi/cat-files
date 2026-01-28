@@ -128,6 +128,7 @@ const RequestList = ({ filterStatus }) => {
                                 <div className={styles.dropdownItem} onClick={() => handleFilterClick('drafts')}>Drafts</div>
                                 <div className={styles.dropdownItem} onClick={() => handleFilterClick('sent')}>Sent</div>
                                 <div className={styles.dropdownItem} onClick={() => handleFilterClick('completed')}>Completed</div>
+                                <div className={styles.dropdownItem} onClick={() => handleFilterClick('expired')}>Expired</div>
                                 <div className={styles.dropdownItem} onClick={() => handleFilterClick('trash')}>Trash</div>
                             </div>
                         )}
