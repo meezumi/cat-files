@@ -169,11 +169,11 @@ const Sidebar = () => {
                                                             size={14}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                // Navigate to Request Detail for editing, treating it as a template
-                                                                navigate(`/dashboard/requests/${t.id}`);
+                                                                // Navigate to New Request with template ID to "Use/Edit" it as a new request
+                                                                navigate(`/dashboard/new?templateId=${t.id}`);
                                                                 setShowTemplates(false);
                                                             }}
-                                                            title="Edit Template"
+                                                            title="Use/Edit Template"
                                                         />
                                                         <Trash2
                                                             size={14}
