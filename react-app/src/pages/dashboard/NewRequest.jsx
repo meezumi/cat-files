@@ -166,6 +166,9 @@ const NewRequest = () => {
     // State for UI UX
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+    const [generatedLink, setGeneratedLink] = useState(null);
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [linkModalTitle, setLinkModalTitle] = useState('');
 
     // ... (useEffect remains same) ...
 
@@ -185,20 +188,36 @@ const NewRequest = () => {
                 tags: formData.tags.map(t => t.value)
             };
 
-            await fetch('/server/create_request_function/', {
+            const res = await fetch('/server/create_request_function/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
+            const result = await res.json();
+
             if (isTemplate) {
                 setIsTemplateSaved(true);
                 setShowSuccessModal(true);
+            } else if (status === 'Sent') {
+                // Check if email failed or just show link as convenience
+                if (result.data && result.data.guestLink) {
+                    setGeneratedLink(result.data.guestLink);
+
+                    // If email failed, specifically mention it?
+                    // result.data.emailDebug.success === false
+                    const emailFailed = result.data.emailDebug && result.data.emailDebug.attempted && !result.data.emailDebug.success;
+                    setLinkModalTitle(emailFailed ? 'Request Created (Email Failed)' : 'Request Sent Successfully');
+                    setShowLinkModal(true);
+                } else {
+                    navigate('/dashboard/inbox');
+                }
             } else {
                 navigate('/dashboard/inbox');
             }
         } catch (error) {
             console.error("Error creating request:", error);
+            alert("An error occurred while creating the request.");
         }
     };
 
@@ -461,16 +480,54 @@ const NewRequest = () => {
                 )}
             </div>
 
+
+
             <Modal
-                isOpen={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
-                title="Template Saved"
-                actions={modalActions}
+                isOpen={showLinkModal}
+                onClose={() => { setShowLinkModal(false); navigate('/dashboard/inbox'); }}
+                title={linkModalTitle}
+                actions={
+                    <button className="btn btn-primary" onClick={() => { setShowLinkModal(false); navigate('/dashboard/inbox'); }}>
+                        Done
+                    </button>
+                }
             >
-                <p><strong>{formData.subject}</strong> has been saved as a template successfully.</p>
-                <p>You can now use this template when creating new requests to save time.</p>
+                <div style={{ padding: '0 0 16px' }}>
+                    <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '16px' }}>
+                        {linkModalTitle.includes('Failed')
+                            ? "The email notification could not be sent due to domain verification limits. You can copy the link below and share it manually."
+                            : "The request has been created. You can also share this link directly:"}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <input
+                            readOnly
+                            value={generatedLink || ''}
+                            style={{
+                                flex: 1,
+                                padding: '8px 12px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '6px',
+                                fontSize: '14px',
+                                color: '#334155',
+                                background: '#f8fafc'
+                            }}
+                            onClick={(e) => e.target.select()}
+                        />
+                        <button
+                            className="btn"
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                            onClick={() => {
+                                navigator.clipboard.writeText(generatedLink);
+                                alert('Link copied to clipboard!');
+                            }}
+                        >
+                            Copy
+                        </button>
+                    </div>
+                </div>
             </Modal>
-        </div>
+        </div >
     );
 };
 

@@ -206,8 +206,68 @@ router.put('/items/:id/status', async (req, res) => {
 
 // POST /requests/:id/remind
 router.post('/requests/:id/remind', async (req, res) => {
-    // TODO: Implement Email logic via SDK
-    res.json({ status: 'success', message: 'Reminder sent (Mock)' });
+    try {
+        const catApp = catalyst.initialize(req);
+        const requestId = req.params.id;
+
+        // Fetch Request
+        const query = `SELECT Subject, RecipientEmail, RecipientName, Message, Status FROM Requests WHERE ROWID = '${requestId}'`;
+        const result = await catApp.zcql().executeZCQLQuery(query);
+
+        if (result.length === 0) return res.status(404).json({ status: 'error', message: 'Request not found' });
+
+        const request = result[0].Requests;
+
+        if (!request.RecipientEmail) {
+            return res.status(400).json({ status: 'error', message: 'No recipient email found for this request' });
+        }
+
+        // Construct Guest Link
+        const link = `https://files-60057482421.development.catalystserverless.in/app/p/${requestId}`;
+
+        // Send Email
+        const emailConfig = {
+            from_email: 'aaryank098@gmail.com', // Verified sender
+            to_email: [request.RecipientEmail],
+            subject: `Reminder: File Request - ${request.Subject}`,
+            html_mode: true,
+            content: `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #fef3c7; padding: 20px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+                        <h2 style="margin: 0; color: #92400e;">Reminder</h2>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="font-size: 16px;">Hi ${request.RecipientName || 'there'},</p>
+                        <p>This is a gentle reminder that we are still waiting for the documents for the following request:</p>
+                        <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; margin: 16px 0; border-left: 4px solid #f59e0b;">
+                            <p style="margin: 0; font-weight: bold;">${request.Subject}</p>
+                        </div>
+                        <p style="margin-bottom: 24px;">Please upload the requested documents at your earliest convenience.</p>
+                        <div style="text-align: center;">
+                            <a href="${link}" style="display: inline-block; background-color: #f59e0b; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Request & Upload Files</a>
+                        </div>
+                        <p style="margin-top: 24px; font-size: 14px; color: #94a3b8;">Link: <a href="${link}" style="color: #2563eb;">${link}</a></p>
+                    </div>
+                </div>
+            `
+        };
+
+        await catApp.email().sendMail(emailConfig);
+
+        // Log Activity
+        await catApp.datastore().table('ActivityLog').insertRow({
+            RequestID: requestId,
+            Action: 'Reminder Sent',
+            Actor: 'System', 
+            Details: `Reminder email sent to ${request.RecipientEmail}`
+        });
+
+        res.json({ status: 'success', message: 'Reminder sent successfully' });
+
+    } catch (err) {
+        console.error("Send Reminder Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
 });
 
 // DELETE /trash - Parmanently delete all requests in Trash

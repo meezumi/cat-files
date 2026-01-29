@@ -78,6 +78,7 @@ app.post('/', async (req, res) => {
         }
 
         // 1. Insert Request
+        const currentStatus = req.body.status || 'Draft';
         const requestData = {
             RecipientName: recipientName,
             RecipientEmail: recipientEmail,
@@ -85,7 +86,7 @@ app.post('/', async (req, res) => {
             Description: description || '',
             Message: message || '',
             Metadata: metadata ? JSON.stringify(metadata) : '{}',
-            Status: 'Draft',
+            Status: currentStatus,
             DueDate: dueDate ? new Date(dueDate).toISOString().split('T')[0] : null,
             Progress: '0/0',
             IsTemplateMode: req.body.isTemplate || false,
@@ -97,7 +98,18 @@ app.post('/', async (req, res) => {
         const requestRow = await catApp.datastore().table('Requests').insertRow(requestData);
         const requestId = requestRow.ROWID;
 
-        // 2. Insert Sections & Items
+        // 2. Insert Sections & Items - (Keep existing logic below, but we need to trigger email if Sent)
+        
+        // ... (We will insert items first in next blocks, but email can be sent async or after)
+        // Let's send email AFTER items are inserted to ensure link is valid/ready? 
+        // Actually, items don't affect the link heavily, but it's good practice.
+        // I will add the email logic at the END of the function before res.json
+        
+        // Storing reference for email
+        req.requestId = requestId; 
+        req.startEmail = currentStatus === 'Sent';
+
+        // 2. Insert Sections & Items (Original Code resumes here normally, I'm just replacing the Insert Block)
         // Normalize
         const sectionsToInsert = sections && sections.length > 0 ? sections : [
             { title: 'General Documents', items: items || [] }
@@ -171,11 +183,75 @@ app.post('/', async (req, res) => {
              console.warn('Logging failed', e);
         }
 
+        // 4. Send Email Notification if Status is 'Sent'
+        let guestLink = null;
+        if (currentStatus === 'Sent') {
+             guestLink = `https://files-60057482421.development.catalystserverless.in/app/p/${requestId}`;
+        }
+        
+        let emailResult = { attempted: false };
+
+        if (req.startEmail && recipientEmail) {
+            emailResult.attempted = true;
+            try {
+                const emailConfig = {
+                    from_email: 'aaryank098@gmail.com', // Verified sender
+                    to_email: [recipientEmail],
+                    subject: `File Request: ${subject}`,
+                    html_mode: true,
+                    content: `
+                        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                            <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+                                <h2 style="margin: 0; color: #0f172a;">File Request</h2>
+                            </div>
+                            <div style="padding: 24px;">
+                                <p style="font-size: 16px;">Hi ${recipientName || 'there'},</p>
+                                <p>You have received a new file request.</p>
+                                <div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; margin: 16px 0;">
+                                    <p style="margin: 0; font-weight: bold;">${subject}</p>
+                                    ${message ? `<p style="margin: 8px 0 0; color: #64748b;">${message}</p>` : ''}
+                                </div>
+                                <p style="margin-bottom: 24px;">Please upload the requested documents by clicking the button below:</p>
+                                <div style="text-align: center;">
+                                    <a href="${guestLink}" style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Request & Upload Files</a>
+                                </div>
+                                <p style="margin-top: 24px; font-size: 14px; color: #94a3b8;">Link: <a href="${guestLink}" style="color: #2563eb;">${guestLink}</a></p>
+                            </div>
+                             <div style="background-color: #f8f9fa; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e0e0e0;">
+                                Sent via File Request System
+                            </div>
+                        </div>
+                    `
+                };
+                
+                const mailRes = await catApp.email().sendMail(emailConfig);
+                console.log(`✓ Email sent to ${recipientEmail}`);
+                emailResult.success = true;
+                emailResult.details = mailRes;
+                
+                // Log Email Activity
+                await catApp.datastore().table('ActivityLog').insertRow({
+                    RequestID: requestId,
+                    Action: 'Email Sent',
+                    Actor: 'System', 
+                    Details: `Invitation email sent to ${recipientEmail}`
+                });
+
+            } catch (emailErr) {
+                console.error("Failed to send email:", emailErr);
+                emailResult.success = false;
+                emailResult.error = emailErr.message || emailErr.toString();
+                // Do not fail the request creation, just log it
+            }
+        }
+
         // Response
         const responseData = {
             id: requestId,
             ...requestData,
-            sections: processedSections
+            sections: processedSections,
+            emailDebug: emailResult,
+            guestLink: guestLink
         };
 
         res.status(201).json({ status: 'success', data: responseData });
