@@ -2,6 +2,55 @@ const express = require('express');
 const router = express.Router();
 const catalyst = require('zcatalyst-sdk-node');
 
+// POST /requests/batch-status - Update Multiple Requests Status
+router.post('/requests/batch-status', async (req, res) => {
+    const { ids, status } = req.body;
+    if (!ids || !Array.isArray(ids) || !status) return res.status(400).json({ status: 'error', message: 'Invalid payload' });
+
+    try {
+        const catApp = catalyst.initialize(req);
+        
+        // Processing in chunks or sequential to handle archive logic properly
+        // For Archive/Unarchive, we need current status, which requires querying.
+        // If simply Trash/Draft/Etc, we can just bulk update provided we don't care about previousStatus history for non-archive.
+        // But let's reuse logic for consistency.
+        
+        // Fetch all target requests first
+        // Formulate query: ROWID in ('id1', 'id2', ...)
+        const idList = ids.map(id => `'${id}'`).join(',');
+        const query = `SELECT * FROM Requests WHERE ROWID IN (${idList})`;
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        
+        const updatePromises = result.map(async row => {
+            const currentRequest = row.Requests;
+            let updateData = {
+                ROWID: currentRequest.ROWID,
+                Status: status
+            };
+            
+            if (status === 'Archived') {
+                const metadata = currentRequest.Metadata ? JSON.parse(currentRequest.Metadata) : {};
+                metadata.previousStatus = currentRequest.Status;
+                updateData.Metadata = JSON.stringify(metadata);
+            } else if (status === 'Unarchived') {
+                const metadata = currentRequest.Metadata ? JSON.parse(currentRequest.Metadata) : {};
+                updateData.Status = metadata.previousStatus || 'Sent';
+                delete metadata.previousStatus;
+                updateData.Metadata = JSON.stringify(metadata);
+            }
+            
+            return catApp.datastore().table('Requests').updateRow(updateData);
+        });
+
+        await Promise.all(updatePromises);
+        res.json({ status: 'success', count: ids.length, message: `Updated ${ids.length} requests to ${status}` });
+
+    } catch (err) {
+        console.error("Batch Update Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // PUT /requests/:id/status - Update Request Status
 router.put('/requests/:id/status', async (req, res) => {
     const requestId = req.params.id;

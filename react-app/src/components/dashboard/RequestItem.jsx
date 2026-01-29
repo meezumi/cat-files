@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 
-const RequestItem = ({ request, index }) => {
+const RequestItem = ({ request, index, isSelected, onToggle }) => {
     const navigate = useNavigate();
 
     const getStatusBadge = (status) => {
@@ -28,7 +28,12 @@ const RequestItem = ({ request, index }) => {
             onClick={() => navigate(`/dashboard/requests/${request.id}`)}
         >
             <div className={styles.colCheckbox}>
-                <input type="checkbox" onClick={(e) => e.stopPropagation()} />
+                <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={onToggle}
+                    onClick={(e) => e.stopPropagation()}
+                />
             </div>
             <div className={styles.colName}>{request.recipient?.name || 'Unknown'}</div>
             <div className={styles.colSubject}>{request.subject}</div>

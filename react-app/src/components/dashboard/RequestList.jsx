@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Filter, ChevronDown, Trash2, AlertTriangle, Search, RefreshCw } from 'lucide-react';
+import { Filter, ChevronDown, Trash2, AlertTriangle, Search, RefreshCw, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RequestItem from './RequestItem';
 import styles from './Dashboard.module.css';
@@ -17,6 +17,7 @@ const RequestList = ({ filterStatus }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [selectedRequests, setSelectedRequests] = useState(new Set());
     const filterRef = useRef(null);
 
     // ... (useEffect for click outside remains same) ...
@@ -40,6 +41,7 @@ const RequestList = ({ filterStatus }) => {
             if (result.status === 'success') {
                 setRequests(result.data);
                 if (result.meta) setMeta(result.meta);
+                setSelectedRequests(new Set()); // Reset selection on fetch
             }
         } catch (error) {
             console.error('Failed to fetch requests:', error);
@@ -83,6 +85,54 @@ const RequestList = ({ filterStatus }) => {
         } catch (error) {
             console.error('Empty trash failed:', error);
             alert('An error occurred.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedRequests(new Set(requests.map(r => r.id)));
+        } else {
+            setSelectedRequests(new Set());
+        }
+    };
+
+    const handleSelectOne = (id) => {
+        const newSet = new Set(selectedRequests);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedRequests(newSet);
+    };
+
+    const handleBatchAction = async (status) => {
+        if (!selectedRequests.size) return;
+        if (!window.confirm(`Are you sure you want to ${status} ${selectedRequests.size} request(s)?`)) return;
+
+        setLoading(true);
+        try {
+            const response = await fetch('/server/workflow_function/requests/batch-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ids: Array.from(selectedRequests),
+                    status: status
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                setSelectedRequests(new Set());
+                fetchRequests(true);
+            } else {
+                alert('Batch action failed: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Batch action error:', error);
+            alert('Batch action failed');
         } finally {
             setLoading(false);
         }
@@ -150,6 +200,27 @@ const RequestList = ({ filterStatus }) => {
                     >
                         <RefreshCw size={16} className={isRefreshing ? styles.spin : ''} />
                     </button>
+
+                    {selectedRequests.size > 0 && (
+                        <div style={{ display: 'flex', gap: 8, marginLeft: 8, borderLeft: '1px solid #ddd', paddingLeft: 8 }}>
+                            <button
+                                className="btn"
+                                onClick={() => handleBatchAction('Archived')}
+                                title="Archive Selected"
+                                style={{ padding: 8 }}
+                            >
+                                <Archive size={16} />
+                            </button>
+                            <button
+                                className="btn"
+                                onClick={() => handleBatchAction('Trash')}
+                                title="Move Selected to Trash"
+                                style={{ padding: 8, color: '#dc3545' }}
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {filterStatus === 'trash' && requests.length > 0 && (
@@ -193,7 +264,13 @@ const RequestList = ({ filterStatus }) => {
 
             <div className={styles.tableWrapper}>
                 <div className={styles.tableHeader}>
-                    <div className={styles.colCheckbox}><input type="checkbox" /></div>
+                    <div className={styles.colCheckbox}>
+                        <input
+                            type="checkbox"
+                            checked={requests.length > 0 && selectedRequests.size === requests.length}
+                            onChange={handleSelectAll}
+                        />
+                    </div>
                     <div className={styles.colName}>Recipient</div>
                     <div className={styles.colSubject}>Subject</div>
                     <div className={styles.colStatus}>Status</div>
@@ -211,7 +288,13 @@ const RequestList = ({ filterStatus }) => {
                     </div>
                 ) : (
                     requests.map((req, index) => (
-                        <RequestItem key={req.id} request={req} index={index} />
+                        <RequestItem
+                            key={req.id}
+                            request={req}
+                            index={index}
+                            isSelected={selectedRequests.has(req.id)}
+                            onToggle={() => handleSelectOne(req.id)}
+                        />
                     ))
                 )}
             </div>
