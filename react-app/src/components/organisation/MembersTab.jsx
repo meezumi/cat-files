@@ -1,7 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
+import Select from 'react-select';
 import { UserPlus, Shield, ShieldAlert, Eye, Users, Trash2, Edit2 } from 'lucide-react';
+
+const roleOptions = [
+    { value: 'Contributor', label: 'Contributor' },
+    { value: 'Viewer', label: 'Viewer' },
+    { value: 'Admin', label: 'Admin' },
+    { value: 'Super Admin', label: 'Super Admin' }
+];
+
+const customSelectStyles = {
+    control: (base) => ({
+        ...base,
+        minHeight: '42px',
+        borderColor: '#e2e8f0',
+        borderRadius: '6px',
+        fontSize: '14px',
+        boxShadow: 'none',
+        '&:hover': {
+            borderColor: '#cbd5e1'
+        }
+    }),
+    menu: (base) => ({
+        ...base,
+        fontSize: '14px',
+        zIndex: 50
+    })
+};
 
 const MembersTab = ({ orgId }) => {
     const { canManageMembers, getOrganisation } = useAuth();
@@ -10,6 +37,7 @@ const MembersTab = ({ orgId }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedMember, setSelectedMember] = useState(null);
+    const [editRole, setEditRole] = useState('');
     const [addForm, setAddForm] = useState({ targetUserId: '', role: 'Contributor' });
 
     useEffect(() => {
@@ -221,6 +249,7 @@ const MembersTab = ({ orgId }) => {
                                     <button
                                         onClick={() => {
                                             setSelectedMember(member);
+                                            setEditRole(member.role);
                                             setShowEditModal(true);
                                         }}
                                         style={{
@@ -302,22 +331,13 @@ const MembersTab = ({ orgId }) => {
                         <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
                             Role *
                         </label>
-                        <select
-                            value={addForm.role}
-                            onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
-                            style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: 6,
-                                fontSize: 14
-                            }}
-                        >
-                            <option value="Contributor">Contributor</option>
-                            <option value="Viewer">Viewer</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Super Admin">Super Admin</option>
-                        </select>
+                        <Select
+                            value={roleOptions.find(opt => opt.value === addForm.role)}
+                            onChange={(option) => setAddForm({ ...addForm, role: option.value })}
+                            options={roleOptions}
+                            styles={customSelectStyles}
+                            isSearchable={false}
+                        />
                     </div>
                 </div>
             </Modal>
@@ -334,9 +354,8 @@ const MembersTab = ({ orgId }) => {
                     <button
                         className="btn btn-primary"
                         onClick={() => {
-                            if (selectedMember) {
-                                const select = document.getElementById('roleSelect');
-                                handleUpdateRole(selectedMember.id, select.value);
+                            if (selectedMember && editRole) {
+                                handleUpdateRole(selectedMember.id, editRole);
                             }
                         }}
                     >
@@ -353,27 +372,18 @@ const MembersTab = ({ orgId }) => {
                             <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>
                                 New Role
                             </label>
-                            <select
-                                id="roleSelect"
-                                defaultValue={selectedMember.role}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: 6,
-                                    fontSize: 14
-                                }}
-                            >
-                                <option value="Contributor">Contributor</option>
-                                <option value="Viewer">Viewer</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Super Admin">Super Admin</option>
-                            </select>
+                            <Select
+                                value={roleOptions.find(opt => opt.value === editRole)}
+                                onChange={(option) => setEditRole(option.value)}
+                                options={roleOptions}
+                                styles={customSelectStyles}
+                                isSearchable={false}
+                            />
                         </div>
                     </div>
                 )}
             </Modal>
-        </div>
+        </div >
     );
 };
 
