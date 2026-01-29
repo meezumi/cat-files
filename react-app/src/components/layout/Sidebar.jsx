@@ -14,7 +14,11 @@ import {
     LogOut,
     User,
     ChevronDown,
-    Building2
+    Building2,
+    Settings,
+    Edit2,
+    MoreHorizontal,
+    X
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -25,6 +29,29 @@ const Sidebar = () => {
     const [templates, setTemplates] = React.useState([]);
     const [loadingTemplates, setLoadingTemplates] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [showTemplateManager, setShowTemplateManager] = React.useState(false);
+
+    const handleDeleteTemplate = async (templateId) => {
+        if (!window.confirm("Are you sure you want to delete this template?")) return;
+
+        try {
+            const response = await fetch(`/server/workflow_function/requests/${templateId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Trash' })
+            });
+
+            if (response.ok) {
+                // Remove from local list
+                setTemplates(prev => prev.filter(t => t.id !== templateId));
+            } else {
+                alert("Failed to delete template");
+            }
+        } catch (err) {
+            console.error("Delete template error:", err);
+            alert("Error deleting template");
+        }
+    };
 
     React.useEffect(() => {
         if (showTemplates && templates.length === 0) {
@@ -78,38 +105,94 @@ const Sidebar = () => {
 
                         {showTemplates && (
                             <div className={styles.templateDropdown}>
-                                <div className={styles.templateSearch}>
-                                    <input
-                                        placeholder="Search templates..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                                <div style={{ padding: '4px 0' }}>
-                                    <div className={styles.navLabel} style={{ padding: '4px 12px' }}>Create from Template</div>
-                                    {loadingTemplates ? (
-                                        <div style={{ padding: '8px 12px', color: '#999', fontSize: '12px' }}>Loading...</div>
-                                    ) : templates.filter(t => t.subject.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
-                                        <div style={{ padding: '8px 12px', color: '#999', fontSize: '12px' }}>No templates found</div>
-                                    ) : (
-                                        templates
-                                            .filter(t => t.subject.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(t => (
-                                                <div
-                                                    key={t.id}
-                                                    className={styles.templateItem}
-                                                    onClick={() => {
-                                                        setShowTemplates(false);
-                                                        navigate(`/dashboard/new?templateId=${t.id}`);
+                                {!showTemplateManager ? (
+                                    <>
+                                        <div className={styles.templateSearch}>
+                                            <input
+                                                placeholder="Search templates..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </div>
+                                        <div style={{ padding: '4px 0' }}>
+                                            <div className={styles.navLabel} style={{ padding: '4px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                Create from Template
+                                                <Settings
+                                                    size={14}
+                                                    style={{ cursor: 'pointer', opacity: 0.7 }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowTemplateManager(true);
                                                     }}
-                                                >
-                                                    <FileText size={12} style={{ marginRight: 6, opacity: 0.7 }} />
-                                                    {t.subject}
+                                                    title="Manage Templates"
+                                                />
+                                            </div>
+                                            {loadingTemplates ? (
+                                                <div style={{ padding: '8px 12px', color: '#999', fontSize: '12px' }}>Loading...</div>
+                                            ) : templates.filter(t => t.subject.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                                                <div style={{ padding: '8px 12px', color: '#999', fontSize: '12px' }}>No templates found</div>
+                                            ) : (
+                                                templates
+                                                    .filter(t => t.subject.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(t => (
+                                                        <div
+                                                            key={t.id}
+                                                            className={styles.templateItem}
+                                                            onClick={() => {
+                                                                setShowTemplates(false);
+                                                                navigate(`/dashboard/new?templateId=${t.id}`);
+                                                            }}
+                                                        >
+                                                            <FileText size={12} style={{ marginRight: 6, opacity: 0.7 }} />
+                                                            {t.subject}
+                                                        </div>
+                                                    ))
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className={styles.templateManager}>
+                                        <div className={styles.managerHeader}>
+                                            <span style={{ fontWeight: 600 }}>Manage Templates</span>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <Plus size={16} style={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard/new')} title="New Template" />
+                                                <X size={16} style={{ cursor: 'pointer' }} onClick={() => setShowTemplateManager(false)} />
+                                            </div>
+                                        </div>
+                                        <div className={styles.managerList}>
+                                            {templates.map(t => (
+                                                <div key={t.id} className={styles.managerItem}>
+                                                    <span className={styles.managerName} title={t.subject}>{t.subject}</span>
+                                                    <div className={styles.managerActions}>
+                                                        <Edit2
+                                                            size={14}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Navigate to Request Detail for editing, treating it as a template
+                                                                navigate(`/dashboard/requests/${t.id}`);
+                                                                setShowTemplates(false);
+                                                            }}
+                                                            title="Edit Template"
+                                                        />
+                                                        <Trash2
+                                                            size={14}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteTemplate(t.id);
+                                                            }}
+                                                            title="Delete Template"
+                                                        />
+                                                        <MoreHorizontal size={14} />
+                                                    </div>
                                                 </div>
-                                            ))
-                                    )}
-                                </div>
+                                            ))}
+                                            {templates.length === 0 && (
+                                                <div style={{ padding: 12, textAlign: 'center', color: '#999', fontSize: 13 }}>No templates</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

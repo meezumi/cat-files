@@ -165,3 +165,58 @@
 .navItem.active svg {
   color: var(--color-primary);
 }
+
+/* Template Manager Styles */
+.managerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 4px;
+}
+
+.managerList {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.managerItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: var(--color-text-main);
+}
+
+.managerItem:hover {
+    background-color: #f8fafc;
+}
+
+.managerName {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 12px;
+}
+
+.managerActions {
+    display: flex;
+    gap: 8px;
+    opacity: 0.6;
+}
+
+.managerItem:hover .managerActions {
+    opacity: 1;
+}
+
+.managerActions svg {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.managerActions svg:hover {
+    color: var(--color-primary);
+}
