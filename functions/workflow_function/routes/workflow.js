@@ -205,10 +205,12 @@ router.put('/items/:id/status', async (req, res) => {
 });
 
 // POST /requests/:id/remind
+// POST /requests/:id/remind
 router.post('/requests/:id/remind', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
         const requestId = req.params.id;
+        const { customMessage } = req.body;
 
         // Fetch Request
         const query = `SELECT Subject, RecipientEmail, RecipientName, Message, Status FROM Requests WHERE ROWID = '${requestId}'`;
@@ -242,6 +244,13 @@ router.post('/requests/:id/remind', async (req, res) => {
                         <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; margin: 16px 0; border-left: 4px solid #f59e0b;">
                             <p style="margin: 0; font-weight: bold;">${request.Subject}</p>
                         </div>
+                        
+                        ${customMessage ? `
+                        <div style="margin: 16px 0; padding: 12px; background-color: #FFFbeb; border: 1px dashed #f59e0b; border-radius: 4px;">
+                            <p style="margin: 0; font-weight: bold; font-size: 14px; color: #92400e;">Note from sender:</p>
+                            <p style="margin: 4px 0 0; color: #333;">${customMessage}</p>
+                        </div>` : ''}
+
                         <p style="margin-bottom: 24px;">Please upload the requested documents at your earliest convenience.</p>
                         <div style="text-align: center;">
                             <a href="${link}" style="display: inline-block; background-color: #f59e0b; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Request & Upload Files</a>
@@ -252,7 +261,7 @@ router.post('/requests/:id/remind', async (req, res) => {
             `
         };
 
-        await catApp.email().sendMail(emailConfig);
+        const mailRes = await catApp.email().sendMail(emailConfig);
 
         // Log Activity
         await catApp.datastore().table('ActivityLog').insertRow({
@@ -262,11 +271,13 @@ router.post('/requests/:id/remind', async (req, res) => {
             Details: `Reminder email sent to ${request.RecipientEmail}`
         });
 
-        res.json({ status: 'success', message: 'Reminder sent successfully' });
+        res.json({ status: 'success', message: 'Reminder sent successfully', debug: mailRes });
 
     } catch (err) {
         console.error("Send Reminder Error:", err);
-        res.status(500).json({ status: 'error', message: err.message });
+        // Return 200 with error status so frontend can handle it gracefully if it's just email failure
+        // But standard HTTP implies 500. Let's keep 500 but ensure message is clear.
+        res.status(500).json({ status: 'error', message: err.message || 'Failed to send reminder email' });
     }
 });
 

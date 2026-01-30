@@ -26,9 +26,11 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Workflow Routes
+// Workflow & Scheduler Routes
 const workflowRoutes = require('./routes/workflow');
+const schedulerRoutes = require('./routes/scheduler');
 app.use('/', workflowRoutes);
+app.use('/', schedulerRoutes);
 
 // Catch-all
 app.all('*', (req, res) => {

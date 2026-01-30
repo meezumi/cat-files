@@ -85,7 +85,14 @@ app.post('/', async (req, res) => {
             Subject: subject,
             Description: description || '',
             Message: message || '',
-            Metadata: metadata ? JSON.stringify(metadata) : '{}',
+            Metadata: JSON.stringify({
+                ...(metadata || {}),
+                reminderSettings: {
+                    autoRemind: req.body.autoRemind || false,
+                    remindInterval: req.body.reminderFreq || 3,
+                    reminderStats: { sentCount: 0, lastSent: null }
+                }
+            }),
             Status: currentStatus,
             DueDate: dueDate ? new Date(dueDate).toISOString().split('T')[0] : null,
             Progress: '0/0',

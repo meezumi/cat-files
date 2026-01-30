@@ -39,6 +39,11 @@ const RequestDetail = () => {
     const [isEditingDueDate, setIsEditingDueDate] = useState(false);
     const [dueDate, setDueDate] = useState('');
 
+    // Reminder State
+    const [showReminderModal, setShowReminderModal] = useState(false);
+    const [reminderMessage, setReminderMessage] = useState('');
+    const [sendingReminder, setSendingReminder] = useState(false);
+
     // Handlers
     const handleMarkCompleted = () => {
         setShowCompleteModal(true);
@@ -49,12 +54,32 @@ const RequestDetail = () => {
         await updateRequestStatus('Completed');
     };
 
-    const handleSendReminder = async () => {
+    const handleSendReminder = () => {
+        setShowReminderModal(true);
+    };
+
+    const confirmSendReminder = async () => {
+        setSendingReminder(true);
         try {
-            const res = await fetch(`/server/workflow_function/requests/${id}/remind`, { method: 'POST' });
-            if (res.ok) alert("Reminder sent successfully!");
+            const res = await fetch(`/server/workflow_function/requests/${id}/remind`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customMessage: reminderMessage })
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                alert("Reminder sent successfully!");
+                setShowReminderModal(false);
+                setReminderMessage('');
+            } else {
+                alert(`Failed to send reminder: ${result.message}`);
+            }
         } catch (err) {
             console.error("Failed to send reminder", err);
+            alert("An error occurred while sending the reminder.");
+        } finally {
+            setSendingReminder(false);
         }
     };
 
@@ -505,6 +530,43 @@ const RequestDetail = () => {
                     <CheckCircle size={32} color="var(--color-success)" style={{ marginBottom: 12 }} />
                     <p>The Guest Portal link has been copied to your clipboard.</p>
                     <p style={{ fontSize: 13, color: '#666', marginTop: 8 }}>You can now share it with the recipient.</p>
+                </div>
+            </Modal>
+            <Modal
+                isOpen={showReminderModal}
+                onClose={() => setShowReminderModal(false)}
+                title="Send Reminder"
+                actions={
+                    <>
+                        <button className="btn" onClick={() => setShowReminderModal(false)} disabled={sendingReminder}>Cancel</button>
+                        <button className="btn btn-primary" onClick={confirmSendReminder} disabled={sendingReminder}>
+                            {sendingReminder ? 'Sending...' : 'Send Reminder'}
+                        </button>
+                    </>
+                }
+            >
+                <div style={{ paddingBottom: '8px' }}>
+                    <p style={{ marginBottom: '16px', color: '#64748b' }}>
+                        Send a reminder email to <strong>{request.recipient?.name}</strong> ({request.recipient?.email})?
+                    </p>
+
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '8px', color: '#334155' }}>
+                        Add a personal note (optional)
+                    </label>
+                    <textarea
+                        value={reminderMessage}
+                        onChange={(e) => setReminderMessage(e.target.value)}
+                        placeholder="e.g. Please upload these by Friday."
+                        style={{
+                            width: '100%',
+                            minHeight: '80px',
+                            padding: '10px',
+                            borderRadius: '6px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '14px',
+                            resize: 'vertical'
+                        }}
+                    />
                 </div>
             </Modal>
         </div>

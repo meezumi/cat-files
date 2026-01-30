@@ -18,6 +18,8 @@ const NewRequest = () => {
         message: '',
         sections: [{ id: Date.now(), title: 'General Documents', items: [] }],
         dueDate: '',
+
+        autoRemind: false,
         reminderFreq: 3,
         tags: [] // Array of {value, label}
     });
@@ -185,7 +187,9 @@ const NewRequest = () => {
                     description: '',
                     items: s.items.map(i => ({ title: i.title, type: i.type || 'file', allowedFileTypes: i.allowedFileTypes }))
                 })),
-                tags: formData.tags.map(t => t.value)
+                tags: formData.tags.map(t => t.value),
+                autoRemind: formData.autoRemind,
+                reminderFreq: parseInt(formData.reminderFreq) || 3
             };
 
             const res = await fetch('/server/create_request_function/', {
@@ -353,6 +357,48 @@ const NewRequest = () => {
                                     color: '#334155'
                                 }}
                             />
+                        </div>
+
+                        {/* Reminder Settings */}
+                        <div className={styles.formGroup} style={{ marginTop: '20px', padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.autoRemind ? '12px' : '0' }}>
+                                <div>
+                                    <h3 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 4px', color: '#334155' }}>Automated Reminders</h3>
+                                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Automatically send reminders for overdue requests.</p>
+                                </div>
+                                <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '24px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.autoRemind}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, autoRemind: e.target.checked }))}
+                                        style={{ opacity: 0, width: 0, height: 0 }}
+                                    />
+                                    <span style={{
+                                        position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
+                                        backgroundColor: formData.autoRemind ? '#2563eb' : '#ccc', transition: '.4s', borderRadius: '34px'
+                                    }}></span>
+                                    <span style={{
+                                        position: 'absolute', content: '""', height: '16px', width: '16px', left: '4px', bottom: '4px',
+                                        backgroundColor: 'white', transition: '.4s', borderRadius: '50%',
+                                        transform: formData.autoRemind ? 'translateX(16px)' : 'translateX(0)'
+                                    }}></span>
+                                </label>
+                            </div>
+
+                            {formData.autoRemind && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <label style={{ fontSize: '13px', color: '#475569' }}>Send reminder every</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="30"
+                                        value={formData.reminderFreq}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, reminderFreq: e.target.value }))}
+                                        style={{ width: '60px', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                    />
+                                    <span style={{ fontSize: '13px', color: '#475569' }}>days</span>
+                                </div>
+                            )}
                         </div>
                         <div className={styles.actions}>
                             <button className="btn btn-primary" onClick={() => setStep(2)}>Next: Checklist</button>

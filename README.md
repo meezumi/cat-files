@@ -24,6 +24,27 @@ The application follows a **Monolithic Functions** architecture (per feature dom
 - **Organization Management**: Multi-user support with role-based access (Super Admin, Admin, Contributor, Viewer).
 - **Workflow**: Approve, reject, or comment on uploaded documents.
 - **Templates**: Save request structures for reuse.
+- **Automated Reminders**: Configure automated reminders for overdue requests.
+
+---
+
+# Configuration & Setup
+
+## Automated Reminders (Cron Job)
+
+To enable automated reminders, you must configure a Scheduler in the **Catalyst Console**:
+
+1.  Navigate to **Cloud Scale** > **Functions** > **Cron**.
+2.  Click **Create Cron**.
+3.  **Name**: `ReminderScheduler`
+4.  **Type**: **API Gateway** (or Webhook).
+5.  **Schedule**: Daily (e.g., at 09:00 AM).
+6.  **Method**: `POST`
+7.  **URL**: `https://files-60057482421.development.catalystserverless.in/server/workflow_function/scheduler/process-reminders`
+8.  **Headers**: Content-Type: application/json (Optional)
+9.  Click **Create**.
+
+This will ensure the system checks every day for requests that are due for a reminder.
 
 ---
 
