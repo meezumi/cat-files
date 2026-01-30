@@ -56,7 +56,17 @@ app.post('/', async (req, res) => {
         const catApp = catalyst.initialize(req);
         
         // Get authenticated user ID
-        const userId = req.headers['x-zc-user-id'];
+        let userId = req.headers['x-zc-user-id'];
+        
+        if (!userId) {
+             try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {
+                console.log('SDK Auth Fallback failed', e);
+            }
+        }
+
         if (!userId) {
             return res.status(401).json({ status: 'error', message: 'Authentication required' });
         }

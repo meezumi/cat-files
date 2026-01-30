@@ -26,16 +26,29 @@ app.get('/auth/me', async (req, res) => {
         
         console.log('=== AUTH /me REQUEST ===');
         
+        const catApp = catalyst.initialize(req);
+        
         // Check for Catalyst user headers
-        const userId = req.headers['x-zc-user-id'];
+        let userId = req.headers['x-zc-user-id'];
         console.log('User ID from header:', userId);
         
+        // Fallback: Try SDK retrieval (Fix for local 'catalyst serve' issues)
         if (!userId) {
-            console.log('✗ No user ID in headers - not authenticated');
-            return res.status(200).json({ status: 'success', data: null });
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) {
+                    userId = currentUser.user_id;
+                    console.log('✓ Retrieved User ID via SDK Fallback:', userId);
+                }
+            } catch (sdkErr) {
+                console.log('ℹ SDK Fallback failed:', sdkErr.message);
+            }
         }
         
-        const catApp = catalyst.initialize(req);
+        if (!userId) {
+            console.log('✗ No user ID in headers or SDK - not authenticated');
+            return res.status(200).json({ status: 'success', data: null });
+        }
         
         try {
             // Get full user details from Catalyst User Management
@@ -264,7 +277,14 @@ app.use('/', membersRoutes);
 app.get('/orgs', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
-        const userId = req.headers['x-zc-user-id'];
+        let userId = req.headers['x-zc-user-id'];
+
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
         
         if (!userId) {
             return res.status(401).json({ status: 'error', message: 'Authentication required' });
@@ -327,7 +347,14 @@ app.post('/orgs', async (req, res) => {
         if (!Name) return res.status(400).json({ status: 'error', message: 'Name is required' });
 
         const catApp = catalyst.initialize(req);
-        const userId = req.headers['x-zc-user-id'];
+        let userId = req.headers['x-zc-user-id'];
+
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
         
         if (!userId) {
             return res.status(401).json({ status: 'error', message: 'Authentication required' });
@@ -516,7 +543,15 @@ app.get('/', async (req, res) => {
         const catApp = catalyst.initialize(req);
         
         // Get authenticated user
-        const userId = req.headers['x-zc-user-id'];
+        let userId = req.headers['x-zc-user-id'];
+
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
+
         if (!userId) {
             return res.status(401).json({ status: 'error', message: 'Authentication required' });
         }

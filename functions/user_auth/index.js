@@ -14,7 +14,7 @@ app.get('/me', async (req, res) => {
         let userDetails = null;
         
         try {
-            userDetails = await catApp.user().getCurrentUser();
+            userDetails = await catApp.userManagement().getCurrentUser();
             console.log('User authenticated:', userDetails.email_id);
         } catch (authErr) {
             console.log('No active session:', authErr.message);
