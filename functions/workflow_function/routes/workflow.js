@@ -115,9 +115,36 @@ router.put('/requests/:id', async (req, res) => {
         delete updateData.CREATORID;
         delete updateData.CREATEDTIME;
         
-        // If updating DueDate, ensure valid key
+        // If updating DueDate, ensure valid key and check for reactivation
         if (req.body.dueDate) {
-            updateData.DueDate = new Date(req.body.dueDate).toISOString().split('T')[0];
+            const newDueDate = new Date(req.body.dueDate).toISOString().split('T')[0];
+            updateData.DueDate = newDueDate;
+
+            // Check if we need to reactivate an Expired request
+            try {
+                const query = `SELECT Status FROM Requests WHERE ROWID = '${req.params.id}'`;
+                const result = await catApp.zcql().executeZCQLQuery(query);
+                
+                if (result.length > 0) {
+                    const currentStatus = result[0].Requests.Status;
+                    const today = new Date().toISOString().split('T')[0];
+
+                    if (currentStatus === 'Expired' && newDueDate >= today) {
+                        updateData.Status = 'Sent';
+                        console.log(`Auto-reactivating Expired request ${req.params.id} to Sent`);
+                        
+                        // Add log entry
+                        await catApp.datastore().table('ActivityLog').insertRow({
+                            RequestID: req.params.id,
+                            Action: 'Reactivated',
+                            Actor: 'System', 
+                            Details: `Request reactivated due to extended due date (${newDueDate})`
+                        });
+                    }
+                }
+            } catch (fetchErr) {
+                console.warn("Failed to check status for reactivation:", fetchErr);
+            }
         }
 
         const updatedRow = await catApp.datastore().table('Requests').updateRow(updateData);
