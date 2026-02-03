@@ -64,7 +64,8 @@ const endpoints = [
         category: "Files",
         items: [
             { name: "Upload File", method: "POST", path: "/server/upload_function/", desc: "Upload a file to a specific Item." },
-            { name: "Download File", method: "GET", path: "/server/upload_function/:id", desc: "Download a specific file." }
+            { name: "Download File", method: "GET", path: "/server/upload_function/:id", desc: "Download a specific file." },
+            { name: "Download All Files", method: "GET", path: "/server/upload_function/download-all/:requestId", desc: "Download all files for a request as a ZIP archive." }
         ]
     }
 ];

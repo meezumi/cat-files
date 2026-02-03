@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -18,6 +19,27 @@ function App() {
   return (
     <Router basename="/app">
       <AuthProvider>
+        <Toaster position="bottom-right" toastOptions={{
+            style: {
+                background: '#333',
+                color: '#fff',
+                fontSize: '14px',
+                borderRadius: '8px',
+                padding: '12px 16px',
+            },
+            success: {
+                iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                },
+            },
+            error: {
+                iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                },
+            },
+        }} />
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard/inbox" replace />} />
           <Route path="/index.html" element={<Navigate to="/dashboard/inbox" replace />} />

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -17,8 +18,10 @@ import {
     Archive,
     CheckCircle,
     Check,
-    X
+    X,
+    History
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import styles from './RequestDetail.module.css';
 
 const RequestDetail = () => {
@@ -29,6 +32,7 @@ const RequestDetail = () => {
     const [loading, setLoading] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCompleteModal, setShowCompleteModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('details'); // 'details' | 'activity'
 
     // CC Recipient State
     const [showCCInput, setShowCCInput] = useState(false);
@@ -43,8 +47,43 @@ const RequestDetail = () => {
     const [showReminderModal, setShowReminderModal] = useState(false);
     const [reminderMessage, setReminderMessage] = useState('');
     const [sendingReminder, setSendingReminder] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     // Handlers
+    const handleDownloadAll = async () => {
+        setIsDownloading(true);
+        const toastId = toast.loading("Preparing download...");
+        try {
+            const response = await fetch(`/server/upload_function/download-all/${id}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Request_${id}_Files.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                toast.success("Download started", { id: toastId });
+            } else {
+                let errorMsg = "Unknown error";
+                try {
+                    const err = await response.json();
+                    errorMsg = err.message;
+                } catch (e) {
+                    errorMsg = response.statusText;
+                }
+                toast.error(`Download failed: ${errorMsg}`, { id: toastId });
+            }
+        } catch (error) {
+            console.error("Download Error:", error);
+            toast.error("Failed to download files", { id: toastId });
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     const handleMarkCompleted = () => {
         setShowCompleteModal(true);
     };
@@ -69,15 +108,15 @@ const RequestDetail = () => {
             const result = await res.json();
 
             if (res.ok) {
-                alert("Reminder sent successfully!");
+                toast.success("Reminder sent successfully!");
                 setShowReminderModal(false);
                 setReminderMessage('');
             } else {
-                alert(`Failed to send reminder: ${result.message}`);
+                toast.error(`Failed to send reminder: ${result.message}`);
             }
         } catch (err) {
             console.error("Failed to send reminder", err);
-            alert("An error occurred while sending the reminder.");
+            toast.error("An error occurred while sending the reminder.");
         } finally {
             setSendingReminder(false);
         }
@@ -102,8 +141,9 @@ const RequestDetail = () => {
                 setCcName('');
                 setCcEmail('');
                 setShowCCInput(false);
+                toast.success("CC Recipient added");
             } else {
-                alert('Failed to add CC: ' + result.message);
+                toast.error('Failed to add CC: ' + result.message);
             }
         } catch (err) {
             console.error('Add CC Error:', err);
@@ -124,13 +164,14 @@ const RequestDetail = () => {
                     ...prev,
                     dueDate: dueDate
                 }));
+                toast.success("Due date updated");
                 setIsEditingDueDate(false);
             } else {
-                alert('Failed to update due date: ' + result.message);
+                toast.error('Failed to update due date: ' + result.message);
             }
         } catch (err) {
             console.error("Update Due Date Error:", err);
-            alert("Failed to update due date");
+            toast.error("Failed to update due date");
         }
     };
 
@@ -178,10 +219,12 @@ const RequestDetail = () => {
             });
 
             if (!response.ok) throw new Error("Update failed");
+            toast.success("Item status updated");
 
         } catch (error) {
             console.error("Status update error:", error);
-            alert("Failed to update status");
+            toast.error("Failed to update status");
+            // Revert optimistic update (TODO: Implement proper revert)
         }
     };
 
@@ -229,11 +272,12 @@ const RequestDetail = () => {
             });
 
             if (res.ok) {
-                alert("Saved as Template successfully!");
+                toast.success("Saved as Template successfully!");
                 setShowDropdown(false);
             }
         } catch (err) {
             console.error("Failed to save template:", err);
+            toast.error("Failed to save template");
         }
     };
 
@@ -246,6 +290,7 @@ const RequestDetail = () => {
         // origin + /app/p/ + requestID
         const url = `${window.location.origin}/app/p/${id}`;
         navigator.clipboard.writeText(url);
+        toast.success("Guest link copied to clipboard");
         setShowShareModal(true);
         setShowDropdown(false);
     };
@@ -279,6 +324,10 @@ const RequestDetail = () => {
                                     <button className={styles.actionBtn} onClick={handleShare}>
                                         <Share2 size={16} style={{ marginRight: 6 }} />
                                         Share Request
+                                    </button>
+                                    <button className={styles.actionBtn} onClick={handleDownloadAll} disabled={isDownloading}>
+                                        <Download size={16} style={{ marginRight: 6 }} />
+                                        Download All
                                     </button>
                                     <button className={styles.actionBtn} onClick={handleSendReminder}>
                                         <Clock size={16} style={{ marginRight: 6 }} />
@@ -402,101 +451,151 @@ const RequestDetail = () => {
             </header>
 
             <div className={styles.content}>
-                {/* Recipients Section */}
-                <div className={styles.recipientsSection}>
-                    <h2>Recipients</h2>
-                    <div className={styles.recipientsList}>
-                        {/* Primary Recipient */}
-                        <div className={styles.recipientPill}>
-                            <span title={request.recipient?.email}>{request.recipient?.name}</span>
-                            <span style={{ fontSize: 11, opacity: 0.7 }}>Primary</span>
-                        </div>
-
-                        {/* CC Recipients */}
-                        {request.ccRecipients && request.ccRecipients.map((cc, idx) => (
-                            <div key={idx} className={`${styles.recipientPill} ${styles.secondaryPill}`}>
-                                <span title={cc.email}>{cc.name}</span>
-                                <span style={{ fontSize: 11, opacity: 0.7 }}>CC</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {!showCCInput ? (
-                        !isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
-                            <button className="btn btn-sm btn-outline" onClick={() => setShowCCInput(true)}>
-                                + Add CC Recipient
-                            </button>
-                        )
-                    ) : (
-                        <div className={styles.ccInputRow}>
-                            <input
-                                className={styles.ccInput}
-                                placeholder="Name"
-                                value={ccName}
-                                onChange={(e) => setCcName(e.target.value)}
-                            />
-                            <input
-                                className={styles.ccInput}
-                                placeholder="Email"
-                                value={ccEmail}
-                                onChange={(e) => setCcEmail(e.target.value)}
-                            />
-                            <div className={styles.ccActions}>
-                                <button className="btn btn-sm btn-primary" onClick={handleAddCC} disabled={!ccName || !ccEmail}>Add</button>
-                                <button className="btn btn-sm" onClick={() => setShowCCInput(false)}>Cancel</button>
-                            </div>
-                        </div>
-                    )}
+                <div className={styles.tabContainer}>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'details' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('details')}
+                    >
+                        Checklist Details
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('activity')}
+                    >
+                        Before Activity Log
+                    </button>
                 </div>
 
-                <h2>Checklist Items</h2>
-                <div className={styles.checklist}>
-                    {request.sections && request.sections.map(section => (
-                        <div key={section.id} className={styles.section}>
-                            <h3 className={styles.sectionTitle}>{section.title}</h3>
-                            {section.items && section.items.map(item => (
-                                <div key={item.id} className={styles.itemCard}>
-                                    <div className={styles.itemHeader}>
-                                        <h3>{item.title}</h3>
-                                        <div className={styles.itemActions}>
-                                            <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
-                                                {item.status}
-                                            </span>
+                {activeTab === 'details' ? (
+                    <>
+                        <div className={styles.recipientsSection}>
+                            <h2>Recipients</h2>
+                            <div className={styles.recipientsList}>
+                                {/* Primary Recipient */}
+                                <div className={styles.recipientPill}>
+                                    <span title={request.recipient?.email}>{request.recipient?.name}</span>
+                                    <span style={{ fontSize: 11, opacity: 0.7 }}>Primary</span>
+                                </div>
 
-                                            {/* Approve/Reject visible ONLY if file is uploaded (Not Pending) and not already decided */}
-                                            {item.status !== 'Approved' && item.status !== 'Returned' && item.status !== 'Pending' && (
-                                                <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
-                                                    <button
-                                                        className={styles.approveBtn}
-                                                        onClick={() => handleStatusChange(item.id, 'Approved')}
-                                                        title="Approve Item"
-                                                    >
-                                                        <Check size={14} />
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        className={styles.rejectBtn}
-                                                        onClick={() => handleStatusChange(item.id, 'Returned')}
-                                                        title="Reject/Return Item"
-                                                    >
-                                                        <X size={14} />
-                                                        Reject
-                                                    </button>
+                                {/* CC Recipients */}
+                                {request.ccRecipients && request.ccRecipients.map((cc, idx) => (
+                                    <div key={idx} className={`${styles.recipientPill} ${styles.secondaryPill}`}>
+                                        <span title={cc.email}>{cc.name}</span>
+                                        <span style={{ fontSize: 11, opacity: 0.7 }}>CC</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {!showCCInput ? (
+                                !isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
+                                    <button className="btn btn-sm btn-outline" onClick={() => setShowCCInput(true)}>
+                                        + Add CC Recipient
+                                    </button>
+                                )
+                            ) : (
+                                <div className={styles.ccInputRow}>
+                                    <input
+                                        className={styles.ccInput}
+                                        placeholder="Name"
+                                        value={ccName}
+                                        onChange={(e) => setCcName(e.target.value)}
+                                    />
+                                    <input
+                                        className={styles.ccInput}
+                                        placeholder="Email"
+                                        value={ccEmail}
+                                        onChange={(e) => setCcEmail(e.target.value)}
+                                    />
+                                    <div className={styles.ccActions}>
+                                        <button className="btn btn-sm btn-primary" onClick={handleAddCC} disabled={!ccName || !ccEmail}>Add</button>
+                                        <button className="btn btn-sm" onClick={() => setShowCCInput(false)}>Cancel</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <h2>Checklist Items</h2>
+                        <div className={styles.checklist}>
+                            {request.sections && request.sections.map(section => (
+                                <div key={section.id} className={styles.section}>
+                                    <h3 className={styles.sectionTitle}>{section.title}</h3>
+                                    {section.items && section.items.map(item => (
+                                        <div key={item.id} className={styles.itemCard}>
+                                            <div className={styles.itemHeader}>
+                                                <h3>{item.title}</h3>
+                                                <div className={styles.itemActions}>
+                                                    <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
+                                                        {item.status}
+                                                    </span>
+
+                                                    {/* Approve/Reject visible ONLY if file is uploaded (Not Pending) and not already decided */}
+                                                    {item.status !== 'Approved' && item.status !== 'Returned' && item.status !== 'Pending' && (
+                                                        <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
+                                                            <button
+                                                                className={styles.approveBtn}
+                                                                onClick={() => handleStatusChange(item.id, 'Approved')}
+                                                                title="Approve Item"
+                                                            >
+                                                                <Check size={14} />
+                                                                Approve
+                                                            </button>
+                                                            <button
+                                                                className={styles.rejectBtn}
+                                                                onClick={() => handleStatusChange(item.id, 'Returned')}
+                                                                title="Reject/Return Item"
+                                                            >
+                                                                <X size={14} />
+                                                                Reject
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {/* Render File Info if exists */}
+                                            {item.status !== 'Pending' && item.fileId && (
+                                                <div className={styles.fileInfo}>
+                                                    <FilePreview fileId={item.fileId} fileName={item.fileName} folderId={item.folderId} />
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-                                    {/* Render File Info if exists */}
-                                    {item.status !== 'Pending' && item.fileId && (
-                                        <div className={styles.fileInfo}>
-                                            <FilePreview fileId={item.fileId} fileName={item.fileName} folderId={item.folderId} />
-                                        </div>
-                                    )}
+                                    ))}
                                 </div>
                             ))}
                         </div>
-                    ))}
-                </div>
+                    </>
+                ) : (
+                    <div className={styles.activityLogContainer}>
+                        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <History size={18} />
+                            Activity History
+                        </h2>
+                        {request.activityLogs && request.activityLogs.length > 0 ? (
+                            <div className={styles.timeline}>
+                                {request.activityLogs.map((log, index) => (
+                                    <div key={index} className={styles.timelineItem}>
+                                        <div className={styles.timelineIcon}>
+                                            <div className={styles.dot} />
+                                        </div>
+                                        <div className={styles.timelineContent}>
+                                            <p className={styles.logDetail}>{log.Details}</p>
+                                            <div className={styles.logMeta}>
+                                                <span className={styles.logAction}>{log.Action}</span>
+                                                <span className={styles.bullet}>•</span>
+                                                <span>{log.Actor}</span>
+                                                <span className={styles.bullet}>•</span>
+                                                <span>
+                                                    {formatDistanceToNow(new Date(log.CREATEDTIME), { addSuffix: true })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className={styles.emptyState}>No activity recorded yet.</div>
+                        )}
+                    </div>
+                )}
             </div>
             <Modal
                 isOpen={showCompleteModal}
@@ -570,11 +669,14 @@ const RequestDetail = () => {
                 </div>
             </Modal>
         </div>
+
     );
 };
 
 // Real File Preview Component
 const FilePreview = ({ fileId, fileName, folderId }) => {
+    const [showPreview, setShowPreview] = useState(false);
+
     // Construct Download URL
     // Since we are using function proxying: 
     // /server/upload_function/:id (GET)
@@ -583,18 +685,87 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
     // Display filename if available, otherwise fall back to showing ID
     const displayName = fileName || `Document (ID: ${fileId})`;
 
+    const getFileExtension = (name) => {
+        return name ? name.split('.').pop().toLowerCase() : '';
+    };
+
+    const isPreviewable = (name) => {
+        const ext = getFileExtension(name);
+        return ['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(ext);
+    };
+
+    const handlePreview = (e) => {
+        e.preventDefault();
+        setShowPreview(true);
+    };
+
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
-            <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
-            <span>{displayName}</span>
-            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-                <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
-                <span style={{ marginLeft: 4 }}>View</span>
-            </a>
-            <a href={downloadUrl} download style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-                <Download size={14} style={{ cursor: 'pointer', marginLeft: 8 }} />
-            </a>
-        </div>
+        <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
+                <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
+                <span>{displayName}</span>
+
+                {isPreviewable(fileName) ? (
+                    <button
+                        onClick={handlePreview}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'inherit',
+                            textDecoration: 'none',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            fontFamily: 'inherit',
+                            fontSize: 'inherit'
+                        }}
+                    >
+                        <ExternalLink size={14} style={{ marginLeft: 4 }} />
+                        <span style={{ marginLeft: 4 }}>Preview</span>
+                    </button>
+                ) : (
+                    <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                        <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
+                        <span style={{ marginLeft: 4 }}>View</span>
+                    </a>
+                )}
+
+                <a href={downloadUrl} download style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                    <Download size={14} style={{ cursor: 'pointer', marginLeft: 8 }} />
+                </a>
+            </div>
+
+            {/* Preview Modal */}
+            <Modal
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                title={`Preview: ${displayName}`}
+                size="large" // Ensure your Modal supports this or add styles
+                actions={
+                    <a href={downloadUrl} download className="btn btn-primary">
+                        <Download size={14} style={{ marginRight: 8 }} />
+                        Download
+                    </a>
+                }
+            >
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: '#f8fafc', borderRadius: '8px' }}>
+                    {getFileExtension(fileName) === 'pdf' ? (
+                        <iframe
+                            src={`${downloadUrl}#toolbar=0`}
+                            title={displayName}
+                            style={{ width: '100%', height: '600px', border: 'none' }}
+                        />
+                    ) : (
+                        <img
+                            src={downloadUrl}
+                            alt={displayName}
+                            style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain' }}
+                        />
+                    )}
+                </div>
+            </Modal>
+        </>
     );
 };
 
