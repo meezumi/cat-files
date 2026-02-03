@@ -630,11 +630,14 @@ const RequestDetail = () => {
                 </div>
             </Modal>
         </div>
+
     );
 };
 
 // Real File Preview Component
 const FilePreview = ({ fileId, fileName, folderId }) => {
+    const [showPreview, setShowPreview] = useState(false);
+
     // Construct Download URL
     // Since we are using function proxying: 
     // /server/upload_function/:id (GET)
@@ -643,18 +646,87 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
     // Display filename if available, otherwise fall back to showing ID
     const displayName = fileName || `Document (ID: ${fileId})`;
 
+    const getFileExtension = (name) => {
+        return name ? name.split('.').pop().toLowerCase() : '';
+    };
+
+    const isPreviewable = (name) => {
+        const ext = getFileExtension(name);
+        return ['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(ext);
+    };
+
+    const handlePreview = (e) => {
+        e.preventDefault();
+        setShowPreview(true);
+    };
+
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
-            <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
-            <span>{displayName}</span>
-            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-                <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
-                <span style={{ marginLeft: 4 }}>View</span>
-            </a>
-            <a href={downloadUrl} download style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-                <Download size={14} style={{ cursor: 'pointer', marginLeft: 8 }} />
-            </a>
-        </div>
+        <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
+                <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
+                <span>{displayName}</span>
+
+                {isPreviewable(fileName) ? (
+                    <button
+                        onClick={handlePreview}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'inherit',
+                            textDecoration: 'none',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            fontFamily: 'inherit',
+                            fontSize: 'inherit'
+                        }}
+                    >
+                        <ExternalLink size={14} style={{ marginLeft: 4 }} />
+                        <span style={{ marginLeft: 4 }}>Preview</span>
+                    </button>
+                ) : (
+                    <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                        <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
+                        <span style={{ marginLeft: 4 }}>View</span>
+                    </a>
+                )}
+
+                <a href={downloadUrl} download style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
+                    <Download size={14} style={{ cursor: 'pointer', marginLeft: 8 }} />
+                </a>
+            </div>
+
+            {/* Preview Modal */}
+            <Modal
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                title={`Preview: ${displayName}`}
+                size="large" // Ensure your Modal supports this or add styles
+                actions={
+                    <a href={downloadUrl} download className="btn btn-primary">
+                        <Download size={14} style={{ marginRight: 8 }} />
+                        Download
+                    </a>
+                }
+            >
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: '#f8fafc', borderRadius: '8px' }}>
+                    {getFileExtension(fileName) === 'pdf' ? (
+                        <iframe
+                            src={`${downloadUrl}#toolbar=0`}
+                            title={displayName}
+                            style={{ width: '100%', height: '600px', border: 'none' }}
+                        />
+                    ) : (
+                        <img
+                            src={downloadUrl}
+                            alt={displayName}
+                            style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain' }}
+                        />
+                    )}
+                </div>
+            </Modal>
+        </>
     );
 };
 
