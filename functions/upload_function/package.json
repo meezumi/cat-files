@@ -4,6 +4,7 @@
 	"main": "index.js",
 	"author": "harsh.kulkarni@itotcloud.in",
 	"dependencies": {
+		"adm-zip": "^0.5.16",
 		"cors": "^2.8.5",
 		"express": "^4.22.1",
 		"form-data": "^4.0.5",

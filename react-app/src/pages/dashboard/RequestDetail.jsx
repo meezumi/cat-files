@@ -47,8 +47,43 @@ const RequestDetail = () => {
     const [showReminderModal, setShowReminderModal] = useState(false);
     const [reminderMessage, setReminderMessage] = useState('');
     const [sendingReminder, setSendingReminder] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     // Handlers
+    const handleDownloadAll = async () => {
+        setIsDownloading(true);
+        const toastId = toast.loading("Preparing download...");
+        try {
+            const response = await fetch(`/server/upload_function/download-all/${id}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Request_${id}_Files.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                toast.success("Download started", { id: toastId });
+            } else {
+                let errorMsg = "Unknown error";
+                try {
+                    const err = await response.json();
+                    errorMsg = err.message;
+                } catch (e) {
+                    errorMsg = response.statusText;
+                }
+                toast.error(`Download failed: ${errorMsg}`, { id: toastId });
+            }
+        } catch (error) {
+            console.error("Download Error:", error);
+            toast.error("Failed to download files", { id: toastId });
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     const handleMarkCompleted = () => {
         setShowCompleteModal(true);
     };
@@ -289,6 +324,10 @@ const RequestDetail = () => {
                                     <button className={styles.actionBtn} onClick={handleShare}>
                                         <Share2 size={16} style={{ marginRight: 6 }} />
                                         Share Request
+                                    </button>
+                                    <button className={styles.actionBtn} onClick={handleDownloadAll} disabled={isDownloading}>
+                                        <Download size={16} style={{ marginRight: 6 }} />
+                                        Download All
                                     </button>
                                     <button className={styles.actionBtn} onClick={handleSendReminder}>
                                         <Clock size={16} style={{ marginRight: 6 }} />
