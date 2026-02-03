@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -72,15 +73,15 @@ const RequestDetail = () => {
             const result = await res.json();
 
             if (res.ok) {
-                alert("Reminder sent successfully!");
+                toast.success("Reminder sent successfully!");
                 setShowReminderModal(false);
                 setReminderMessage('');
             } else {
-                alert(`Failed to send reminder: ${result.message}`);
+                toast.error(`Failed to send reminder: ${result.message}`);
             }
         } catch (err) {
             console.error("Failed to send reminder", err);
-            alert("An error occurred while sending the reminder.");
+            toast.error("An error occurred while sending the reminder.");
         } finally {
             setSendingReminder(false);
         }
@@ -105,8 +106,9 @@ const RequestDetail = () => {
                 setCcName('');
                 setCcEmail('');
                 setShowCCInput(false);
+                toast.success("CC Recipient added");
             } else {
-                alert('Failed to add CC: ' + result.message);
+                toast.error('Failed to add CC: ' + result.message);
             }
         } catch (err) {
             console.error('Add CC Error:', err);
@@ -127,13 +129,14 @@ const RequestDetail = () => {
                     ...prev,
                     dueDate: dueDate
                 }));
+                toast.success("Due date updated");
                 setIsEditingDueDate(false);
             } else {
-                alert('Failed to update due date: ' + result.message);
+                toast.error('Failed to update due date: ' + result.message);
             }
         } catch (err) {
             console.error("Update Due Date Error:", err);
-            alert("Failed to update due date");
+            toast.error("Failed to update due date");
         }
     };
 
@@ -181,10 +184,12 @@ const RequestDetail = () => {
             });
 
             if (!response.ok) throw new Error("Update failed");
+            toast.success("Item status updated");
 
         } catch (error) {
             console.error("Status update error:", error);
-            alert("Failed to update status");
+            toast.error("Failed to update status");
+            // Revert optimistic update (TODO: Implement proper revert)
         }
     };
 
@@ -232,11 +237,12 @@ const RequestDetail = () => {
             });
 
             if (res.ok) {
-                alert("Saved as Template successfully!");
+                toast.success("Saved as Template successfully!");
                 setShowDropdown(false);
             }
         } catch (err) {
             console.error("Failed to save template:", err);
+            toast.error("Failed to save template");
         }
     };
 
@@ -249,6 +255,7 @@ const RequestDetail = () => {
         // origin + /app/p/ + requestID
         const url = `${window.location.origin}/app/p/${id}`;
         navigator.clipboard.writeText(url);
+        toast.success("Guest link copied to clipboard");
         setShowShareModal(true);
         setShowDropdown(false);
     };
