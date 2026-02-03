@@ -739,6 +739,11 @@ app.get('/:id', async (req, res) => {
             }
         });
 
+        // 4. Fetch Activity Logs
+        const logQuery = `SELECT * FROM ActivityLog WHERE RequestID = '${requestId}' ORDER BY CREATEDTIME DESC`;
+        const logResult = await catApp.zcql().executeZCQLQuery(logQuery);
+        const activityLogs = logResult.map(l => l.ActivityLog);
+
         const requestData = {
             id: r.ROWID,
             recipient: { name: r.RecipientName, email: r.RecipientEmail },
@@ -751,7 +756,8 @@ app.get('/:id', async (req, res) => {
             progress: `${completedItems}/${totalItems}`,
             date: r.CREATEDTIME,
             dueDate: r.DueDate,
-            sections: sections
+            sections: sections,
+            activityLogs: activityLogs // Added Logs
         };
 
         res.status(200).json({ status: 'success', data: requestData });

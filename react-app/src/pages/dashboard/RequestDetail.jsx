@@ -17,8 +17,10 @@ import {
     Archive,
     CheckCircle,
     Check,
-    X
+    X,
+    History
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import styles from './RequestDetail.module.css';
 
 const RequestDetail = () => {
@@ -29,6 +31,7 @@ const RequestDetail = () => {
     const [loading, setLoading] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCompleteModal, setShowCompleteModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('details'); // 'details' | 'activity'
 
     // CC Recipient State
     const [showCCInput, setShowCCInput] = useState(false);
@@ -402,101 +405,151 @@ const RequestDetail = () => {
             </header>
 
             <div className={styles.content}>
-                {/* Recipients Section */}
-                <div className={styles.recipientsSection}>
-                    <h2>Recipients</h2>
-                    <div className={styles.recipientsList}>
-                        {/* Primary Recipient */}
-                        <div className={styles.recipientPill}>
-                            <span title={request.recipient?.email}>{request.recipient?.name}</span>
-                            <span style={{ fontSize: 11, opacity: 0.7 }}>Primary</span>
-                        </div>
-
-                        {/* CC Recipients */}
-                        {request.ccRecipients && request.ccRecipients.map((cc, idx) => (
-                            <div key={idx} className={`${styles.recipientPill} ${styles.secondaryPill}`}>
-                                <span title={cc.email}>{cc.name}</span>
-                                <span style={{ fontSize: 11, opacity: 0.7 }}>CC</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {!showCCInput ? (
-                        !isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
-                            <button className="btn btn-sm btn-outline" onClick={() => setShowCCInput(true)}>
-                                + Add CC Recipient
-                            </button>
-                        )
-                    ) : (
-                        <div className={styles.ccInputRow}>
-                            <input
-                                className={styles.ccInput}
-                                placeholder="Name"
-                                value={ccName}
-                                onChange={(e) => setCcName(e.target.value)}
-                            />
-                            <input
-                                className={styles.ccInput}
-                                placeholder="Email"
-                                value={ccEmail}
-                                onChange={(e) => setCcEmail(e.target.value)}
-                            />
-                            <div className={styles.ccActions}>
-                                <button className="btn btn-sm btn-primary" onClick={handleAddCC} disabled={!ccName || !ccEmail}>Add</button>
-                                <button className="btn btn-sm" onClick={() => setShowCCInput(false)}>Cancel</button>
-                            </div>
-                        </div>
-                    )}
+                <div className={styles.tabContainer}>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'details' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('details')}
+                    >
+                        Checklist Details
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('activity')}
+                    >
+                        Before Activity Log
+                    </button>
                 </div>
 
-                <h2>Checklist Items</h2>
-                <div className={styles.checklist}>
-                    {request.sections && request.sections.map(section => (
-                        <div key={section.id} className={styles.section}>
-                            <h3 className={styles.sectionTitle}>{section.title}</h3>
-                            {section.items && section.items.map(item => (
-                                <div key={item.id} className={styles.itemCard}>
-                                    <div className={styles.itemHeader}>
-                                        <h3>{item.title}</h3>
-                                        <div className={styles.itemActions}>
-                                            <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
-                                                {item.status}
-                                            </span>
+                {activeTab === 'details' ? (
+                    <>
+                        <div className={styles.recipientsSection}>
+                            <h2>Recipients</h2>
+                            <div className={styles.recipientsList}>
+                                {/* Primary Recipient */}
+                                <div className={styles.recipientPill}>
+                                    <span title={request.recipient?.email}>{request.recipient?.name}</span>
+                                    <span style={{ fontSize: 11, opacity: 0.7 }}>Primary</span>
+                                </div>
 
-                                            {/* Approve/Reject visible ONLY if file is uploaded (Not Pending) and not already decided */}
-                                            {item.status !== 'Approved' && item.status !== 'Returned' && item.status !== 'Pending' && (
-                                                <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
-                                                    <button
-                                                        className={styles.approveBtn}
-                                                        onClick={() => handleStatusChange(item.id, 'Approved')}
-                                                        title="Approve Item"
-                                                    >
-                                                        <Check size={14} />
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        className={styles.rejectBtn}
-                                                        onClick={() => handleStatusChange(item.id, 'Returned')}
-                                                        title="Reject/Return Item"
-                                                    >
-                                                        <X size={14} />
-                                                        Reject
-                                                    </button>
+                                {/* CC Recipients */}
+                                {request.ccRecipients && request.ccRecipients.map((cc, idx) => (
+                                    <div key={idx} className={`${styles.recipientPill} ${styles.secondaryPill}`}>
+                                        <span title={cc.email}>{cc.name}</span>
+                                        <span style={{ fontSize: 11, opacity: 0.7 }}>CC</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {!showCCInput ? (
+                                !isViewer() && request.status !== 'Completed' && request.status !== 'Archived' && (
+                                    <button className="btn btn-sm btn-outline" onClick={() => setShowCCInput(true)}>
+                                        + Add CC Recipient
+                                    </button>
+                                )
+                            ) : (
+                                <div className={styles.ccInputRow}>
+                                    <input
+                                        className={styles.ccInput}
+                                        placeholder="Name"
+                                        value={ccName}
+                                        onChange={(e) => setCcName(e.target.value)}
+                                    />
+                                    <input
+                                        className={styles.ccInput}
+                                        placeholder="Email"
+                                        value={ccEmail}
+                                        onChange={(e) => setCcEmail(e.target.value)}
+                                    />
+                                    <div className={styles.ccActions}>
+                                        <button className="btn btn-sm btn-primary" onClick={handleAddCC} disabled={!ccName || !ccEmail}>Add</button>
+                                        <button className="btn btn-sm" onClick={() => setShowCCInput(false)}>Cancel</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <h2>Checklist Items</h2>
+                        <div className={styles.checklist}>
+                            {request.sections && request.sections.map(section => (
+                                <div key={section.id} className={styles.section}>
+                                    <h3 className={styles.sectionTitle}>{section.title}</h3>
+                                    {section.items && section.items.map(item => (
+                                        <div key={item.id} className={styles.itemCard}>
+                                            <div className={styles.itemHeader}>
+                                                <h3>{item.title}</h3>
+                                                <div className={styles.itemActions}>
+                                                    <span className={`${styles.badge} ${styles[item.status.toLowerCase()]}`}>
+                                                        {item.status}
+                                                    </span>
+
+                                                    {/* Approve/Reject visible ONLY if file is uploaded (Not Pending) and not already decided */}
+                                                    {item.status !== 'Approved' && item.status !== 'Returned' && item.status !== 'Pending' && (
+                                                        <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
+                                                            <button
+                                                                className={styles.approveBtn}
+                                                                onClick={() => handleStatusChange(item.id, 'Approved')}
+                                                                title="Approve Item"
+                                                            >
+                                                                <Check size={14} />
+                                                                Approve
+                                                            </button>
+                                                            <button
+                                                                className={styles.rejectBtn}
+                                                                onClick={() => handleStatusChange(item.id, 'Returned')}
+                                                                title="Reject/Return Item"
+                                                            >
+                                                                <X size={14} />
+                                                                Reject
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {/* Render File Info if exists */}
+                                            {item.status !== 'Pending' && item.fileId && (
+                                                <div className={styles.fileInfo}>
+                                                    <FilePreview fileId={item.fileId} fileName={item.fileName} folderId={item.folderId} />
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-                                    {/* Render File Info if exists */}
-                                    {item.status !== 'Pending' && item.fileId && (
-                                        <div className={styles.fileInfo}>
-                                            <FilePreview fileId={item.fileId} fileName={item.fileName} folderId={item.folderId} />
-                                        </div>
-                                    )}
+                                    ))}
                                 </div>
                             ))}
                         </div>
-                    ))}
-                </div>
+                    </>
+                ) : (
+                    <div className={styles.activityLogContainer}>
+                        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <History size={18} />
+                            Activity History
+                        </h2>
+                        {request.activityLogs && request.activityLogs.length > 0 ? (
+                            <div className={styles.timeline}>
+                                {request.activityLogs.map((log, index) => (
+                                    <div key={index} className={styles.timelineItem}>
+                                        <div className={styles.timelineIcon}>
+                                            <div className={styles.dot} />
+                                        </div>
+                                        <div className={styles.timelineContent}>
+                                            <p className={styles.logDetail}>{log.Details}</p>
+                                            <div className={styles.logMeta}>
+                                                <span className={styles.logAction}>{log.Action}</span>
+                                                <span className={styles.bullet}>•</span>
+                                                <span>{log.Actor}</span>
+                                                <span className={styles.bullet}>•</span>
+                                                <span>
+                                                    {formatDistanceToNow(new Date(log.CREATEDTIME), { addSuffix: true })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className={styles.emptyState}>No activity recorded yet.</div>
+                        )}
+                    </div>
+                )}
             </div>
             <Modal
                 isOpen={showCompleteModal}
