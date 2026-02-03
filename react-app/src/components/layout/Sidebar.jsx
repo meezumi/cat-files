@@ -18,7 +18,8 @@ import {
     Settings,
     Edit2,
     MoreHorizontal,
-    X
+    X,
+    Book
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -247,6 +248,18 @@ const Sidebar = () => {
                     </NavLink>
                 </div>
             </nav>
+
+            {/* API Documentation Link for Devs/Reviewers */}
+            <div style={{ padding: '0 16px 16px' }}>
+                <NavLink
+                    to="/api/v1/documentation"
+                    className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+                    style={{ color: '#6366f1' }}
+                >
+                    <Book size={18} />
+                    <span>API Docs</span>
+                </NavLink>
+            </div>
 
             {/* User Profile Section */}
             <div style={{ padding: '24px', borderTop: '1px solid var(--color-border)' }}>
