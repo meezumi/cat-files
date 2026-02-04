@@ -178,7 +178,8 @@ export const AuthProvider = ({ children }) => {
       getUserRole,
       canManageMembers,
       canViewAllRequests,
-      isViewer
+      isViewer,
+      isSuperAdmin: () => getUserRole() === 'Super Admin'
     }}>
       {children}
     </AuthContext.Provider>

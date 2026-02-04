@@ -51,10 +51,16 @@
 
 .metaRow {
     display: flex;
+    align-items: center;
     gap: 24px;
     color: var(--color-text-muted);
     font-size: 14px;
     padding-left: 52px; /* Align with title */
+}
+
+.metaItem strong {
+    margin-right: 6px;
+    color: var(--color-text-main);
 }
 
 .metaItem {

@@ -3,15 +3,19 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import MembersTab from '../../components/organisation/MembersTab';
-import { ArrowLeft, Building2, User, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building2, User, Plus, Trash2, Edit, Save, X } from 'lucide-react';
 import styles from './OrganisationDetail.module.css';
+import { useAuth } from '../../context/AuthContext';
 
 const OrganisationDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const { isSuperAdmin } = useAuth();
     const [org, setOrg] = useState(null);
     const [contacts, setContacts] = useState([]);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({});
     const [loading, setLoading] = useState(true);
 
     // Support ?tab=members query param
@@ -37,7 +41,10 @@ const OrganisationDetail = () => {
                 const orgData = await orgRes.json();
                 const contactData = await contactRes.json();
 
-                if (orgData.status === 'success') setOrg(orgData.data);
+                if (orgData.status === 'success') {
+                    setOrg(orgData.data);
+                    setEditForm(orgData.data);
+                }
                 if (contactData.status === 'success') setContacts(contactData.data);
             } catch (error) {
                 console.error("Failed to load data", error);
@@ -47,6 +54,26 @@ const OrganisationDetail = () => {
         };
         fetchData();
     }, [id]);
+
+    const handleSaveOrg = async () => {
+        try {
+            const res = await fetch(`/server/fetch_requests_function/orgs/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editForm)
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                setOrg({ ...org, ...editForm });
+                setIsEditing(false);
+            } else {
+                alert("Failed to update: " + result.message);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error updating organisation");
+        }
+    };
 
     const handleAddContact = async () => {
         if (!contactForm.Name || !contactForm.Email) return alert("Name and Email are required");
@@ -102,28 +129,82 @@ const OrganisationDetail = () => {
             <div className={styles.grid}>
                 {/* Org Info Card */}
                 <div className={styles.card} style={{ height: 'fit-content' }}>
-                    <div className={styles.cardHeader}>
+                    <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3>Organisation Details</h3>
+                        {isSuperAdmin() && !isEditing && (
+                            <button className="btn btn-sm" onClick={() => setIsEditing(true)}>
+                                <Edit size={14} style={{ marginRight: 6 }} /> Edit
+                            </button>
+                        )}
+                        {isEditing && (
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button className="btn btn-sm" onClick={() => setIsEditing(false)}>
+                                    <X size={14} style={{ marginRight: 6 }} /> Cancel
+                                </button>
+                                <button className="btn btn-sm btn-primary" onClick={handleSaveOrg}>
+                                    <Save size={14} style={{ marginRight: 6 }} /> Save
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
                         <div className={styles.orgIcon}>
                             <Building2 size={32} />
                         </div>
-                        <div>
-                            <h3 style={{ margin: '0 0 4px 0', fontSize: 18 }}>{org.Name}</h3>
-                            <a href={`http://${org.Domain}`} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: '#3b82f6' }}>{org.Domain || 'No Domain'}</a>
+                        <div style={{ flex: 1 }}>
+                            {isEditing ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <input
+                                        className="form-input"
+                                        value={editForm.Name || ''}
+                                        onChange={e => setEditForm({ ...editForm, Name: e.target.value })}
+                                        style={{ fontSize: 18, fontWeight: 'bold', width: '100%', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                        placeholder="Organisation Name"
+                                    />
+                                    <input
+                                        className="form-input"
+                                        value={editForm.Domain || ''}
+                                        onChange={e => setEditForm({ ...editForm, Domain: e.target.value })}
+                                        placeholder="Domain"
+                                        style={{ fontSize: 14, width: '100%', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <h3 style={{ margin: '0 0 4px 0', fontSize: 18 }}>{org.Name}</h3>
+                                    <a href={`http://${org.Domain}`} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: '#3b82f6' }}>{org.Domain || 'No Domain'}</a>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className={styles.infoList}>
                         <div className={styles.row}>
                             <span className={styles.label}>Phone:</span>
-                            <span>{org.Phone || '--'}</span>
+                            {isEditing ? (
+                                <input
+                                    className="form-input"
+                                    value={editForm.Phone || ''}
+                                    onChange={e => setEditForm({ ...editForm, Phone: e.target.value })}
+                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                />
+                            ) : (
+                                <span>{org.Phone || '--'}</span>
+                            )}
                         </div>
                         <div className={styles.row}>
                             <span className={styles.label}>Address:</span>
-                            <span>{org.Address || '--'}</span>
+                            {isEditing ? (
+                                <input
+                                    className="form-input"
+                                    value={editForm.Address || ''}
+                                    onChange={e => setEditForm({ ...editForm, Address: e.target.value })}
+                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                />
+                            ) : (
+                                <span>{org.Address || '--'}</span>
+                            )}
                         </div>
                     </div>
                 </div>

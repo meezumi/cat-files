@@ -281,7 +281,7 @@ const RequestDetail = () => {
         }
     };
 
-    const [showShareModal, setShowShareModal] = useState(false);
+    // ...
 
     // ...
 
@@ -290,8 +290,15 @@ const RequestDetail = () => {
         // origin + /app/p/ + requestID
         const url = `${window.location.origin}/app/p/${id}`;
         navigator.clipboard.writeText(url);
-        toast.success("Guest link copied to clipboard");
-        setShowShareModal(true);
+        toast.success(
+            <div>
+                <div>Guest link copied to clipboard!</div>
+                <div style={{ fontSize: '13px', opacity: 0.8, marginTop: '4px' }}>
+                    You can now share it with the recipient.
+                </div>
+            </div>,
+            { duration: 4000 }
+        );
         setShowDropdown(false);
     };
 
@@ -614,23 +621,7 @@ const RequestDetail = () => {
                 <p>This indicates that all necessary documents have been received and reviewed.</p>
             </Modal>
 
-            <Modal
-                isOpen={showShareModal}
-                onClose={() => setShowShareModal(false)}
-                title="Link Copied"
-                size="small"
-                actions={
-                    <button className="btn btn-primary" onClick={() => setShowShareModal(false)}>
-                        OK
-                    </button>
-                }
-            >
-                <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                    <CheckCircle size={32} color="var(--color-success)" style={{ marginBottom: 12 }} />
-                    <p>The Guest Portal link has been copied to your clipboard.</p>
-                    <p style={{ fontSize: 13, color: '#666', marginTop: 8 }}>You can now share it with the recipient.</p>
-                </div>
-            </Modal>
+
             <Modal
                 isOpen={showReminderModal}
                 onClose={() => setShowReminderModal(false)}
@@ -676,6 +667,14 @@ const RequestDetail = () => {
 // Real File Preview Component
 const FilePreview = ({ fileId, fileName, folderId }) => {
     const [showPreview, setShowPreview] = useState(false);
+    const [isLoadingPreview, setIsLoadingPreview] = useState(true);
+
+    // Reset loading state when preview opens
+    useEffect(() => {
+        if (showPreview) {
+            setIsLoadingPreview(true);
+        }
+    }, [showPreview]);
 
     // Construct Download URL
     // Since we are using function proxying: 
@@ -749,18 +748,26 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
                     </a>
                 }
             >
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: '#f8fafc', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: '#f8fafc', borderRadius: '8px', position: 'relative' }}>
+                    {isLoadingPreview && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                            <Loader text="Loading preview..." />
+                        </div>
+                    )}
                     {getFileExtension(fileName) === 'pdf' ? (
                         <iframe
                             src={`${downloadUrl}#toolbar=0`}
                             title={displayName}
-                            style={{ width: '100%', height: '600px', border: 'none' }}
+                            style={{ width: '100%', height: '600px', border: 'none', opacity: isLoadingPreview ? 0 : 1, transition: 'opacity 0.3s' }}
+                            onLoad={() => setIsLoadingPreview(false)}
                         />
                     ) : (
                         <img
                             src={downloadUrl}
                             alt={displayName}
-                            style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain' }}
+                            style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain', opacity: isLoadingPreview ? 0 : 1, transition: 'opacity 0.3s' }}
+                            onLoad={() => setIsLoadingPreview(false)}
+                            onError={() => setIsLoadingPreview(false)} // Handle error too
                         />
                     )}
                 </div>
