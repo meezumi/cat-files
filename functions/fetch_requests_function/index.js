@@ -124,6 +124,49 @@ app.get('/auth/me', async (req, res) => {
     }
 });
 
+// POST /auth/update - Update user profile
+app.post('/auth/update', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        const { first_name, last_name } = req.body;
+        
+        // Get current user ID
+        let userId = req.headers['x-zc-user-id'];
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
+        
+        if (!userId) {
+            return res.status(401).json({ status: 'error', message: 'Authentication required' });
+        }
+
+        const updateData = {};
+        if (first_name) updateData.first_name = first_name;
+        if (last_name) updateData.last_name = last_name;
+
+        // 1. Fetch current details first because updateUserDetails requires email_id
+        const userManagement = catApp.userManagement();
+        const currentUserDetails = await userManagement.getUserDetails(userId);
+        
+        // 2. Merge existing required fields
+        const finalUpdateData = {
+            ...updateData,
+            email_id: currentUserDetails.email_id // Required by SDK
+        };
+
+        // 3. Update user details
+        const updatedUser = await userManagement.updateUserDetails(userId, finalUpdateData);
+        
+        res.json({ status: 'success', data: updatedUser, message: 'Profile updated successfully' });
+    } catch (err) {
+        console.error('Update Profile Error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // POST /auth/logout - Clear session
 app.post('/auth/logout', async (req, res) => {
     // Prevent caching

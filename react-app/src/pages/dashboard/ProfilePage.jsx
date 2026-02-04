@@ -2,20 +2,52 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut } from 'lucide-react';
 import Loader from '../../components/common/Loader';
+import { toast } from 'react-hot-toast';
 
 const ProfilePage = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, getOrganisation } = useAuth();
     const [stats, setStats] = useState({ sent: 0, completed: 0 });
-    const [loading, setLoading] = useState(true); // Introduce loading state
+    const [loading, setLoading] = useState(true);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Get Organisation Details
+    const myOrg = user?.organisation;
 
     useEffect(() => {
         // Mock stats or fetch from backend if available
         setStats({ sent: 12, completed: 5 });
         // Set loading to false once user data is available or fetched
         if (user) {
+            setFirstName(user.first_name || '');
+            setLastName(user.last_name || '');
             setLoading(false);
         }
-    }, [user]); // Depend on user to update loading state
+    }, [user]);
+
+    const handleSaveProfile = async () => {
+        try {
+            const res = await fetch('/server/fetch_requests_function/auth/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ first_name: firstName, last_name: lastName })
+            });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                toast.success("Profile updated successfully");
+                setIsEditing(false);
+                // Reload to refresh context
+                window.location.reload();
+            } else {
+                toast.error("Failed to update: " + result.message);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("An error occurred");
+        }
+    };
 
     if (loading || !user) return <Loader text="Loading profile..." />; // Use loading state and user check
 
@@ -46,12 +78,55 @@ const ProfilePage = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                         <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px' }}>First Name</label>
-                            <input disabled value={user.first_name} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafc' }} />
+                            <input
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                disabled={!isEditing}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #e2e8f0',
+                                    background: isEditing ? 'white' : '#f8fafc'
+                                }}
+                            />
                         </div>
                         <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px' }}>Last Name</label>
-                            <input disabled value={user.last_name || ''} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafc' }} />
+                            <input
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                disabled={!isEditing}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #e2e8f0',
+                                    background: isEditing ? 'white' : '#f8fafc'
+                                }}
+                            />
                         </div>
+                    </div>
+                    {/* Action Buttons */}
+                    <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                        {isEditing ? (
+                            <>
+                                <button className="btn" onClick={() => {
+                                    setIsEditing(false);
+                                    setFirstName(user.first_name || '');
+                                    setLastName(user.last_name || '');
+                                }}>
+                                    Cancel
+                                </button>
+                                <button className="btn btn-primary" onClick={handleSaveProfile}>
+                                    Save Changes
+                                </button>
+                            </>
+                        ) : (
+                            <button className="btn" onClick={() => setIsEditing(true)}>
+                                Edit Profile
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -61,13 +136,25 @@ const ProfilePage = () => {
                     <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>Organization</h2>
                 </div>
                 <div style={{ padding: '24px' }}>
-                    <p><strong>Org ID:</strong> {user.org_id || 'N/A'}</p>
+                    {myOrg ? (
+                        <div>
+                            <p style={{ fontSize: 16, fontWeight: 500, marginBottom: 4 }}>{myOrg.name}</p>
+                            <p style={{ color: '#64748b', fontSize: 13 }}>ID: {myOrg.id}</p>
+                            <p style={{ marginTop: 8 }}>
+                                <span className={`badge ${myOrg.role === 'Super Admin' ? 'badge-error' : 'badge-primary'}`}>
+                                    {myOrg.role}
+                                </span>
+                            </p>
+                        </div>
+                    ) : (
+                        <p style={{ color: '#64748b' }}>You are not part of any organization.</p>
+                    )}
                 </div>
             </div>
 
             <div style={{ marginTop: '32px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
                 <div style={{ padding: '24px' }}>
-                    <button 
+                    <button
                         onClick={logout}
                         style={{
                             display: 'flex',
