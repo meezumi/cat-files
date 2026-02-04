@@ -11,7 +11,14 @@ router.get('/orgs/:id/members', async (req, res) => {
     try {
         const catApp = catalyst.initialize(req);
         const orgId = req.params.id;
-        const userId = req.headers['x-zc-user-id'];
+        let userId = req.headers['x-zc-user-id'];
+
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
         
         console.log('=== FETCH MEMBERS DEBUG ===');
         console.log('Org ID:', orgId);
@@ -41,6 +48,27 @@ router.get('/orgs/:id/members', async (req, res) => {
         const result = await catApp.zcql().executeZCQLQuery(query);
         console.log('✓ Found', result.length, 'members');
         const members = result.map(row => row.OrganisationMembers);
+
+        // Check if Owner is in the list, if not add them
+        const orgQuery = `SELECT OwnerID FROM Organisations WHERE ROWID = '${orgId}'`;
+        const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
+        
+        if (orgResult.length > 0) {
+            const ownerId = orgResult[0].Organisations.OwnerID;
+            const isOwnerInList = members.some(m => m.UserID === ownerId);
+            
+            if (!isOwnerInList && ownerId) {
+                console.log('ℹ Owner not in member list, adding manually:', ownerId);
+                members.push({
+                    ROWID: 'owner_' + ownerId, // Virtual ID
+                    UserID: ownerId,
+                    Role: 'Super Admin',
+                    Status: 'Active',
+                    JoinedAt: new Date().toISOString(),
+                    CREATEDTIME: new Date().toISOString()
+                });
+            }
+        }
 
         // Fetch user details for each member
         const userManagement = catApp.userManagement();
