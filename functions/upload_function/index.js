@@ -103,6 +103,27 @@ app.post('/', upload.single('file'), async (req, res) => {
                     // 1. Fetch current status to avoid overriding final states
                     const requestRow = await catApp.datastore().table('Requests').getRow(requestId);
                     const currentStatus = requestRow.Requests ? requestRow.Requests.Status : requestRow.Status; 
+                    const requestTitle = requestRow.Requests ? requestRow.Requests.Subject : requestRow.Subject;
+
+                    // Log the upload activity
+                    let actor = 'Guest';
+                    let details = `Uploaded file "${req.file.originalname}"`;
+                    
+                    // Try to identify user if authenticated
+                    const userId = req.headers['x-zc-user-id'];
+                    if (userId) {
+                        try {
+                            const user = await catApp.userManagement().getUserDetails(userId);
+                            actor = user.email_id;
+                        } catch (e) {}
+                    }
+                    
+                    await catApp.datastore().table('ActivityLog').insertRow({
+                        RequestID: requestId,
+                        Action: 'Uploaded',
+                        Actor: actor,
+                        Details: details
+                    });
 
                     // 2. Update if applicable (Not Completed or Archived)
                     const finalStatuses = ['Completed', 'Archived', 'Trash'];
@@ -111,9 +132,19 @@ app.post('/', upload.single('file'), async (req, res) => {
                              ROWID: requestId, 
                              Status: 'Responded',
                          });
+                         
+                         // Log status change
+                         if (currentStatus !== 'Responded') {
+                             await catApp.datastore().table('ActivityLog').insertRow({
+                                 RequestID: requestId,
+                                 Action: 'Responded',
+                                 Actor: 'System',
+                                 Details: 'Request status updated to Responded after file upload'
+                             });
+                         }
                     }
                 } catch (statusErr) {
-                    console.warn("Failed to auto-update Request status to Responded:", statusErr);
+                    console.warn("Failed to auto-update Request status/log:", statusErr);
                 }
             }
 
