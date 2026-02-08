@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 import {
     Inbox,
+    MessageSquare,
     FileText,
     Send,
     CheckCircle,
@@ -227,7 +228,7 @@ const Sidebar = () => {
                         <span>Sent</span>
                     </NavLink>
                     <NavLink to="/dashboard/responded" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
-                        <CheckCircle size={18} />
+                        <MessageSquare size={18} />
                         <span>Responded</span>
                     </NavLink>
                     <NavLink to="/dashboard/expired" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
