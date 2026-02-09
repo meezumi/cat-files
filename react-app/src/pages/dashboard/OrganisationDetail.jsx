@@ -130,7 +130,7 @@ const OrganisationDetail = () => {
                 {/* Org Info Card */}
                 <div className={styles.card} style={{ height: 'fit-content' }}>
                     <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3>Organisation Details</h3>
+                        <h3 className={styles.sectionTitle}>Organisation Details</h3>
                         {isSuperAdmin() && !isEditing && (
                             <button className="btn btn-sm" onClick={() => setIsEditing(true)}>
                                 <Edit size={14} style={{ marginRight: 6 }} /> Edit
@@ -159,7 +159,7 @@ const OrganisationDetail = () => {
                                         className="form-input"
                                         value={editForm.Name || ''}
                                         onChange={e => setEditForm({ ...editForm, Name: e.target.value })}
-                                        style={{ fontSize: 18, fontWeight: 'bold', width: '100%', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                        style={{ fontSize: 18, fontWeight: 'bold', width: '100%', padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }}
                                         placeholder="Organisation Name"
                                     />
                                     <input
@@ -167,12 +167,12 @@ const OrganisationDetail = () => {
                                         value={editForm.Domain || ''}
                                         onChange={e => setEditForm({ ...editForm, Domain: e.target.value })}
                                         placeholder="Domain"
-                                        style={{ fontSize: 14, width: '100%', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                        style={{ fontSize: 14, width: '100%', padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }}
                                     />
                                 </div>
                             ) : (
                                 <>
-                                    <h3 style={{ margin: '0 0 4px 0', fontSize: 18 }}>{org.Name}</h3>
+                                    <h3 style={{ margin: '0 0 4px 0', fontSize: 18, color: 'var(--color-text-main)' }}>{org.Name}</h3>
                                     <a href={`http://${org.Domain}`} target="_blank" rel="noreferrer" style={{ fontSize: 14, color: '#3b82f6' }}>{org.Domain || 'No Domain'}</a>
                                 </>
                             )}
@@ -187,7 +187,7 @@ const OrganisationDetail = () => {
                                     className="form-input"
                                     value={editForm.Phone || ''}
                                     onChange={e => setEditForm({ ...editForm, Phone: e.target.value })}
-                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }}
                                 />
                             ) : (
                                 <span>{org.Phone || '--'}</span>
@@ -200,7 +200,7 @@ const OrganisationDetail = () => {
                                     className="form-input"
                                     value={editForm.Address || ''}
                                     onChange={e => setEditForm({ ...editForm, Address: e.target.value })}
-                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }}
                                 />
                             ) : (
                                 <span>{org.Address || '--'}</span>
@@ -212,41 +212,16 @@ const OrganisationDetail = () => {
                 {/* Tabs and Content */}
                 <div className={styles.card} style={{ padding: 0 }}>
                     {/* Tab Headers */}
-                    <div style={{
-                        display: 'flex',
-                        borderBottom: '1px solid #e2e8f0'
-                    }}>
+                    <div className={styles.tabContainer}>
                         <button
                             onClick={() => setActiveTab('contacts')}
-                            style={{
-                                flex: 1,
-                                padding: '16px 24px',
-                                border: 'none',
-                                background: activeTab === 'contacts' ? 'white' : '#f8fafc',
-                                borderBottom: activeTab === 'contacts' ? '2px solid #3b82f6' : '2px solid transparent',
-                                cursor: 'pointer',
-                                fontWeight: activeTab === 'contacts' ? 600 : 400,
-                                color: activeTab === 'contacts' ? '#1e293b' : '#64748b',
-                                fontSize: 14,
-                                transition: 'all 0.2s'
-                            }}
+                            className={`${styles.tabBtn} ${activeTab === 'contacts' ? styles.tabBtnActive : ''}`}
                         >
                             Contacts
                         </button>
                         <button
                             onClick={() => setActiveTab('members')}
-                            style={{
-                                flex: 1,
-                                padding: '16px 24px',
-                                border: 'none',
-                                background: activeTab === 'members' ? 'white' : '#f8fafc',
-                                borderBottom: activeTab === 'members' ? '2px solid #3b82f6' : '2px solid transparent',
-                                cursor: 'pointer',
-                                fontWeight: activeTab === 'members' ? 600 : 400,
-                                color: activeTab === 'members' ? '#1e293b' : '#64748b',
-                                fontSize: 14,
-                                transition: 'all 0.2s'
-                            }}
+                            className={`${styles.tabBtn} ${activeTab === 'members' ? styles.tabBtnActive : ''}`}
                         >
                             Team Members
                         </button>
@@ -256,7 +231,7 @@ const OrganisationDetail = () => {
                     {activeTab === 'contacts' ? (
                         <div style={{ padding: 24 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b' }}>All Contacts</h3>
+                                <h3 className={styles.sectionTitle}>All Contacts</h3>
                                 <button className="btn btn-sm" onClick={() => setShowContactModal(true)}>
                                     <Plus size={14} style={{ marginRight: 6 }} /> Add Contact
                                 </button>
@@ -270,8 +245,8 @@ const OrganisationDetail = () => {
                                                 <User size={18} />
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 500, fontSize: 14, color: '#1e293b' }}>{contact.Name}</div>
-                                                <div style={{ fontSize: 13, color: '#64748b' }}>{contact.Email}</div>
+                                                <div className={styles.contactName}>{contact.Name}</div>
+                                                <div className={styles.contactEmail}>{contact.Email}</div>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -292,8 +267,8 @@ const OrganisationDetail = () => {
                                         border: '1px dashed #e2e8f0'
                                     }}>
                                         <User size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                                        <p style={{ margin: 0, fontSize: 14 }}>No contacts added yet</p>
-                                        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#cbd5e1' }}>Add contacts to send them data requests</p>
+                                        <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-main)' }}>No contacts added yet</p>
+                                        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>Add contacts to send them data requests</p>
                                     </div>
                                 )}
                             </div>
@@ -319,19 +294,19 @@ const OrganisationDetail = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
                         <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Name *</label>
-                        <input className="form-input" value={contactForm.Name} onChange={e => setContactForm({ ...contactForm, Name: e.target.value })} placeholder="Full Name" style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }} />
+                        <input className="form-input" value={contactForm.Name} onChange={e => setContactForm({ ...contactForm, Name: e.target.value })} placeholder="Full Name" style={{ width: '100%', padding: 8, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
                     </div>
                     <div>
                         <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Email *</label>
-                        <input className="form-input" value={contactForm.Email} onChange={e => setContactForm({ ...contactForm, Email: e.target.value })} placeholder="email@example.com" style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }} />
+                        <input className="form-input" value={contactForm.Email} onChange={e => setContactForm({ ...contactForm, Email: e.target.value })} placeholder="email@example.com" style={{ width: '100%', padding: 8, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
                     </div>
                     <div>
                         <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Role</label>
-                        <input className="form-input" value={contactForm.Role} onChange={e => setContactForm({ ...contactForm, Role: e.target.value })} placeholder="e.g. Accountant" style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }} />
+                        <input className="form-input" value={contactForm.Role} onChange={e => setContactForm({ ...contactForm, Role: e.target.value })} placeholder="e.g. Accountant" style={{ width: '100%', padding: 8, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
                     </div>
                     <div>
                         <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Phone</label>
-                        <input className="form-input" value={contactForm.Phone} onChange={e => setContactForm({ ...contactForm, Phone: e.target.value })} placeholder="Optional" style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }} />
+                        <input className="form-input" value={contactForm.Phone} onChange={e => setContactForm({ ...contactForm, Phone: e.target.value })} placeholder="Optional" style={{ width: '100%', padding: 8, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
                     </div>
                 </div>
             </Modal>
@@ -365,9 +340,9 @@ const OrganisationForm = () => {
             <div className={styles.card} style={{ maxWidth: 600, margin: '0 auto' }}>
                 <h2>Create New Organisation</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <input placeholder="Organisation Name" value={formData.Name} onChange={e => setFormData({ ...formData, Name: e.target.value })} style={{ padding: 10, border: '1px solid #ddd', borderRadius: 4 }} />
-                    <input placeholder="Domain (e.g. acme.com)" value={formData.Domain} onChange={e => setFormData({ ...formData, Domain: e.target.value })} style={{ padding: 10, border: '1px solid #ddd', borderRadius: 4 }} />
-                    <input placeholder="Address" value={formData.Address} onChange={e => setFormData({ ...formData, Address: e.target.value })} style={{ padding: 10, border: '1px solid #ddd', borderRadius: 4 }} />
+                    <input placeholder="Organisation Name" value={formData.Name} onChange={e => setFormData({ ...formData, Name: e.target.value })} style={{ padding: 10, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
+                    <input placeholder="Domain (e.g. acme.com)" value={formData.Domain} onChange={e => setFormData({ ...formData, Domain: e.target.value })} style={{ padding: 10, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
+                    <input placeholder="Address" value={formData.Address} onChange={e => setFormData({ ...formData, Address: e.target.value })} style={{ padding: 10, border: '1px solid var(--color-border)', borderRadius: 4, background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }} />
                     <button className="btn btn-primary" onClick={handleSubmit}>Create Organisation</button>
                     <button className="btn" onClick={() => navigate(-1)}>Cancel</button>
                 </div>

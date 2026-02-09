@@ -2,14 +2,15 @@
 
 :root {
   /* Brand Colors */
-  --color-primary: #10b981; /* More vibrant green */
+  --color-primary: #10b981;
   --color-primary-hover: #059669;
-  --color-secondary: #0f172a; /* Darker slate */
+  --color-secondary: #0f172a;
   --color-text-main: #1e293b;
   --color-text-muted: #64748b;
-  --color-bg-page: #f0f4f8; /* Brighter fallback */
-  --color-bg-card: rgba(255, 255, 255, 0.6); /* High transparency for clear glass effect */
+  --color-bg-page: #f0f4f8;
+  --color-bg-card: rgba(255, 255, 255, 0.6);
   --color-border: rgba(226, 232, 240, 0.8);
+  --color-border-card: rgba(255, 255, 255, 0.5); /* New variable */
   
   /* Status Colors */
   --color-status-draft: #ef4444;
@@ -26,6 +27,34 @@
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+
+  /* Layout Specific */
+  --color-sidebar-bg: #ffffff;
+  --color-header-bg: #0f172a;
+  --color-header-text: #ffffff;
+  --color-nav-hover: #f1f5f9;
+  --color-nav-active: #ecfdf5;
+  --color-input-bg: #ffffff;
+}
+
+[data-theme='dark'] {
+  --color-primary: #34d399; /* Lighter green for dark mode */
+  --color-primary-hover: #10b981;
+  --color-secondary: #f8fafc; /* Inverted for text on dark/primary */
+  --color-text-main: #f1f5f9; /* Off-white */
+  --color-text-muted: #94a3b8; /* Lighter gray */
+  --color-bg-page: #0f172a; /* Dark slate */
+  --color-bg-card: rgba(30, 41, 59, 0.7); /* Dark semi-transparent */
+  --color-border: rgba(51, 65, 85, 0.8);
+  --color-border-card: rgba(255, 255, 255, 0.1); 
+
+  /* Layout Specific Dark */
+  --color-sidebar-bg: #1e293b;
+  --color-header-bg: #0f172a; /* Match page or slightly different */
+  --color-header-text: #f1f5f9;
+  --color-nav-hover: rgba(255,255,255,0.05);
+  --color-nav-active: rgba(52, 211, 153, 0.15);
+  --color-input-bg: #1e293b;
 }
 
 * {
@@ -37,16 +66,18 @@ body {
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #ffffff;
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(210, 100%, 98%, 1) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, hsla(260, 100%, 98%, 1) 0, transparent 50%), 
-    radial-gradient(at 50% 100%, hsla(180, 100%, 98%, 1) 0, transparent 50%);
-  background-attachment: fixed;
-  background-size: 100% 100%;
+  background-color: var(--color-bg-page);
   color: var(--color-text-main);
   line-height: 1.5;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Remove fixed background image for dark mode or update it */
+[data-theme='dark'] body {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0, transparent 50%);
 }
 
 button, input, select, textarea {

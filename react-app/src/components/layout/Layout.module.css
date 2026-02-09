@@ -6,8 +6,8 @@
 
 .topbar {
   height: 60px;
-  background-color: var(--color-secondary);
-  color: white;
+  background-color: var(--color-header-bg);
+  color: var(--color-header-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -28,11 +28,12 @@
 
 .sidebar {
   width: 260px;
-  background-color: #ffffff;
+  background-color: var(--color-sidebar-bg);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   padding: 24px 0;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .content {
@@ -74,7 +75,7 @@
   left: 0;
   right: 0;
   margin-top: 4px;
-  background: white;
+  background: var(--color-sidebar-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -94,6 +95,8 @@
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 13px;
+  background: var(--color-input-bg);
+  color: var(--color-text-main);
 }
 
 .templateItem {
@@ -108,7 +111,7 @@
 }
 
 .templateItem:hover {
-  background-color: #f1f5f9;
+  background-color: var(--color-bg-page);
 }
 
 .nav {
@@ -147,7 +150,7 @@
 }
 
 .navItem:hover {
-  background-color: #f1f5f9;
+  background-color: var(--color-nav-hover);
   color: var(--color-text-main);
 }
 
@@ -156,7 +159,7 @@
 }
 
 .navItem.active {
-  background-color: #ecfdf5; /* Light emerald */
+  background-color: var(--color-nav-active);
   color: var(--color-primary);
   border-left-color: var(--color-primary);
   font-weight: 600;
@@ -164,6 +167,81 @@
 
 .navItem.active svg {
   color: var(--color-primary);
+}
+
+/* User Profile Styles */
+.userProfileSection {
+    padding: 24px;
+    border-top: 1px solid var(--color-border);
+}
+
+.userInfoWrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    flex: 1;
+    overflow: hidden;
+    margin-right: 8px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.userInfoWrapper:hover {
+    background-color: var(--color-nav-hover);
+}
+
+.userAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--color-border); /* Slightly darker than bg */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+}
+
+.userName {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.userEmail {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logoutBtn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--color-status-draft); /* Red warning color */
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.logoutBtn:hover {
+    background-color: #fee2e2;
+}
+
+/* Dark mode adjustment for hover red bg */
+:global([data-theme='dark']) .logoutBtn:hover {
+    background-color: rgba(239, 68, 68, 0.15);
 }
 
 /* Template Manager Styles */
@@ -191,7 +269,7 @@
 }
 
 .managerItem:hover {
-    background-color: #f8fafc;
+    background-color: var(--color-bg-page);
 }
 
 .managerName {

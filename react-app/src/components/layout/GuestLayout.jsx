@@ -11,9 +11,7 @@ const GuestLayout = () => {
             <main className={styles.content}>
                 <Outlet />
             </main>
-            <footer className={styles.footer}>
-                <p>Powered by Pipefile</p>
-            </footer>
+
         </div>
     );
 };

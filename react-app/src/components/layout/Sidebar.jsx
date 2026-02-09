@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
+import ThemeToggle from './ThemeToggle';
+
 const Sidebar = () => {
     const { user, logout, isViewer } = useAuth();
     const navigate = useNavigate();
@@ -263,44 +265,34 @@ const Sidebar = () => {
             </div>
 
             {/* User Profile Section */}
-            <div style={{ padding: '24px', borderTop: '1px solid var(--color-border)' }}>
+            <div className={styles.userProfileSection}>
                 {user ? (
-                    <div
-                        style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}
-                        onClick={() => navigate('/dashboard/profile')}
-                    >
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px' }}>
-                            <User size={16} color="#64748b" />
-                        </div>
-                        <div style={{ overflow: 'hidden' }}>
-                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {user.first_name} {user.last_name}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <div
+                            className={styles.userInfoWrapper}
+                            onClick={() => navigate('/dashboard/profile')}
+                        >
+                            <div className={styles.userAvatar}>
+                                <User size={16} />
                             </div>
-                            <div style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {user.email_id}
+                            <div style={{ overflow: 'hidden' }}>
+                                <div className={styles.userName}>
+                                    {user.first_name} {user.last_name}
+                                </div>
+                                <div className={styles.userEmail}>
+                                    {user.email_id}
+                                </div>
                             </div>
                         </div>
+                        <ThemeToggle />
                     </div>
                 ) : (
-                    <div style={{ padding: '8px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>Loading...</div>
+                    <div style={{ padding: '8px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '13px' }}>Loading...</div>
                 )}
 
                 <button
                     onClick={logout}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: 'none',
-                        background: 'transparent',
-                        color: '#ef4444',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        borderRadius: '6px'
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#fef2f2'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+                    className={styles.logoutBtn}
                 >
                     <LogOut size={16} style={{ marginRight: '8px' }} />
                     Sign Out

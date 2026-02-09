@@ -1,15 +1,15 @@
 .container {
     display: flex;
     height: 100vh;
-    background: #f8f9fa;
+    background: var(--color-bg-page);
     font-family: 'Inter', sans-serif;
-    color: #333;
+    color: var(--color-text-main);
 }
 
 .sidebar {
     width: 280px;
-    background: white;
-    border-right: 1px solid #e1e4e8;
+    background: var(--color-bg-card);
+    border-right: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -17,7 +17,7 @@
 
 .sidebarHeader {
     padding: 24px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -27,7 +27,7 @@
     font-size: 18px;
     font-weight: 600;
     margin: 0;
-    color: #1a1a1a;
+    color: var(--color-text-main);
 }
 
 .nav {
@@ -42,7 +42,7 @@
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #666;
+    color: var(--color-text-muted);
     margin: 0 0 12px 0;
     cursor: pointer;
     font-weight: 600;
@@ -63,17 +63,17 @@
     cursor: pointer;
     font-size: 14px;
     margin-bottom: 4px;
-    color: #444;
+    color: var(--color-text-main);
     transition: all 0.2s;
 }
 
 .navItem:hover {
-    background: #f1f3f5;
+    background: var(--color-nav-hover);
 }
 
 .activeItem {
-    background: #e6f7ff;
-    color: #007bff;
+    background: var(--color-nav-active);
+    color: var(--color-primary);
     font-weight: 500;
 }
 
@@ -92,6 +92,11 @@
 .PUT { background: #fff3e0; color: #f57c00; }
 .DELETE { background: #ffebee; color: #c62828; }
 
+:global([data-theme='dark']) .GET { background: rgba(25, 118, 210, 0.2); color: #64b5f6; }
+:global([data-theme='dark']) .POST { background: rgba(46, 125, 50, 0.2); color: #81c784; }
+:global([data-theme='dark']) .PUT { background: rgba(245, 124, 0, 0.2); color: #ffb74d; }
+:global([data-theme='dark']) .DELETE { background: rgba(198, 40, 40, 0.2); color: #e57373; }
+
 .main {
     flex: 1;
     padding: 40px 60px;
@@ -105,12 +110,12 @@
 .header h1 {
     font-size: 28px;
     margin: 0 0 12px 0;
-    color: #111;
+    color: var(--color-text-main);
 }
 
 .header p {
     font-size: 16px;
-    color: #666;
+    color: var(--color-text-muted);
     line-height: 1.5;
 }
 
@@ -119,8 +124,8 @@
     align-items: center;
     gap: 16px;
     padding: 16px;
-    background: white;
-    border: 1px solid #e1e4e8;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     margin-bottom: 32px;
 }
@@ -135,7 +140,7 @@
 .url {
     font-family: 'Fira Code', monospace;
     font-size: 15px;
-    color: #333;
+    color: var(--color-text-main);
 }
 
 .section {
@@ -145,6 +150,7 @@
 .section h3 {
     font-size: 18px;
     margin-bottom: 16px;
+    color: var(--color-text-main);
 }
 
 .codeBlock {
