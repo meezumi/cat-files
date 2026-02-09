@@ -244,9 +244,9 @@ const NewRequest = () => {
 
                         {/* Contact Selection Logic */}
                         <div style={{ marginBottom: 16 }}>
-                            <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500 }}>Recipient Source</label>
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--color-text-main)' }}>Recipient Source</label>
                             <div style={{ display: 'flex', gap: 24 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: 'var(--color-text-main)' }}>
                                     <input
                                         type="radio"
                                         name="recipientSource"
@@ -256,7 +256,7 @@ const NewRequest = () => {
                                     />
                                     New Recipient
                                 </label>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: 'var(--color-text-main)' }}>
                                     <input
                                         type="radio"
                                         name="recipientSource"
@@ -310,27 +310,50 @@ const NewRequest = () => {
                                     control: (base) => ({
                                         ...base,
                                         minHeight: '42px',
-                                        borderColor: '#e2e8f0',
+                                        borderColor: 'var(--color-border)',
                                         borderRadius: '4px',
                                         fontSize: '14px',
                                         boxShadow: 'none',
+                                        background: 'var(--color-input-bg)',
+                                        color: 'var(--color-text-main)',
                                         '&:hover': {
                                             borderColor: '#cbd5e1'
                                         }
                                     }),
                                     multiValue: (base) => ({
                                         ...base,
-                                        backgroundColor: '#e2e8f0',
-                                        borderRadius: '4px'
+                                        backgroundColor: 'var(--color-bg-page)',
+                                        borderRadius: '4px',
+                                        border: '1px solid var(--color-border)'
                                     }),
                                     multiValueLabel: (base) => ({
                                         ...base,
-                                        color: '#334155',
+                                        color: 'var(--color-text-main)',
                                         fontSize: '12px'
                                     }),
                                     menu: (base) => ({
                                         ...base,
-                                        fontSize: '14px'
+                                        fontSize: '14px',
+                                        background: 'var(--color-input-bg)',
+                                        color: 'var(--color-text-main)',
+                                        zIndex: 100
+                                    }),
+                                    option: (base, state) => ({
+                                        ...base,
+                                        backgroundColor: state.isFocused ? 'var(--color-nav-hover)' : 'var(--color-input-bg)',
+                                        color: 'var(--color-text-main)',
+                                        cursor: 'pointer',
+                                        ':active': {
+                                            backgroundColor: 'var(--color-nav-active)'
+                                        }
+                                    }),
+                                    singleValue: (base) => ({
+                                        ...base,
+                                        color: 'var(--color-text-main)'
+                                    }),
+                                    input: (base) => ({
+                                        ...base,
+                                        color: 'var(--color-text-main)'
                                     })
                                 }}
                             />
@@ -354,17 +377,19 @@ const NewRequest = () => {
                                     borderRadius: '4px',
                                     border: '1px solid var(--color-border)',
                                     fontSize: '14px',
-                                    color: '#334155'
+                                    color: 'var(--color-text-main)',
+                                    background: 'var(--color-input-bg)',
+                                    colorScheme: 'dark'
                                 }}
                             />
                         </div>
 
                         {/* Reminder Settings */}
-                        <div className={styles.formGroup} style={{ marginTop: '20px', padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div className={styles.formGroup} style={{ marginTop: '20px', padding: '16px', background: 'var(--color-bg-page)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: formData.autoRemind ? '12px' : '0' }}>
                                 <div>
-                                    <h3 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 4px', color: '#334155' }}>Automated Reminders</h3>
-                                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Automatically send reminders for overdue requests.</p>
+                                    <h3 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 4px', color: 'var(--color-text-main)' }}>Automated Reminders</h3>
+                                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>Automatically send reminders for overdue requests.</p>
                                 </div>
                                 <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '24px' }}>
                                     <input
@@ -375,7 +400,7 @@ const NewRequest = () => {
                                     />
                                     <span style={{
                                         position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-                                        backgroundColor: formData.autoRemind ? '#2563eb' : '#ccc', transition: '.4s', borderRadius: '34px'
+                                        backgroundColor: formData.autoRemind ? 'var(--color-primary)' : 'var(--color-border)', transition: '.4s', borderRadius: '34px'
                                     }}></span>
                                     <span style={{
                                         position: 'absolute', content: '""', height: '16px', width: '16px', left: '4px', bottom: '4px',
@@ -387,16 +412,16 @@ const NewRequest = () => {
 
                             {formData.autoRemind && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <label style={{ fontSize: '13px', color: '#475569' }}>Send reminder every</label>
+                                    <label style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Send reminder every</label>
                                     <input
                                         type="number"
                                         min="1"
                                         max="30"
                                         value={formData.reminderFreq}
                                         onChange={(e) => setFormData(prev => ({ ...prev, reminderFreq: e.target.value }))}
-                                        style={{ width: '60px', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                        style={{ width: '60px', padding: '6px', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-input-bg)', color: 'var(--color-text-main)' }}
                                     />
-                                    <span style={{ fontSize: '13px', color: '#475569' }}>days</span>
+                                    <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>days</span>
                                 </div>
                             )}
                         </div>
@@ -411,12 +436,12 @@ const NewRequest = () => {
                         <h2>Build Checklist</h2>
                         <div className={styles.checklist}>
                             {formData.sections.map((section, sIndex) => (
-                                <div key={section.id} style={{ marginBottom: 24, padding: 16, border: '1px solid #eee', borderRadius: 8, background: '#fafafa' }}>
+                                <div key={section.id} style={{ marginBottom: 24, padding: 16, border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-bg-page)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
                                         <input
                                             value={section.title}
                                             onChange={(e) => handleSectionTitleChange(section.id, e.target.value)}
-                                            style={{ flex: 1, fontWeight: 'bold', border: 'none', background: 'transparent', fontSize: 16 }}
+                                            style={{ flex: 1, fontWeight: 'bold', border: 'none', background: 'transparent', fontSize: 16, color: 'var(--color-text-main)' }}
                                             placeholder="Section Title"
                                         />
                                         {formData.sections.length > 1 && (
@@ -453,23 +478,23 @@ const NewRequest = () => {
                                                         }));
                                                     }}
                                                     placeholder="Allowed Types (e.g. .pdf, .png) - Optional"
-                                                    style={{ fontSize: 12, padding: 4, border: '1px solid #eee', borderRadius: 4, color: '#666' }}
+                                                    style={{ fontSize: 14, padding: 10, border: '1px solid var(--color-border)', borderRadius: 4, color: 'var(--color-text-muted)', background: 'var(--color-input-bg)' }}
                                                 />
                                             </div>
                                             <button onClick={() => handleRemoveItem(section.id, item.id)} className={styles.removeBtn}>×</button>
                                         </div>
                                     ))}
-                                    <button className="btn" onClick={() => handleAddItem(section.id)} style={{ border: '1px dashed #ccc', width: '100%', marginTop: 8, fontSize: 13 }}>+ Add Item to {section.title}</button>
+                                    <button className="btn" onClick={() => handleAddItem(section.id)} style={{ border: '1px dashed var(--color-border)', width: '100%', marginTop: 8, fontSize: 13, color: 'var(--color-text-muted)', background: 'transparent' }}>+ Add Item to {section.title}</button>
                                 </div>
                             ))}
 
-                            <button className="btn btn-primary" onClick={handleAddSection} style={{ width: '100%', marginBottom: 16, background: 'var(--color-secondary)' }}>
+                            <button className="btn" onClick={handleAddSection} style={{ width: '100%', marginBottom: 16, background: 'transparent', border: '1px dashed var(--color-border)', color: 'var(--color-text-main)' }}>
                                 <Plus size={16} style={{ marginRight: 8 }} />
                                 Add New Section
                             </button>
                         </div>
                         <div className={styles.actions}>
-                            <button className="btn" onClick={() => setStep(1)}>Back</button>
+                            <button className="btn" onClick={() => setStep(1)} style={{ background: 'var(--color-bg-card)', color: 'var(--color-text-main)', border: '1px solid var(--color-border)' }}>Back</button>
                             <button className="btn btn-primary" onClick={() => setStep(3)}>Next: Review</button>
                         </div>
                     </div>
@@ -501,7 +526,7 @@ const NewRequest = () => {
                                         border: '1px solid var(--color-primary)',
                                         color: isTemplateSaved ? 'var(--color-success)' : 'var(--color-primary)',
                                         borderColor: isTemplateSaved ? 'var(--color-success)' : 'var(--color-primary)',
-                                        background: 'white',
+                                        background: 'var(--color-bg-card)',
                                         cursor: isTemplateSaved ? 'default' : 'pointer',
                                         opacity: isTemplateSaved ? 0.8 : 1
                                     }}
@@ -636,17 +661,34 @@ const ContactSelect = ({ onSelect }) => {
                 control: (base) => ({
                     ...base,
                     minHeight: '42px',
-                    borderColor: '#e2e8f0',
+                    borderColor: 'var(--color-border)',
                     borderRadius: '4px',
                     fontSize: '14px',
                     boxShadow: 'none',
+                    background: 'var(--color-input-bg)',
+                    color: 'var(--color-text-main)',
                     '&:hover': {
                         borderColor: '#cbd5e1'
                     }
                 }),
                 menu: (base) => ({
                     ...base,
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    background: 'var(--color-input-bg)',
+                    color: 'var(--color-text-main)'
+                }),
+                option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused ? 'var(--color-nav-hover)' : 'transparent',
+                    color: 'var(--color-text-main)'
+                }),
+                singleValue: (base) => ({
+                    ...base,
+                    color: 'var(--color-text-main)'
+                }),
+                input: (base) => ({
+                    ...base,
+                    color: 'var(--color-text-main)'
                 })
             }}
         />

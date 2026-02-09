@@ -17,7 +17,7 @@
     font-size: 24px;
     font-weight: 600;
     margin: 0;
-    color: #1e293b;
+    color: var(--color-text-main);
 }
 
 .grid {
@@ -27,8 +27,8 @@
 }
 
 .card {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -39,7 +39,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 16px;
 }
 
@@ -47,19 +47,19 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
-    color: #334155;
+    color: var(--color-text-main);
 }
 
 .orgIcon {
     width: 64px;
     height: 64px;
     border-radius: 12px;
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
+    background: var(--color-nav-hover);
+    border: 1px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
+    color: var(--color-text-muted);
     margin-right: 16px;
 }
 
@@ -67,13 +67,13 @@
     display: flex;
     margin-bottom: 12px;
     font-size: 14px;
-    color: #334155;
+    color: var(--color-text-main);
 }
 
 .label {
     width: 100px;
     font-weight: 500;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .contactItem {
@@ -81,15 +81,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
-    background: white;
+    background: var(--color-bg-card);
     transition: all 0.2s;
     margin-bottom: 12px;
 }
 
 .contactItem:hover {
-    border-color: #cbd5e1;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
@@ -97,7 +97,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #ffedd5;
+    background: rgba(234, 88, 12, 0.1);
     color: #ea580c;
     display: flex;
     align-items: center;
@@ -108,18 +108,65 @@
 
 .contactRole {
     font-size: 12px;
-    background: #f1f5f9;
+    background: var(--color-nav-hover);
     padding: 4px 8px;
     border-radius: 4px;
-    color: #475569;
+    color: var(--color-text-muted);
     font-weight: 500;
 }
 
 .emptyState {
     text-align: center;
     padding: 40px;
-    color: #94a3b8;
-    background: #f8fafc;
+    color: var(--color-text-muted);
+    background: var(--color-bg-card);
     border-radius: 8px;
-    border: 1px dashed #e2e8f0;
+    border: 1px dashed var(--color-border);
+}
+
+.tabContainer {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tabBtn {
+    flex: 1;
+    padding: 16px 24px;
+    border: none;
+    background: var(--color-nav-hover); /* Default inactive background */
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.tabBtn:hover {
+    color: var(--color-primary);
+}
+
+.tabBtnActive {
+    background: var(--color-bg-card);
+    border-bottom: 2px solid var(--color-primary);
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.contactName {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-text-main);
+}
+
+.contactEmail {
+    font-size: 13px;
+    color: var(--color-text-muted);
 }

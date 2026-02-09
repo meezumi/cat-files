@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import GuestLayout from './components/layout/GuestLayout';
@@ -18,7 +19,8 @@ import LoginPage from './pages/auth/LoginPage';
 function App() {
   return (
     <Router basename="/app">
-      <AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
         <Toaster position="bottom-right" toastOptions={{
             style: {
                 background: '#333',
@@ -74,6 +76,7 @@ function App() {
           <Route path="/api/v1/documentation" element={<APIDocs />} />
         </Routes>
       </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

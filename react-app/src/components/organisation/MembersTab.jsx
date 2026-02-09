@@ -15,12 +15,14 @@ const customSelectStyles = {
     control: (base) => ({
         ...base,
         minHeight: '42px',
-        borderColor: '#e2e8f0',
+        borderColor: 'var(--color-border)',
         borderRadius: '6px',
         fontSize: '14px',
         boxShadow: 'none',
+        backgroundColor: 'var(--color-input-bg)',
+        color: 'var(--color-text-main)',
         '&:hover': {
-            borderColor: '#cbd5e1'
+            borderColor: 'var(--color-border)'
         }
     }),
     menu: (base) => ({
@@ -196,9 +198,9 @@ const MembersTab = ({ orgId }) => {
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 padding: 16,
-                                border: '1px solid #e2e8f0',
+                                border: '1px solid var(--color-border)',
                                 borderRadius: 8,
-                                background: member.status === 'Active' ? 'white' : '#f8fafc'
+                                background: member.status === 'Active' ? 'var(--color-bg-card)' : 'var(--color-bg-page)'
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
@@ -254,15 +256,15 @@ const MembersTab = ({ orgId }) => {
                                         }}
                                         style={{
                                             padding: '6px 12px',
-                                            border: '1px solid #e2e8f0',
+                                            border: '1px solid var(--color-border)',
                                             borderRadius: 6,
-                                            background: 'white',
+                                            background: 'var(--color-bg-card)',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: 4,
                                             fontSize: 13,
-                                            color: '#475569'
+                                            color: 'var(--color-text-muted)'
                                         }}
                                         title="Change Role"
                                     >

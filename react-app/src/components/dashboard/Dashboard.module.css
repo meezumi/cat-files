@@ -33,7 +33,7 @@
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--color-bg-card); /* Use card bg for header too, maybe slightly different opacity handled by variable */
   border-bottom: 1px solid var(--color-border);
   font-weight: 500;
   font-size: 13px;
@@ -46,6 +46,7 @@
   padding: 16px;
   border-bottom: 1px solid var(--color-border);
   font-size: 14px;
+  color: var(--color-text-main);
   transition: background-color 0.2s;
 }
 
@@ -54,15 +55,19 @@
 }
 
 .tableRow:hover {
-  background-color: #f8f9fa;
-  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.02); /* Very subtle hover */
 }
 
-.colCheckbox { width: 40px; }
-.colName { width: 20%; font-weight: 500; }
-.colSubject { flex: 1; }
+/* Dark mode override for hover */
+:global([data-theme='dark']) .tableRow:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.colCheckbox { width: 40px; padding-left: 8px; }
+.colName { width: 25%; font-weight: 500; color: var(--color-text-main); }
+.colSubject { flex: 1; color: var(--color-text-muted); }
 .colStatus { width: 120px; }
-.colProgress { width: 100px; text-align: right; }
+.colProgress { width: 100px; text-align: right; color: var(--color-text-muted); }
 .colDate { width: 120px; text-align: right; color: var(--color-text-muted); }
 
 /* Status Badges */
@@ -74,33 +79,47 @@
   font-weight: 500;
 }
 
-.badgeDraft { color: var(--color-status-draft); background-color: #fde8e8; }
-.badgeSent { color: var(--color-status-sent); background-color: #e6f7ec; }
-.badgeCompleted { color: white; background-color: var(--color-status-completed); }
+/* Use slightly more opaque/variable based colors for badges if possible, 
+   but for now let's keep them as they are usually fine in dark mode 
+   or need specific overrides. Let's start with basic overrides */
+
+.badgeDraft { color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
+.badgeSent { color: #10b981; background-color: rgba(16, 185, 129, 0.1); }
+.badgeCompleted { color: white; background-color: #10b981; }
 
 .badgeTrash { color: #fff; background-color: #ef4444; }
-.badgeSeen { color: #0369a1; background-color: #e0f2fe; }
-.badgeResponded { color: #7e22ce; background-color: #f3e8ff; }
-.badgeInReview { color: #c2410c; background-color: #ffedd5; }
-.badgeExpired { color: #b91c1c; background-color: #fee2e2; }
-.badgeArchived { color: #475569; background-color: #e2e8f0; }
+.badgeSeen { color: #0369a1; background-color: rgba(3, 105, 161, 0.1); }
+.badgeResponded { color: #7e22ce; background-color: rgba(126, 34, 206, 0.1); }
+.badgeInReview { color: #c2410c; background-color: rgba(194, 65, 12, 0.1); }
+.badgeExpired { color: #b91c1c; background-color: rgba(185, 28, 28, 0.1); }
+.badgeArchived { color: #475569; background-color: rgba(71, 85, 105, 0.1); }
+
+/* Dark mode badge overrides for better visibility */
+:global([data-theme='dark']) .badgeDraft { background-color: rgba(239, 68, 68, 0.2); }
+:global([data-theme='dark']) .badgeSent { background-color: rgba(16, 185, 129, 0.2); }
+:global([data-theme='dark']) .badgeSeen { background-color: rgba(3, 105, 161, 0.2); }
+:global([data-theme='dark']) .badgeResponded { background-color: rgba(126, 34, 206, 0.2); }
+:global([data-theme='dark']) .badgeInReview { background-color: rgba(194, 65, 12, 0.2); }
+:global([data-theme='dark']) .badgeExpired { background-color: rgba(185, 28, 28, 0.2); }
+:global([data-theme='dark']) .badgeArchived { background-color: rgba(71, 85, 105, 0.2); }
 
 .controls {
     display: flex;
     gap: 12px;
     margin-bottom: 16px;
+    flex-wrap: wrap;
 }
 
 .dropdownItem {
     padding: 8px 16px;
     font-size: 14px;
-    color: var(--color-text);
+    color: var(--color-text-main);
     cursor: pointer;
     transition: background-color 0.1s;
 }
 
 .dropdownItem:hover {
-    background-color: #f5f5f5;
+    background-color: var(--color-bg-page);
 }
 
 @keyframes spin {
@@ -110,4 +129,19 @@
 
 .spin {
     animation: spin 1s linear infinite;
+}
+
+.orgCard {
+  background: var(--color-bg-card);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
+  color: var(--color-text-main);
+}
+
+.orgCard:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-color: var(--color-primary);
 }

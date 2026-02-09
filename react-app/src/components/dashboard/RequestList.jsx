@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Filter, ChevronDown, Trash2, AlertTriangle, Search, RefreshCw, Archive } from 'lucide-react';
+import { Filter, ChevronDown, Trash2, AlertTriangle, Search, RefreshCw, Archive, CheckCircle, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RequestItem from './RequestItem';
 import styles from './Dashboard.module.css';
@@ -154,7 +154,7 @@ const RequestList = ({ filterStatus }) => {
                     <div style={{ position: 'relative' }} ref={filterRef}>
                         <button
                             className="btn"
-                            style={{ border: '1px solid #ddd', background: 'white', display: 'flex', alignItems: 'center' }}
+                            style={{ border: '1px solid var(--color-border)', background: 'var(--color-bg-card)', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center' }}
                             onClick={() => setShowFilter(!showFilter)}
                         >
                             <Filter size={14} style={{ marginRight: 8 }} />
@@ -167,8 +167,9 @@ const RequestList = ({ filterStatus }) => {
                                 top: '100%',
                                 left: 0,
                                 marginTop: 4,
-                                background: 'white',
-                                border: '1px solid #eee',
+                                background: 'var(--color-bg-card)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid var(--color-border)',
                                 borderRadius: 6,
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                 zIndex: 10,
@@ -189,8 +190,9 @@ const RequestList = ({ filterStatus }) => {
                         onClick={() => fetchRequests(false)}
                         title="Refresh List"
                         style={{
-                            border: '1px solid #ddd',
-                            background: 'white',
+                            border: '1px solid var(--color-border)',
+                            background: 'var(--color-bg-card)',
+                            color: 'var(--color-text-main)',
                             padding: '8px',
                             display: 'flex',
                             alignItems: 'center',
@@ -202,23 +204,50 @@ const RequestList = ({ filterStatus }) => {
                     </button>
 
                     {selectedRequests.size > 0 && (
-                        <div style={{ display: 'flex', gap: 8, marginLeft: 8, borderLeft: '1px solid #ddd', paddingLeft: 8 }}>
-                            <button
-                                className="btn"
-                                onClick={() => handleBatchAction('Archived')}
-                                title="Archive Selected"
-                                style={{ padding: 8 }}
-                            >
-                                <Archive size={16} />
-                            </button>
-                            <button
-                                className="btn"
-                                onClick={() => handleBatchAction('Trash')}
-                                title="Move Selected to Trash"
-                                style={{ padding: 8, color: '#dc3545' }}
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                        <div style={{ display: 'flex', gap: 8, marginLeft: 12, paddingLeft: 12, borderLeft: '1px solid var(--color-border)', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-muted)', marginRight: 4 }}>
+                                {selectedRequests.size} selected
+                            </span>
+
+                            {filterStatus === 'trash' ? (
+                                <>
+                                    <button
+                                        className="btn"
+                                        onClick={() => handleBatchAction('Draft')}
+                                        title="Restore to Draft"
+                                        style={{ padding: 8, color: 'var(--color-primary)', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}
+                                    >
+                                        <RotateCcw size={16} />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        className="btn"
+                                        onClick={() => handleBatchAction('Completed')}
+                                        title="Mark as Completed"
+                                        style={{ padding: 8, color: 'var(--color-status-completed)', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}
+                                    >
+                                        <CheckCircle size={16} />
+                                    </button>
+                                    <button
+                                        className="btn"
+                                        onClick={() => handleBatchAction('Archived')}
+                                        title="Archive Selected"
+                                        style={{ padding: 8, color: 'var(--color-text-muted)', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}
+                                    >
+                                        <Archive size={16} />
+                                    </button>
+                                    <button
+                                        className="btn"
+                                        onClick={() => handleBatchAction('Trash')}
+                                        title="Move to Trash"
+                                        style={{ padding: 8, color: 'var(--color-status-draft)', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
@@ -244,7 +273,7 @@ const RequestList = ({ filterStatus }) => {
             {/* Search Bar */}
             <div style={{ padding: '0 16px 16px 16px' }}>
                 <div style={{ position: 'relative' }}>
-                    <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: '#94a3b8' }} />
+                    <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--color-text-muted)' }} />
                     <input
                         type="text"
                         placeholder="Search requests by subject or recipient..."
@@ -253,10 +282,12 @@ const RequestList = ({ filterStatus }) => {
                         style={{
                             width: '100%',
                             padding: '10px 10px 10px 40px',
-                            border: '1px solid #e2e8f0',
+                            border: '1px solid var(--color-border)',
                             borderRadius: '8px',
                             fontSize: '14px',
-                            outline: 'none'
+                            outline: 'none',
+                            background: 'var(--color-bg-card)',
+                            color: 'var(--color-text-main)'
                         }}
                     />
                 </div>
@@ -283,7 +314,7 @@ const RequestList = ({ filterStatus }) => {
                         <Loader text="Loading requests..." />
                     </div>
                 ) : requests.length === 0 ? (
-                    <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                    <div style={{ padding: 24, textAlign: 'center', color: 'var(--color-text-muted)' }}>
                         {filterStatus === 'trash' ? 'Trash is empty.' : 'No requests found.'}
                     </div>
                 ) : (
@@ -305,14 +336,28 @@ const RequestList = ({ filterStatus }) => {
                     className="btn"
                     disabled={page === 1}
                     onClick={() => setPage(p => Math.max(1, p - 1))}
+                    style={{
+                        background: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-main)',
+                        opacity: page === 1 ? 0.5 : 1,
+                        cursor: page === 1 ? 'not-allowed' : 'pointer'
+                    }}
                 >
                     Previous
                 </button>
-                <span style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>Page {page}</span>
+                <span style={{ display: 'flex', alignItems: 'center', fontSize: '14px', color: 'var(--color-text-main)' }}>Page {page}</span>
                 <button
                     className="btn"
                     disabled={requests.length < meta.limit}
                     onClick={() => setPage(p => p + 1)}
+                    style={{
+                        background: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-main)',
+                        opacity: requests.length < meta.limit ? 0.5 : 1,
+                        cursor: requests.length < meta.limit ? 'not-allowed' : 'pointer'
+                    }}
                 >
                     Next
                 </button>
@@ -326,10 +371,10 @@ const RequestList = ({ filterStatus }) => {
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#dc3545' }}>
                     <AlertTriangle size={24} />
-                    <p style={{ color: '#333', margin: 0 }}>
+                    <p style={{ color: 'var(--color-text-main)', margin: 0 }}>
                         Are you sure you want to permanently delete all items in the Trash?
                         <br />
-                        <span style={{ fontSize: '13px', color: '#666' }}>This action cannot be undone.</span>
+                        <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>This action cannot be undone.</span>
                     </p>
                 </div>
             </Modal>

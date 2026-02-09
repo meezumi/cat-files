@@ -41,30 +41,21 @@ const OrganisationList = () => {
                 {orgs.map(org => (
                     <div
                         key={org.ROWID}
-                        style={{
-                            background: 'white',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            border: '1px solid #eee',
-                            cursor: 'pointer',
-                            transition: 'box-shadow 0.2s'
-                        }}
+                        className={styles.orgCard}
                         onClick={() => navigate(`/dashboard/organisations/${org.ROWID}`)}
-                        onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
                             {org.LogoURL ? (
                                 <img src={org.LogoURL} alt={org.Name} style={{ width: 40, height: 40, borderRadius: 4, marginRight: 12, objectFit: 'cover' }} />
                             ) : (
-                                <div style={{ width: 40, height: 40, borderRadius: 4, background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                                <div style={{ width: 40, height: 40, borderRadius: 4, background: 'var(--color-nav-active)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                                     <Building2 size={20} />
                                 </div>
                             )}
                             <h3 style={{ margin: 0, fontSize: 16 }}>{org.Name}</h3>
                         </div>
 
-                        <div style={{ fontSize: 13, color: '#666', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ fontSize: 13, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {org.Website && (
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <Globe size={13} style={{ marginRight: 8 }} />
@@ -88,7 +79,7 @@ const OrganisationList = () => {
                 ))}
 
                 {orgs.length === 0 && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 40, background: '#fafafa', borderRadius: 8, color: '#666' }}>
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 40, background: 'var(--color-bg-card)', borderRadius: 8, color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }}>
                         <Building2 size={48} style={{ opacity: 0.2, marginBottom: 16 }} />
                         <p>No organisations found. Create one to get started.</p>
                     </div>

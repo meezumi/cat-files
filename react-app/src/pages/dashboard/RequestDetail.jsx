@@ -411,20 +411,35 @@ const RequestDetail = () => {
                     <div className={styles.metaItem}>
                         <strong>Due Date:</strong>
                         {isEditingDueDate ? (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 8, gap: 4 }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 8, gap: 8 }}>
                                 <input
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
                                     style={{
-                                        padding: '2px 4px',
+                                        padding: '6px 10px',
                                         fontSize: '13px',
-                                        border: '1px solid #ccc',
-                                        borderRadius: '4px'
+                                        border: '1px solid var(--color-border)',
+                                        borderRadius: '6px',
+                                        background: 'var(--color-input-bg)',
+                                        color: 'var(--color-text-main)',
+                                        colorScheme: 'dark'
                                     }}
                                 />
-                                <button className="btn btn-xs btn-primary" onClick={handleUpdateDueDate} style={{ padding: '2px 6px' }}>Save</button>
-                                <button className="btn btn-xs" onClick={() => setIsEditingDueDate(false)} style={{ padding: '2px 6px' }}>X</button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleUpdateDueDate}
+                                    style={{ padding: '6px 12px', fontSize: '12px', height: '32px' }}
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    className="btn"
+                                    onClick={() => setIsEditingDueDate(false)}
+                                    style={{ padding: '6px 12px', fontSize: '12px', height: '32px', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', color: 'var(--color-text-main)' }}
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
                         ) : (
                             <>
@@ -636,11 +651,11 @@ const RequestDetail = () => {
                 }
             >
                 <div style={{ paddingBottom: '8px' }}>
-                    <p style={{ marginBottom: '16px', color: '#64748b' }}>
+                    <p style={{ marginBottom: '16px', color: 'var(--color-text-muted)' }}>
                         Send a reminder email to <strong>{request.recipient?.name}</strong> ({request.recipient?.email})?
                     </p>
 
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '8px', color: '#334155' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '8px', color: 'var(--color-text-muted)' }}>
                         Add a personal note (optional)
                     </label>
                     <textarea
@@ -652,9 +667,11 @@ const RequestDetail = () => {
                             minHeight: '80px',
                             padding: '10px',
                             borderRadius: '6px',
-                            border: '1px solid #e2e8f0',
+                            border: '1px solid var(--color-border)',
                             fontSize: '14px',
-                            resize: 'vertical'
+                            resize: 'vertical',
+                            background: 'var(--color-input-bg)',
+                            color: 'var(--color-text-main)'
                         }}
                     />
                 </div>
@@ -748,7 +765,7 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
                     </a>
                 }
             >
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: '#f8fafc', borderRadius: '8px', position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: 'var(--color-bg-page)', borderRadius: '8px', position: 'relative' }}>
                     {isLoadingPreview && (
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                             <Loader text="Loading preview..." />

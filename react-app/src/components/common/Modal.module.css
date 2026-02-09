@@ -13,7 +13,7 @@
 }
 
 .modal {
-    background: white;
+    background: var(--color-sidebar-bg);
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
@@ -21,6 +21,7 @@
     display: flex;
     flex-direction: column;
     animation: slideUp 0.2s ease-out;
+    border: 1px solid var(--color-border);
 }
 
 .small {
@@ -39,7 +40,7 @@
 
 .header {
     padding: 16px 24px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -48,14 +49,14 @@
 .header h3 {
     margin: 0;
     font-size: 18px;
-    color: #333;
+    color: var(--color-text-main);
 }
 
 .closeBtn {
     background: none;
     border: none;
     cursor: pointer;
-    color: #999;
+    color: var(--color-text-muted);
     padding: 4px;
     display: flex;
     align-items: center;
@@ -65,20 +66,20 @@
 }
 
 .closeBtn:hover {
-    background: #f5f5f5;
-    color: #666;
+    background: var(--color-bg-page);
+    color: var(--color-text-main);
 }
 
 .content {
     padding: 24px;
-    color: #555;
+    color: var(--color-text-muted);
     font-size: 15px;
     line-height: 1.5;
 }
 
 .actions {
     padding: 16px 24px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--color-border);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
