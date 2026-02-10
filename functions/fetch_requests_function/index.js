@@ -650,16 +650,41 @@ app.get('/', async (req, res) => {
 
         // 4. Search Filter
         if (search) {
-            conditions.push(`(Subject LIKE '%${search}%' OR RecipientName LIKE '%${search}%' OR RecipientEmail LIKE '%${search}%')`);
+             // For search, we fetch ALL generic matches (filtered by user/status) and filter in-memory
+             // This avoids ZCQL "10 condition limit" and provides true case-insensitive search
+             console.log(`ℹ Performing in-memory search for: "${search}"`);
         }
 
         baseQuery += " " + conditions.join(" AND ");
         
-        baseQuery += ` ORDER BY CREATEDTIME DESC LIMIT ${limit} OFFSET ${offset}`;
+        // Only apply DB limit if NOT searching (otherwise we need full set to filter)
+        if (!search) {
+             baseQuery += ` ORDER BY CREATEDTIME DESC LIMIT ${limit} OFFSET ${offset}`;
+        } else {
+             baseQuery += ` ORDER BY CREATEDTIME DESC`; // Get usage sorted, but all of them
+        }
         
         const queryResult = await catApp.zcql().executeZCQLQuery(baseQuery);
+        let requests = queryResult.map(row => row.Requests);
         
-        const requests = queryResult.map(row => row.Requests);
+        // 5. In-Memory Search Filter
+        if (search) {
+            const lowerSearch = search.toLowerCase();
+            requests = requests.filter(r => {
+                const subj = (r.Subject || '').toLowerCase();
+                const name = (r.RecipientName || '').toLowerCase();
+                const email = (r.RecipientEmail || '').toLowerCase();
+                
+                return subj.includes(lowerSearch) || name.includes(lowerSearch) || email.includes(lowerSearch);
+            });
+            
+            console.log(`✓ Found ${requests.length} matches after in-memory filter`);
+            
+            // Manual Pagination
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            requests = requests.slice(startIndex, endIndex);
+        }
         
         // Dynamic Progress Calculation
         // 1. Get all Request IDs
