@@ -99,6 +99,8 @@ app.post('/', upload.single('file'), async (req, res) => {
 
             // --- NEW: Update Request Status to 'Responded' ---
             if (requestId) {
+                let actor = 'Guest';
+
                 try {
                     // 1. Fetch current status to avoid overriding final states
                     const requestRow = await catApp.datastore().table('Requests').getRow(requestId);
@@ -106,7 +108,6 @@ app.post('/', upload.single('file'), async (req, res) => {
                     const requestTitle = requestRow.Requests ? requestRow.Requests.Subject : requestRow.Subject;
 
                     // Log the upload activity
-                    let actor = 'Guest';
                     let details = `Uploaded file "${req.file.originalname}"`;
                     
                     // Try to identify user if authenticated
@@ -145,6 +146,27 @@ app.post('/', upload.single('file'), async (req, res) => {
                     }
                 } catch (statusErr) {
                     console.warn("Failed to auto-update Request status/log:", statusErr);
+                }
+
+                // 3. Create Notification for Creator
+                try {
+                     const requestRow = await catApp.datastore().table('Requests').getRow(requestId);
+                     const request = requestRow.Requests || requestRow;
+                     const creatorId = request.CREATORID;
+                     
+                     if (creatorId) {
+                         const notificationData = {
+                             UserID: creatorId,
+                             Type: 'Upload',
+                             Message: `New file uploaded for "${request.Subject}" by ${actor === 'Guest' ? (request.RecipientName || 'Guest') : actor}`,
+                             Link: `/dashboard/requests/${requestId}`,
+                             IsRead: false
+                         };
+                         await catApp.datastore().table('Notifications').insertRow(notificationData);
+                         console.log("Notification created for user:", creatorId);
+                     }
+                } catch (notifyErr) {
+                    console.warn("Failed to create notification:", notifyErr.message);
                 }
             }
 

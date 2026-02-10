@@ -758,6 +758,85 @@ app.get('/', async (req, res) => {
     }
 });
 
+// ============================================
+// NOTIFICATION ROUTES
+// ============================================
+
+// GET /notifications - List notifications for user
+app.get('/notifications', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        let userId = req.headers['x-zc-user-id'];
+        
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
+        
+        if (!userId) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+
+        const query = `SELECT * FROM Notifications WHERE UserID = '${userId}' ORDER BY CREATEDTIME DESC LIMIT 20`;
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        const notifications = result.map(row => row.Notifications);
+        
+        res.json({ status: 'success', data: notifications });
+    } catch (err) {
+        console.error("List Notifications Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// PUT /notifications/read-all - Mark all as read
+app.put('/notifications/read-all', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        let userId = req.headers['x-zc-user-id'];
+        
+        // We need to fetch unread first to get IDs, then update them in batch?
+        // Catalyst doesn't support "UPDATE ... WHERE ..." in one go easily via SDK without ZCQL + IDs
+        // ZCQL update is limited. 
+        // Best approach: Fetch unread IDs, then batch update.
+        
+        if (!userId) {
+             const currentUser = await catApp.userManagement().getCurrentUser();
+             if (currentUser) userId = currentUser.user_id;
+        }
+        
+        const query = `SELECT ROWID FROM Notifications WHERE UserID = '${userId}' AND IsRead = false`;
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        
+        if (result.length > 0) {
+            const updateRows = result.map(row => ({
+                ROWID: row.Notifications.ROWID,
+                IsRead: true
+            }));
+            await catApp.datastore().table('Notifications').updateRows(updateRows);
+        }
+        
+        res.json({ status: 'success', count: result.length });
+    } catch (err) {
+        console.error("Read All Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// PUT /notifications/:id - Mark single as read
+app.put('/notifications/:id', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        await catApp.datastore().table('Notifications').updateRow({
+            ROWID: req.params.id,
+            IsRead: true
+        });
+        res.json({ status: 'success' });
+    } catch (err) {
+        console.error("Mark Read Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // GET /:id - Get single request with full details
 app.get('/:id', async (req, res) => {
     try {
@@ -834,6 +913,8 @@ app.get('/:id', async (req, res) => {
          res.status(500).json({ status: 'error', message: err.message });
     }
 });
+
+
 
 // Catch-all
 app.all('*', (req, res) => {

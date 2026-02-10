@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import MembersTab from '../../components/organisation/MembersTab';
+import EmailSettingsTab from '../../components/organisation/EmailSettingsTab';
 import { ArrowLeft, Building2, User, Plus, Trash2, Edit, Save, X } from 'lucide-react';
 import styles from './OrganisationDetail.module.css';
 import { useAuth } from '../../context/AuthContext';
@@ -225,6 +226,14 @@ const OrganisationDetail = () => {
                         >
                             Team Members
                         </button>
+                        {isSuperAdmin() && (
+                            <button
+                                onClick={() => setActiveTab('email')}
+                                className={`${styles.tabBtn} ${activeTab === 'email' ? styles.tabBtnActive : ''}`}
+                            >
+                                Email Settings
+                            </button>
+                        )}
                     </div>
 
                     {/* Tab Content */}
@@ -273,6 +282,8 @@ const OrganisationDetail = () => {
                                 )}
                             </div>
                         </div>
+                    ) : activeTab === 'email' ? (
+                        <EmailSettingsTab orgId={id} orgData={org} onUpdate={(newData) => setOrg(prev => ({ ...prev, ...newData }))} />
                     ) : (
                         <MembersTab orgId={id} />
                     )}

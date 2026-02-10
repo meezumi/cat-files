@@ -211,10 +211,65 @@ app.post('/', async (req, res) => {
         if (req.startEmail && recipientEmail) {
             emailResult.attempted = true;
             try {
+                // 4a. Fetch Organisation for Email Template
+                let emailSubject = `File Request: ${subject}`;
+                let emailBody = null;
+
+                try {
+                    if (organisationId) {
+                        const orgQuery = `SELECT Name, EmailSubject, EmailBody FROM Organisations WHERE ROWID = '${organisationId}'`;
+                        const orgRes = await catApp.zcql().executeZCQLQuery(orgQuery);
+                        if (orgRes.length > 0) {
+                            const org = orgRes[0].Organisations;
+                            // Template Substitution
+                            const senderName = 'Sender'; // You might want to pass this in req.body or fetch user details
+                            
+                            if (org.EmailSubject) {
+                                emailSubject = org.EmailSubject
+                                    .replace(/{{Subject}}/g, subject)
+                                    .replace(/{{RecipientName}}/g, recipientName || '')
+                                    .replace(/{{SenderName}}/g, senderName);
+                            }
+                            
+                            if (org.EmailBody) {
+                                emailBody = org.EmailBody
+                                    .replace(/{{Subject}}/g, subject)
+                                    .replace(/{{RecipientName}}/g, recipientName || '')
+                                    .replace(/{{SenderName}}/g, senderName)
+                                    // Handle newlines for HTML
+                                    .replace(/\n/g, '<br/>');
+                            }
+                        }
+                    }
+                } catch (tmplErr) {
+                    console.warn('Template fetch failed', tmplErr);
+                }
+
+                // Default Body Fallback
+                if (!emailBody) {
+                    emailBody = `
+                        <p style="font-size: 16px;">Hi ${recipientName || 'there'},</p>
+                        <p>You have received a new file request.</p>
+                        <div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; margin: 16px 0;">
+                            <p style="margin: 0; font-weight: bold;">${subject}</p>
+                            ${message ? `<p style="margin: 8px 0 0; color: #64748b;">${message}</p>` : ''}
+                        </div>
+                        <p style="margin-bottom: 24px;">Please upload the requested documents by clicking the button below:</p>
+                    `;
+                } else {
+                     // Add the message box even to custom template if {{Message}} isn't used?
+                     // For now, let's append the formatted message box if the user didn't include it in their text body
+                     // actually, let's just use the body as is, but we might want to ensure the link is there.
+                     // The link is added below the body in the template structure.
+                     if (message) {
+                         emailBody += `<div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; margin: 16px 0; color: #64748b;">${message}</div>`;
+                     }
+                }
+
                 const emailConfig = {
                     from_email: 'aaryank098@gmail.com', // Verified sender
                     to_email: [recipientEmail],
-                    subject: `File Request: ${subject}`,
+                    subject: emailSubject,
                     html_mode: true,
                     content: `
                         <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -222,14 +277,8 @@ app.post('/', async (req, res) => {
                                 <h2 style="margin: 0; color: #0f172a;">File Request</h2>
                             </div>
                             <div style="padding: 24px;">
-                                <p style="font-size: 16px;">Hi ${recipientName || 'there'},</p>
-                                <p>You have received a new file request.</p>
-                                <div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; margin: 16px 0;">
-                                    <p style="margin: 0; font-weight: bold;">${subject}</p>
-                                    ${message ? `<p style="margin: 8px 0 0; color: #64748b;">${message}</p>` : ''}
-                                </div>
-                                <p style="margin-bottom: 24px;">Please upload the requested documents by clicking the button below:</p>
-                                <div style="text-align: center;">
+                                ${emailBody}
+                                <div style="text-align: center; margin-top: 24px;">
                                     <a href="${guestLink}" style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Request & Upload Files</a>
                                 </div>
                                 <p style="margin-top: 24px; font-size: 14px; color: #94a3b8;">Link: <a href="${guestLink}" style="color: #2563eb;">${guestLink}</a></p>

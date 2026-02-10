@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Plus, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import NotificationCenter from '../common/NotificationCenter';
 import styles from './Layout.module.css';
 
 const Topbar = () => {
@@ -41,6 +42,7 @@ const Topbar = () => {
                         Add Organisation <Plus size={14} />
                     </button>
                 )}
+                <NotificationCenter />
                 <button
                     onClick={() => navigate('/dashboard/profile')}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 4 }}
