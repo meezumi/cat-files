@@ -15,6 +15,7 @@ import ProfilePage from './pages/dashboard/ProfilePage';
 import OrganisationList from './pages/dashboard/OrganisationList';
 import OrganisationDetail from './pages/dashboard/OrganisationDetail';
 import LoginPage from './pages/auth/LoginPage';
+import AnalyticsPage from './components/dashboard/AnalyticsPage';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
             <Route path="drafts" element={<RequestView title="Drafts" filterStatus="draft" />} />
             <Route path="sent" element={<RequestView title="Sent" filterStatus="sent" />} />
             <Route path="responded" element={<RequestView title="Responded" filterStatus="responded" />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="expired" element={<RequestView title="Expired" filterStatus="expired" />} />
             <Route path="completed" element={<RequestView title="Completed" filterStatus="completed" />} />
             <Route path="archived" element={<RequestView title="Archived" filterStatus="archived" />} />

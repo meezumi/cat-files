@@ -1,0 +1,209 @@
+
+.container {
+    padding: 16px;
+    background: var(--color-bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    margin-bottom: 24px;
+}
+
+.grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.card {
+    flex: 1;
+    min-width: 200px;
+    padding: 16px;
+    background: var(--color-bg-page);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.iconBlue { color: #3b82f6; }
+.iconGreen { color: #10b981; }
+.iconPurple { color: #8b5cf6; }
+.iconOrange { color: #f59e0b; }
+
+.statusGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.statItem {
+    text-align: center;
+}
+
+.statValue {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.statLabel {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.bigStat {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--color-text-main);
+    line-height: 1;
+}
+
+.unit {
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+
+.subtext {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 8px;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.listItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 14px;
+}
+
+.listItem:last-child {
+    border-bottom: none;
+}
+
+.rank {
+    font-weight: 600;
+    width: 20px;
+    color: var(--color-text-muted);
+}
+
+.name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
+}
+
+.count {
+    font-weight: 600;
+}
+
+.chartCard {
+    min-width: 100%;
+}
+
+.chartContainer {
+    display: flex;
+    justify-content: space-between;
+    height: 180px;
+    align-items: flex-end;
+    padding-top: 20px;
+}
+
+.barGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 100%;
+    width: 24px;
+}
+
+.barSent {
+    flex: 1;
+    background-color: #3b82f6;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s ease;
+}
+
+.barCompleted {
+    flex: 1;
+    background-color: #10b981;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s ease;
+}
+
+.monthLabel {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
+
+.legend {
+    margin-top: 8px;
+    flex: 1;
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dotSent {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background-color: #3b82f6;
+}
+
+.dotComp {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background-color: #10b981;
+}
+
+.loading {
+    padding: 40px;
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+.empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 13px;
+}

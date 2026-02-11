@@ -759,6 +759,136 @@ app.get('/', async (req, res) => {
 });
 
 // ============================================
+// ANALYTICS ROUTE
+// ============================================
+
+// GET /analytics - Dashboard metrics
+app.get('/analytics', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        let userId = req.headers['x-zc-user-id'];
+
+        if (!userId) {
+             const currentUser = await catApp.userManagement().getCurrentUser();
+             if (currentUser) userId = currentUser.user_id;
+        }
+
+        if (!userId) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+
+        // Fetch ALL non-template requests for this user/org context
+        // (Reusing the extensive filtering logic from the main GET logic is ideal, 
+        // but for now, let's fetch based on UserID or Org Context simply)
+        
+        let requests = [];
+        
+        // Check org context
+        let userOrgId = null;
+        try {
+            const orgQuery = `SELECT OrganisationID FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active' LIMIT 1`;
+            const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
+            if (orgResult.length > 0) userOrgId = orgResult[0].OrganisationMembers.OrganisationID;
+        } catch (e) {}
+
+        let query = "SELECT ROWID, Status, RecipientName, CREATEDTIME, MODIFIEDTIME FROM Requests WHERE IsTemplateMode = false";
+        
+        if (userOrgId) {
+             query += ` AND OrganisationID = '${userOrgId}'`;
+        } else {
+             query += ` AND CREATORID = '${userId}'`;
+        }
+        
+        // Note: Catalyst max fetch is 2000 via SDK/ZCQL usually. 
+        // For large datasets, pagination is needed. For MVP, we assume < 2000 active requests.
+        const result = await catApp.zcql().executeZCQLQuery(query);
+        const allRequests = result.map(row => row.Requests);
+
+        // 1. Status Counts
+        const statusCounts = {
+            Total: allRequests.length,
+            Sent: 0,
+            Completed: 0,
+            Archived: 0,
+            Responded: 0,
+            Draft: 0,
+            Expired: 0
+        };
+
+        // 2. Completion Time (Average in Days)
+        let totalCompletionTimeMs = 0;
+        let completedCount = 0;
+
+        // 3. Top Requesters (Recipients)
+        const recipientCounts = {};
+
+        allRequests.forEach(r => {
+            // Status
+            if (statusCounts[r.Status] !== undefined) {
+                statusCounts[r.Status]++;
+            }
+
+            // Completion Time
+            if (r.Status === 'Completed' || r.Status === 'Archived') {
+                const created = new Date(r.CREATEDTIME);
+                const modified = new Date(r.MODIFIEDTIME);
+                const diff = modified - created;
+                if (diff > 0) {
+                    totalCompletionTimeMs += diff;
+                    completedCount++;
+                }
+            }
+
+            // Top Recipients
+            const recipient = r.RecipientName || 'Unknown';
+            recipientCounts[recipient] = (recipientCounts[recipient] || 0) + 1;
+        });
+
+        // Calculate Average
+        const avgCompletionDays = completedCount > 0 
+            ? (totalCompletionTimeMs / completedCount / (1000 * 60 * 60 * 24)).toFixed(1) 
+            : 0;
+
+        // Sort Recipients
+        const topRecipients = Object.entries(recipientCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([name, count]) => ({ name, count }));
+            
+        // Monthly Trends (Current Year)
+        // Group by Month (Created vs Completed)
+        const currentYear = new Date().getFullYear();
+        const monthlyData = Array(12).fill(0).map(() => ({ sent: 0, completed: 0 }));
+        
+        allRequests.forEach(r => {
+            const created = new Date(r.CREATEDTIME);
+            if (created.getFullYear() === currentYear) {
+                monthlyData[created.getMonth()].sent++;
+            }
+            
+            if (r.Status === 'Completed' || r.Status === 'Archived') {
+                const modified = new Date(r.MODIFIEDTIME); // Approximate completion date
+                if (modified.getFullYear() === currentYear) {
+                     monthlyData[modified.getMonth()].completed++;
+                }
+            }
+        });
+
+        res.json({
+            status: 'success',
+            data: {
+                statusCounts,
+                avgCompletionDays,
+                topRecipients,
+                monthlyData
+            }
+        });
+
+    } catch (err) {
+        console.error("Analytics Error:", err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// ============================================
 // NOTIFICATION ROUTES
 // ============================================
 
