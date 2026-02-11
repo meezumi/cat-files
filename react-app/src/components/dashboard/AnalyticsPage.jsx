@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AnalyticsWidget from './AnalyticsWidget';
+import Loader from '../common/Loader';
 import styles from './Dashboard.module.css';
 
 const AnalyticsPage = () => {

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Clock, Users, Activity } from 'lucide-react';
 import styles from './AnalyticsWidget.module.css';
+import Loader from '../common/Loader';
 
 const AnalyticsWidget = () => {
     const [data, setData] = useState(null);
@@ -25,7 +26,11 @@ const AnalyticsWidget = () => {
         fetchAnalytics();
     }, []);
 
-    if (loading) return <div className={styles.loading}>Loading analytics...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <Loader text="Loading analytics..." />
+        </div>
+    );
     if (!data) return null;
 
     const { statusCounts, avgCompletionDays, topRecipients, monthlyData } = data;
