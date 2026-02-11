@@ -20,7 +20,7 @@ const RequestList = ({ filterStatus }) => {
     const [selectedRequests, setSelectedRequests] = useState(new Set());
     const filterRef = useRef(null);
 
-    // ... (useEffect for click outside remains same) ...
+
 
     const fetchRequests = useCallback(async (showLoader = true) => {
         if (showLoader) setLoading(true);

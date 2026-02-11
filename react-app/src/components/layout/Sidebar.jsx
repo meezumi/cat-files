@@ -20,7 +20,8 @@ import {
     Edit2,
     MoreHorizontal,
     X,
-    Book
+    Book,
+    BarChart2
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -213,6 +214,14 @@ const Sidebar = () => {
                         <Building2 size={18} />
                         <span>Organisations</span>
                     </NavLink>
+
+                    {/* Analytics - Admin Only */}
+                    {user?.organisation && (user.organisation.role === 'Super Admin' || user.organisation.role === 'Admin') && (
+                        <NavLink to="/dashboard/analytics" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+                            <BarChart2 size={18} />
+                            <span>Analytics</span>
+                        </NavLink>
+                    )}
                 </div>
 
                 <div className={styles.navLabel}>Requests</div>
