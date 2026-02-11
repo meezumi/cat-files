@@ -416,15 +416,7 @@ const RequestDetail = () => {
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
-                                    style={{
-                                        padding: '6px 10px',
-                                        fontSize: '13px',
-                                        border: '1px solid var(--color-border)',
-                                        borderRadius: '6px',
-                                        background: 'var(--color-input-bg)',
-                                        color: 'var(--color-text-main)',
-                                        colorScheme: 'dark'
-                                    }}
+                                    className={styles.dateInput}
                                 />
                                 <button
                                     className="btn btn-primary"

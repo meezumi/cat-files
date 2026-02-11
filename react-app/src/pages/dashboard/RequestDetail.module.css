@@ -68,6 +68,20 @@
     align-items: center;
 }
 
+.dateInput {
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-input-bg);
+    color: var(--color-text-main);
+    color-scheme: light;
+}
+
+:global([data-theme='dark']) .dateInput {
+    color-scheme: dark;
+}
+
 .statusBadge {
     display: inline-block;
     padding: 2px 8px;

@@ -370,17 +370,7 @@ const NewRequest = () => {
                                 name="dueDate"
                                 value={formData.dueDate}
                                 onChange={handleInputChange}
-                                className="form-input"
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    borderRadius: '4px',
-                                    border: '1px solid var(--color-border)',
-                                    fontSize: '14px',
-                                    color: 'var(--color-text-main)',
-                                    background: 'var(--color-input-bg)',
-                                    colorScheme: 'dark'
-                                }}
+                                className={styles.dateInput}
                             />
                         </div>
 

@@ -47,6 +47,14 @@
   color: var(--color-text-main);
 }
 
+.dateInput {
+    color-scheme: light;
+}
+
+:global([data-theme='dark']) .dateInput {
+    color-scheme: dark;
+}
+
 .checklist {
     margin-bottom: 24px;
 }
