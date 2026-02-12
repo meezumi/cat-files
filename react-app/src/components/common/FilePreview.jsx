@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink, FileText, Image as ImageIcon, File } from 'lucide-react';
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import Modal from './Modal';
@@ -18,6 +18,34 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
 
     const getExtension = (name) => name ? name.split('.').pop().toLowerCase() : '';
     const ext = getExtension(fileName);
+
+    // Helper to get icon
+    const getFileIcon = (fileName) => {
+        const extension = getExtension(fileName);
+        switch (extension) {
+            case 'pdf':
+                return <FileText size={16} color="#ef4444" />; // Red
+            case 'doc':
+            case 'docx':
+                return <FileText size={16} color="#3b82f6" />; // Blue
+            case 'xls':
+            case 'xlsx':
+            case 'csv':
+                return <FileText size={16} color="#10b981" />; // Green
+            case 'ppt':
+            case 'pptx':
+                return <FileText size={16} color="#f97316" />; // Orange
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'webp':
+            case 'bmp':
+                return <ImageIcon size={16} color="#8b5cf6" />; // Purple
+            default:
+                return <File size={16} color="#64748b" />; // Gray
+        }
+    };
 
     // Logic to decide if we should pre-fetch as blob
     const useBlob = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'txt'].includes(ext);
@@ -69,7 +97,7 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
     return (
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
-                <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
+                {getFileIcon(fileName)}
                 <span>{displayName}</span>
 
                 {isSupported ? (
