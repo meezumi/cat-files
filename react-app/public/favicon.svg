@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Maximized Green Cat Head -->
+  <path fill="#10b981" d="M5 15 L20 65 C20 95 80 95 80 65 L95 15 L50 40 Z" stroke="#10b981" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Larger Eyes -->
+  <circle cx="35" cy="55" r="6" fill="white"/>
+  <circle cx="65" cy="55" r="6" fill="white"/>
+  <!-- Larger Nose -->
+  <path d="M44 72 L56 72 L50 82 Z" fill="white"/>
+</svg>
