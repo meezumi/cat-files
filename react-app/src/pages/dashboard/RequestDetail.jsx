@@ -4,12 +4,12 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
+import FilePreview from '../../components/common/FilePreview';
 import {
     ArrowLeft,
     MoreHorizontal,
     Trash2,
     Clock,
-    ExternalLink,
     Download,
     Share2,
     Edit,
@@ -673,116 +673,6 @@ const RequestDetail = () => {
     );
 };
 
-// Real File Preview Component
-const FilePreview = ({ fileId, fileName, folderId }) => {
-    const [showPreview, setShowPreview] = useState(false);
-    const [isLoadingPreview, setIsLoadingPreview] = useState(true);
 
-    // Reset loading state when preview opens
-    useEffect(() => {
-        if (showPreview) {
-            setIsLoadingPreview(true);
-        }
-    }, [showPreview]);
-
-    // Construct Download URL
-    // Since we are using function proxying: 
-    // /server/upload_function/:id (GET)
-    const downloadUrl = `/server/upload_function/${fileId}${folderId ? `?folderId=${folderId}` : ''}`;
-
-    // Display filename if available, otherwise fall back to showing ID
-    const displayName = fileName || `Document (ID: ${fileId})`;
-
-    const getFileExtension = (name) => {
-        return name ? name.split('.').pop().toLowerCase() : '';
-    };
-
-    const isPreviewable = (name) => {
-        const ext = getFileExtension(name);
-        return ['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(ext);
-    };
-
-    const handlePreview = (e) => {
-        e.preventDefault();
-        setShowPreview(true);
-    };
-
-    return (
-        <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
-                <div style={{ width: 16, height: 16, background: '#eee', borderRadius: 2 }}></div>
-                <span>{displayName}</span>
-
-                {isPreviewable(fileName) ? (
-                    <button
-                        onClick={handlePreview}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            color: 'inherit',
-                            textDecoration: 'none',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                            fontFamily: 'inherit',
-                            fontSize: 'inherit'
-                        }}
-                    >
-                        <ExternalLink size={14} style={{ marginLeft: 4 }} />
-                        <span style={{ marginLeft: 4 }}>Preview</span>
-                    </button>
-                ) : (
-                    <a href={downloadUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-                        <ExternalLink size={14} style={{ cursor: 'pointer', marginLeft: 4 }} />
-                        <span style={{ marginLeft: 4 }}>View</span>
-                    </a>
-                )}
-
-                <a href={downloadUrl} download style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-                    <Download size={14} style={{ cursor: 'pointer', marginLeft: 8 }} />
-                </a>
-            </div>
-
-            {/* Preview Modal */}
-            <Modal
-                isOpen={showPreview}
-                onClose={() => setShowPreview(false)}
-                title={`Preview: ${displayName}`}
-                size="large" // Ensure your Modal supports this or add styles
-                actions={
-                    <a href={downloadUrl} download className="btn btn-primary">
-                        <Download size={14} style={{ marginRight: 8 }} />
-                        Download
-                    </a>
-                }
-            >
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', background: 'var(--color-bg-page)', borderRadius: '8px', position: 'relative' }}>
-                    {isLoadingPreview && (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                            <Loader text="Loading preview..." />
-                        </div>
-                    )}
-                    {getFileExtension(fileName) === 'pdf' ? (
-                        <iframe
-                            src={`${downloadUrl}#toolbar=0`}
-                            title={displayName}
-                            style={{ width: '100%', height: '600px', border: 'none', opacity: isLoadingPreview ? 0 : 1, transition: 'opacity 0.3s' }}
-                            onLoad={() => setIsLoadingPreview(false)}
-                        />
-                    ) : (
-                        <img
-                            src={downloadUrl}
-                            alt={displayName}
-                            style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain', opacity: isLoadingPreview ? 0 : 1, transition: 'opacity 0.3s' }}
-                            onLoad={() => setIsLoadingPreview(false)}
-                            onError={() => setIsLoadingPreview(false)} // Handle error too
-                        />
-                    )}
-                </div>
-            </Modal>
-        </>
-    );
-};
 
 export default RequestDetail;
