@@ -96,7 +96,7 @@ const FilePreview = ({ fileId, fileName, folderId }) => {
 
     return (
         <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#666', marginTop: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
                 {getFileIcon(fileName)}
                 <span>{displayName}</span>
 
