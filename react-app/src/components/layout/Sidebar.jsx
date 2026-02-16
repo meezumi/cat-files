@@ -21,7 +21,8 @@ import {
     MoreHorizontal,
     X,
     Book,
-    BarChart2
+    BarChart2,
+    Shield
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -217,10 +218,16 @@ const Sidebar = () => {
 
                     {/* Analytics - Admin Only */}
                     {user?.organisation && (user.organisation.role === 'Super Admin' || user.organisation.role === 'Admin') && (
-                        <NavLink to="/dashboard/analytics" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
-                            <BarChart2 size={18} />
-                            <span>Analytics</span>
-                        </NavLink>
+                        <>
+                            <NavLink to="/dashboard/analytics" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+                                <BarChart2 size={18} />
+                                <span>Analytics</span>
+                            </NavLink>
+                            <NavLink to="/dashboard/audit-logs" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+                                <Shield size={18} />
+                                <span>Audit Logs</span>
+                            </NavLink>
+                        </>
                     )}
                 </div>
 

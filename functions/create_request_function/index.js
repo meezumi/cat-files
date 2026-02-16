@@ -81,7 +81,15 @@ app.post('/', async (req, res) => {
             const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
             if (orgResult.length > 0) {
                 organisationId = orgResult[0].OrganisationMembers.OrganisationID;
-                console.log('✓ Auto-assigned request to organisation:', organisationId);
+                console.log('✓ Auto-assigned request to organisation (Member):', organisationId);
+            } else {
+                // Fallback: Check ownership
+                const ownerQuery = `SELECT ROWID FROM Organisations WHERE OwnerID = '${userId}' LIMIT 1`;
+                const ownerResult = await catApp.zcql().executeZCQLQuery(ownerQuery);
+                if (ownerResult.length > 0) {
+                    organisationId = ownerResult[0].Organisations.ROWID;
+                    console.log('✓ Auto-assigned request to organisation (Owner):', organisationId);
+                }
             }
         } catch (orgErr) {
             console.warn('Could not fetch user organisation:', orgErr.message);

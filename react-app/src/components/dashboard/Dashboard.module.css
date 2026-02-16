@@ -70,6 +70,13 @@
 .colProgress { width: 100px; text-align: right; color: var(--color-text-muted); }
 .colDate { width: 120px; text-align: right; color: var(--color-text-muted); }
 
+/* Audit Log Columns */
+.colTimestamp { width: 180px; color: var(--color-text-muted); }
+.colAction { width: 150px; font-weight: 500; }
+.colActor { width: 200px; color: var(--color-text-muted); }
+.colDetails { flex: 1; color: var(--color-text-main); }
+
+
 /* Status Badges */
 .badge {
   display: inline-block;

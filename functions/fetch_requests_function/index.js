@@ -759,6 +759,109 @@ app.get('/', async (req, res) => {
 });
 
 // ============================================
+// AUDIT LOGS ROUTE
+// ============================================
+
+// GET /audit-logs - Fetch system-wide audit logs for the organisation
+app.get('/audit-logs', async (req, res) => {
+    try {
+        const catApp = catalyst.initialize(req);
+        let userId = req.headers['x-zc-user-id'];
+
+        if (!userId) {
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser && currentUser.user_id) userId = currentUser.user_id;
+            } catch (e) {}
+        }
+
+        if (!userId) {
+            return res.status(401).json({ status: 'error', message: 'Authentication required' });
+        }
+
+        // 1. Verify User Role (Must be Admin/Owner)
+        let userOrgId = null;
+        let userRole = null;
+        
+        try {
+            const orgQuery = `SELECT OrganisationID, Role FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active' LIMIT 1`;
+            const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
+            if (orgResult.length > 0) {
+                userOrgId = orgResult[0].OrganisationMembers.OrganisationID;
+                userRole = orgResult[0].OrganisationMembers.Role;
+            } else {
+                // Check ownership
+                const ownerQuery = `SELECT ROWID FROM Organisations WHERE OwnerID = '${userId}' LIMIT 1`;
+                const ownerResult = await catApp.zcql().executeZCQLQuery(ownerQuery);
+                if (ownerResult.length > 0) {
+                    userOrgId = ownerResult[0].Organisations.ROWID;
+                    userRole = 'Super Admin';
+                }
+            }
+        } catch (err) {
+            console.warn('Could not fetch user org:', err.message);
+        }
+
+        if (!userOrgId || (userRole !== 'Super Admin' && userRole !== 'Admin')) {
+            return res.status(403).json({ status: 'error', message: 'Access denied. Only Admins can view audit logs.' });
+        }
+
+        // 2. Fetch Logs
+        // Strategy: Get all logs. Since we can't easily filter ActivityLog by OrgID directly (unless we added it),
+        // we will fetch recent logs and filter in memory if necessary, or fetch logs for known RequestIDs.
+        
+        // BETTER STRATEGY: Fetch all logs (limit 200) and if they have RequestID, verify it belongs to Org.
+        // If they don't have RequestID (system events), we might show them if they match the actor?
+        
+        // Let's try to fetch logs for requests belonging to the org.
+        const reqQuery = `SELECT ROWID FROM Requests WHERE OrganisationID = '${userOrgId}'`;
+        const reqResult = await catApp.zcql().executeZCQLQuery(reqQuery);
+        const requestIds = reqResult.map(r => r.Requests.ROWID);
+        
+        let logs = [];
+        
+        if (requestIds.length > 0) {
+            // Add OrganisationID to the list of IDs to fetch logs for (to capture org-level events like role changes)
+            if (userOrgId) requestIds.push(userOrgId);
+
+            // Chunk request IDs if too many
+            const chunkSize = 50; 
+            const chunks = [];
+            for (let i = 0; i < requestIds.length; i += chunkSize) {
+                chunks.push(requestIds.slice(i, i + chunkSize));
+            }
+            
+            for (const chunk of chunks) {
+                const idsStr = chunk.map(id => `'${id}'`).join(',');
+                const logQuery = `SELECT * FROM ActivityLog WHERE RequestID IN (${idsStr}) ORDER BY CREATEDTIME DESC`;
+                try {
+                    const logResult = await catApp.zcql().executeZCQLQuery(logQuery);
+                    logs.push(...logResult.map(l => l.ActivityLog));
+                } catch (e) {
+                    console.warn('Error fetching logs chunk:', e);
+                }
+            }
+        } else if (userOrgId) {
+             // specific case: no requests, but we want org logs
+             const logQuery = `SELECT * FROM ActivityLog WHERE RequestID = '${userOrgId}' ORDER BY CREATEDTIME DESC`;
+             const logResult = await catApp.zcql().executeZCQLQuery(logQuery);
+             logs.push(...logResult.map(l => l.ActivityLog));
+        }
+        
+        // Also fetch "General" logs (RequestID = '0' or 'System') if possible? 
+        // Current implementation only links to Requests.
+        // We will sort all combined logs
+        logs.sort((a, b) => new Date(b.CREATEDTIME) - new Date(a.CREATEDTIME));
+        
+        res.status(200).json({ status: 'success', data: logs });
+
+    } catch (err) {
+        console.error('Fetch Audit Logs Error:', err);
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+// ============================================
 // ANALYTICS ROUTE
 // ============================================
 

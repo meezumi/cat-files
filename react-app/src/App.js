@@ -16,6 +16,7 @@ import OrganisationList from './pages/dashboard/OrganisationList';
 import OrganisationDetail from './pages/dashboard/OrganisationDetail';
 import LoginPage from './pages/auth/LoginPage';
 import AnalyticsPage from './components/dashboard/AnalyticsPage';
+import AuditLogsPage from './pages/dashboard/AuditLogsPage';
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
             <Route path="sent" element={<RequestView title="Sent" filterStatus="sent" />} />
             <Route path="responded" element={<RequestView title="Responded" filterStatus="responded" />} />
             <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="expired" element={<RequestView title="Expired" filterStatus="expired" />} />
             <Route path="completed" element={<RequestView title="Completed" filterStatus="completed" />} />
             <Route path="archived" element={<RequestView title="Archived" filterStatus="archived" />} />

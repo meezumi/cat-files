@@ -243,6 +243,18 @@ router.post('/orgs/:id/members', async (req, res) => {
             console.warn('Could not update member count:', updateErr.message);
         }
 
+        // Log Activity
+        try {
+            await catApp.datastore().table('ActivityLog').insertRow({
+                RequestID: orgId, // Using OrgID to track org-level events
+                Action: 'Member Added',
+                Actor: userId, 
+                Details: `Added user ${targetUserId} with role ${role}`
+            });
+        } catch (logErr) {
+            console.warn('Logging member addition failed', logErr);
+        }
+
         res.json({ status: 'success', data: result, message: 'Member added successfully' });
     } catch (err) {
         console.error('Add Member Error:', err);
@@ -283,11 +295,15 @@ router.put('/orgs/:id/members/:memberId', async (req, res) => {
         }
 
         // Prevent changing Super Admin role (only Super Admin can do that)
-        const memberQuery = `SELECT Role FROM OrganisationMembers WHERE ROWID = '${memberId}'`;
+        const memberQuery = `SELECT Role, UserID FROM OrganisationMembers WHERE ROWID = '${memberId}'`;
         const memberResult = await catApp.zcql().executeZCQLQuery(memberQuery);
         
-        if (memberResult.length > 0 && memberResult[0].OrganisationMembers.Role === 'Super Admin' && currentUserRole !== 'Super Admin') {
-            return res.status(403).json({ status: 'error', message: 'Only Super Admin can modify Super Admin roles' });
+        let targetUserId = memberId;
+        if (memberResult.length > 0) {
+            targetUserId = memberResult[0].OrganisationMembers.UserID;
+            if (memberResult[0].OrganisationMembers.Role === 'Super Admin' && currentUserRole !== 'Super Admin') {
+                return res.status(403).json({ status: 'error', message: 'Only Super Admin can modify Super Admin roles' });
+            }
         }
 
         // Update role
@@ -295,6 +311,18 @@ router.put('/orgs/:id/members/:memberId', async (req, res) => {
             ROWID: memberId,
             Role: role
         });
+
+        // Log Activity
+        try {
+            await catApp.datastore().table('ActivityLog').insertRow({
+                RequestID: orgId,
+                Action: 'Role Updated',
+                Actor: userId, 
+                Details: `Updated role of User ${targetUserId} to ${role}`
+            });
+        } catch (logErr) {
+            console.warn('Logging role update failed', logErr);
+        }
 
         res.json({ status: 'success', data: result, message: 'Member role updated successfully' });
     } catch (err) {
@@ -329,11 +357,16 @@ router.delete('/orgs/:id/members/:memberId', async (req, res) => {
         }
 
         // Prevent removing Super Admin
-        const memberQuery = `SELECT Role FROM OrganisationMembers WHERE ROWID = '${memberId}'`;
+        const memberQuery = `SELECT Role, UserID FROM OrganisationMembers WHERE ROWID = '${memberId}'`;
         const memberResult = await catApp.zcql().executeZCQLQuery(memberQuery);
         
-        if (memberResult.length > 0 && memberResult[0].OrganisationMembers.Role === 'Super Admin') {
-            return res.status(403).json({ status: 'error', message: 'Cannot remove Super Admin from organisation' });
+        let targetUserId = memberId;
+
+        if (memberResult.length > 0) {
+            targetUserId = memberResult[0].OrganisationMembers.UserID;
+            if (memberResult[0].OrganisationMembers.Role === 'Super Admin') {
+                return res.status(403).json({ status: 'error', message: 'Cannot remove Super Admin from organisation' });
+            }
         }
 
         // Soft delete - update status to Suspended
@@ -341,6 +374,18 @@ router.delete('/orgs/:id/members/:memberId', async (req, res) => {
             ROWID: memberId,
             Status: 'Suspended'
         });
+
+        // Log Activity
+        try {
+            await catApp.datastore().table('ActivityLog').insertRow({
+                RequestID: orgId,
+                Action: 'Member Removed',
+                Actor: userId, 
+                Details: `Removed user ${targetUserId} from organisation`
+            });
+        } catch (logErr) {
+            console.warn('Logging member removal failed', logErr);
+        }
 
         // Update organisation member count
         try {
