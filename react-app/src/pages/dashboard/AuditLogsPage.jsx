@@ -25,8 +25,8 @@ const AuditLogsPage = () => {
             });
 
             if (!response.ok) {
-                if (response.status === 403) throw new Error("You do not have permission to view audit logs.");
-                throw new Error('Failed to fetch logs');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || (response.status === 403 ? "You do not have permission to view audit logs." : 'Failed to fetch logs'));
             }
 
             const data = await response.json();
@@ -144,7 +144,7 @@ const AuditLogsPage = () => {
                                     {formatDate(log.CREATEDTIME)}
                                 </div>
                                 <div className={styles.colAction}>
-                                    <div className="flex items-center gap-2">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         {getActionIcon(log.Action)}
                                         <span style={{ fontWeight: 500 }}>{log.Action}</span>
                                     </div>

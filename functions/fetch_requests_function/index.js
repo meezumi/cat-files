@@ -7,6 +7,16 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 
+// Middleware to sanitize duplicate headers from Catalyst/Frontend
+app.use((req, res, next) => {
+    let userId = req.headers['x-zc-user-id'];
+    if (userId && typeof userId === 'string' && userId.includes(',')) {
+        req.headers['x-zc-user-id'] = userId.split(',')[0].trim();
+        console.log('Refined User ID from headers:', req.headers['x-zc-user-id']);
+    }
+    next();
+});
+
 // Import member management routes
 const membersRoutes = require('./routes/members');
 
@@ -784,18 +794,22 @@ app.get('/audit-logs', async (req, res) => {
         let userRole = null;
         
         try {
+            // 1. Check Membership
             const orgQuery = `SELECT OrganisationID, Role FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active' LIMIT 1`;
             const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
             if (orgResult.length > 0) {
                 userOrgId = orgResult[0].OrganisationMembers.OrganisationID;
                 userRole = orgResult[0].OrganisationMembers.Role;
-            } else {
-                // Check ownership
+            } 
+            
+            // 2. Check Ownership (Override/Fallback)
+            // If we didn't find membership OR the role isn't Super Admin, check if they are the Owner
+            if (userRole !== 'Super Admin') {
                 const ownerQuery = `SELECT ROWID FROM Organisations WHERE OwnerID = '${userId}' LIMIT 1`;
                 const ownerResult = await catApp.zcql().executeZCQLQuery(ownerQuery);
                 if (ownerResult.length > 0) {
                     userOrgId = ownerResult[0].Organisations.ROWID;
-                    userRole = 'Super Admin';
+                    userRole = 'Super Admin'; // Force Super Admin for owner
                 }
             }
         } catch (err) {
@@ -811,7 +825,6 @@ app.get('/audit-logs', async (req, res) => {
         // we will fetch recent logs and filter in memory if necessary, or fetch logs for known RequestIDs.
         
         // BETTER STRATEGY: Fetch all logs (limit 200) and if they have RequestID, verify it belongs to Org.
-        // If they don't have RequestID (system events), we might show them if they match the actor?
         
         // Let's try to fetch logs for requests belonging to the org.
         const reqQuery = `SELECT ROWID FROM Requests WHERE OrganisationID = '${userOrgId}'`;
