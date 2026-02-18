@@ -219,10 +219,50 @@ router.put('/items/:id/status', async (req, res) => {
         const updateData = {
             ROWID: itemId,
             Status: status
-            // Feedback: feedback || "" // Feedback column does not exist in schema yet
         };
 
         const updatedRow = await catApp.datastore().table('Items').updateRow(updateData);
+
+        // If item was Returned (rejected), update the parent Request status back to 'Sent'
+        // so the recipient knows they need to re-upload the file.
+        if (status === 'Returned') {
+            try {
+                // Find the parent request for this item (via Sections table)
+                const itemQuery = `SELECT SectionID FROM Items WHERE ROWID = '${itemId}'`;
+                const itemRows = await catApp.zcql().executeZCQLQuery(itemQuery);
+
+                if (itemRows.length > 0) {
+                    const sectionId = itemRows[0].Items.SectionID;
+
+                    const sectionQuery = `SELECT RequestID FROM Sections WHERE ROWID = '${sectionId}'`;
+                    const sectionRows = await catApp.zcql().executeZCQLQuery(sectionQuery);
+
+                    if (sectionRows.length > 0) {
+                        const requestId = sectionRows[0].Sections.RequestID;
+
+                        // Update request status back to 'Sent' (returned to recipient for re-upload)
+                        await catApp.datastore().table('Requests').updateRow({
+                            ROWID: requestId,
+                            Status: 'Sent'
+                        });
+
+                        // Log the status change
+                        await catApp.datastore().table('ActivityLog').insertRow({
+                            RequestID: requestId,
+                            Action: 'Returned',
+                            Actor: 'Sender',
+                            Details: `File rejected and returned to recipient for re-upload`
+                        });
+
+                        console.log(`✓ Request ${requestId} status updated to 'Sent' after item rejection`);
+                    }
+                }
+            } catch (cascadeErr) {
+                // Don't fail the whole request if cascade update fails — item status is already saved
+                console.warn('Failed to cascade request status update after item rejection:', cascadeErr.message);
+            }
+        }
+
         res.json({ status: 'success', data: updatedRow });
 
     } catch (err) {
@@ -230,6 +270,7 @@ router.put('/items/:id/status', async (req, res) => {
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
+
 
 // POST /requests/:id/remind
 // POST /requests/:id/remind

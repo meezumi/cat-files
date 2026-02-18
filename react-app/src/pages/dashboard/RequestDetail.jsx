@@ -201,7 +201,7 @@ const RequestDetail = () => {
 
     const handleStatusChange = async (itemId, newStatus) => {
         try {
-            // Optimistic update
+            // Optimistic update for item status
             setRequest(prev => ({
                 ...prev,
                 sections: prev.sections.map(section => ({
@@ -219,7 +219,14 @@ const RequestDetail = () => {
             });
 
             if (!response.ok) throw new Error("Update failed");
-            toast.success("Item status updated");
+
+            // If item was rejected/returned, also update the request status in local state
+            if (newStatus === 'Returned') {
+                setRequest(prev => ({ ...prev, status: 'Sent' }));
+                toast.success("File rejected — request sent back to recipient for re-upload");
+            } else {
+                toast.success("Item status updated");
+            }
 
         } catch (error) {
             console.error("Status update error:", error);
@@ -227,6 +234,7 @@ const RequestDetail = () => {
             // Revert optimistic update (TODO: Implement proper revert)
         }
     };
+
 
     const updateRequestStatus = async (newStatus) => {
         try {
