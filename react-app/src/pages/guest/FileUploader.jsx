@@ -3,11 +3,15 @@ import { UploadCloud } from 'lucide-react';
 import styles from './FileUploader.module.css';
 import Modal from '../../components/common/Modal';
 
+// Detect touch-primary devices
+const isTouchDevice = () =>
+    typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+
 const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedFileTypes }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [error, setError] = useState(null); // State for error modal
+    const [error, setError] = useState(null);
 
     const validateFile = useCallback((file) => {
         if (!allowedFileTypes || allowedFileTypes.trim() === '') return true;
@@ -21,7 +25,7 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
         });
 
         if (!isValid) {
-            setError(`Invalid file type. Allowed types: ${allowedFileTypes}`);
+            setError(`Invalid file type. Allowed: ${allowedFileTypes}`);
             return false;
         }
         return true;
@@ -65,10 +69,11 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
                 throw new Error(result.message || 'Upload failed');
             }
 
-        } catch (error) {
-            console.error('Upload failed:', error);
+        } catch (err) {
+            console.error('Upload failed:', err);
             setUploading(false);
-            setError('Upload failed: ' + error.message);
+            setProgress(0);
+            setError('Upload failed: ' + err.message);
         }
     }, [requestId, sectionId, itemId, onUploadComplete]);
 
@@ -86,33 +91,40 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
         e.preventDefault();
         setIsDragging(false);
         const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            if (validateFile(files[0])) {
-                await uploadFile(files[0]);
-            }
+        if (files.length > 0 && validateFile(files[0])) {
+            await uploadFile(files[0]);
         }
     }, [validateFile, uploadFile]);
 
     const handleFileSelect = async (e) => {
-        if (e.target.files.length > 0) {
-            if (validateFile(e.target.files[0])) {
-                await uploadFile(e.target.files[0]);
-            }
+        if (e.target.files.length > 0 && validateFile(e.target.files[0])) {
+            await uploadFile(e.target.files[0]);
         }
     };
+
+    const triggerFileInput = () => document.getElementById(`fileInput-${itemId}`).click();
 
     if (uploading) {
         return (
             <div className={styles.uploadingState}>
-                <div className={styles.progressLabel}>Uploading... {progress}%</div>
+                <div className={styles.progressLabel}>Uploading… {progress}%</div>
                 <div className={styles.progressBar}>
-                    <div className={styles.progressFill} style={{ width: `${progress}%` }}></div>
+                    <div className={styles.progressFill} style={{ width: `${progress}%` }} />
                 </div>
             </div>
         );
     }
 
-    const acceptAttr = allowedFileTypes ? allowedFileTypes : undefined;
+    const isTouch = isTouchDevice();
+    const acceptAttr = allowedFileTypes || undefined;
+    const primaryText = isDragging
+        ? 'Drop file here'
+        : isTouch
+            ? 'Tap to select a file'
+            : (allowedFileTypes ? `Upload ${allowedFileTypes}` : 'Drag & drop or click to upload');
+    const hintText = allowedFileTypes
+        ? `Allowed: ${allowedFileTypes}`
+        : isTouch ? '' : 'or click anywhere above';
 
     return (
         <>
@@ -121,7 +133,11 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => document.getElementById(`fileInput-${itemId}`).click()}
+                onClick={triggerFileInput}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && triggerFileInput()}
+                aria-label="Upload file"
             >
                 <input
                     type="file"
@@ -130,10 +146,9 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
                     onChange={handleFileSelect}
                     accept={acceptAttr}
                 />
-                <UploadCloud size={24} className={styles.icon} />
-                <span className={styles.text}>
-                    {isDragging ? 'Drop file here' : (allowedFileTypes ? `Upload ${allowedFileTypes}` : 'Drag & drop or Click to Upload')}
-                </span>
+                <UploadCloud size={isTouch ? 32 : 28} className={styles.icon} />
+                <span className={styles.text}>{primaryText}</span>
+                {hintText && <span className={styles.hint}>{hintText}</span>}
             </div>
 
             <Modal
@@ -149,3 +164,4 @@ const FileUploader = ({ onUploadComplete, requestId, sectionId, itemId, allowedF
 };
 
 export default FileUploader;
+

@@ -1,49 +1,65 @@
 .dropZone {
-    border: 2px dashed #ddd;
-    border-radius: 6px;
-    padding: 32px;
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 28px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #999;
+    gap: 8px;
+    color: #94a3b8;
     cursor: pointer;
-    background: #fafafa;
+    background: #f8fafc;
     transition: all 0.2s;
+    text-align: center;
+    min-height: 120px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
-.dropZone:hover, .dragging {
+.dropZone:hover,
+.dragging {
     border-color: var(--color-primary);
     color: var(--color-primary);
     background: #f0fdf4;
 }
 
 .icon {
-    margin-bottom: 8px;
+    flex-shrink: 0;
+    opacity: 0.7;
 }
 
 .text {
     font-size: 14px;
     font-weight: 500;
+    line-height: 1.4;
 }
 
+.hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* Uploading progress */
 .uploadingState {
-    padding: 24px;
+    padding: 20px;
     text-align: center;
-    border: 1px solid #eee;
-    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
     background: white;
 }
 
 .progressLabel {
     font-size: 13px;
-    color: #666;
-    margin-bottom: 8px;
+    color: #64748b;
+    margin-bottom: 10px;
+    font-weight: 500;
 }
 
 .progressBar {
     height: 6px;
-    background: #eee;
+    background: #e2e8f0;
     border-radius: 3px;
     overflow: hidden;
     width: 100%;
@@ -52,6 +68,7 @@
 .progressFill {
     height: 100%;
     background: var(--color-primary);
+    border-radius: 3px;
     transition: width 0.3s ease;
 }
 
@@ -60,13 +77,26 @@
     color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: filter 0.2s;
 }
 
 .modalCloseBtn:hover {
-    background-color: #269647; /* Slightly darker shade of primary */
+    filter: brightness(0.9);
+}
+
+/* ── Mobile ─────────────────────────────────────── */
+@media (max-width: 600px) {
+    .dropZone {
+        min-height: 100px;
+        padding: 20px 16px;
+        border-radius: 10px;
+    }
+
+    .text {
+        font-size: 15px;
+    }
 }

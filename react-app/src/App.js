@@ -17,71 +17,82 @@ import OrganisationDetail from './pages/dashboard/OrganisationDetail';
 import LoginPage from './pages/auth/LoginPage';
 import AnalyticsPage from './components/dashboard/AnalyticsPage';
 import AuditLogsPage from './pages/dashboard/AuditLogsPage';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function App() {
   return (
-    <Router basename="/app">
-      <ThemeProvider>
-        <AuthProvider>
-        <Toaster position="bottom-right" toastOptions={{
-            style: {
-                background: '#333',
-                color: '#fff',
-                fontSize: '14px',
-                borderRadius: '8px',
-                padding: '12px 16px',
-            },
-            success: {
-                iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
-                },
-            },
-            error: {
-                iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
-                },
-            },
-        }} />
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard/inbox" replace />} />
-          <Route path="/index.html" element={<Navigate to="/dashboard/inbox" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="inbox" element={<RequestView title="Inbox" filterStatus="" />} />
-            <Route path="all" element={<RequestView title="All Requests" filterStatus="all" />} />
-            <Route path="drafts" element={<RequestView title="Drafts" filterStatus="draft" />} />
-            <Route path="sent" element={<RequestView title="Sent" filterStatus="sent" />} />
-            <Route path="responded" element={<RequestView title="Responded" filterStatus="responded" />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="audit-logs" element={<AuditLogsPage />} />
-            <Route path="expired" element={<RequestView title="Expired" filterStatus="expired" />} />
-            <Route path="completed" element={<RequestView title="Completed" filterStatus="completed" />} />
-            <Route path="archived" element={<RequestView title="Archived" filterStatus="archived" />} />
-            <Route path="trash" element={<RequestView title="Trash" filterStatus="trash" />} />
-            <Route path="requests/:id" element={<RequestDetail />} />
-            <Route path="new" element={<NewRequest />} />
+    <ErrorBoundary context="the application">
+      <Router basename="/app">
+        <ThemeProvider>
+          <AuthProvider>
+          <Toaster position="bottom-right" toastOptions={{
+              style: {
+                  background: '#333',
+                  color: '#fff',
+                  fontSize: '14px',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+              },
+              success: {
+                  iconTheme: {
+                      primary: '#10b981',
+                      secondary: '#fff',
+                  },
+              },
+              error: {
+                  iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                  },
+              },
+          }} />
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard/inbox" replace />} />
+            <Route path="/index.html" element={<Navigate to="/dashboard/inbox" replace />} />
+            <Route path="/login" element={<LoginPage />} />
             
-            <Route path="organisations" element={<OrganisationList />} />
-            <Route path="organisations/:id" element={<OrganisationDetail />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <ErrorBoundary context="the dashboard">
+                  <DashboardLayout />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            }>
+              <Route path="inbox" element={<RequestView title="Inbox" filterStatus="" />} />
+              <Route path="all" element={<RequestView title="All Requests" filterStatus="all" />} />
+              <Route path="drafts" element={<RequestView title="Drafts" filterStatus="draft" />} />
+              <Route path="sent" element={<RequestView title="Sent" filterStatus="sent" />} />
+              <Route path="responded" element={<RequestView title="Responded" filterStatus="responded" />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="audit-logs" element={<AuditLogsPage />} />
+              <Route path="expired" element={<RequestView title="Expired" filterStatus="expired" />} />
+              <Route path="completed" element={<RequestView title="Completed" filterStatus="completed" />} />
+              <Route path="archived" element={<RequestView title="Archived" filterStatus="archived" />} />
+              <Route path="trash" element={<RequestView title="Trash" filterStatus="trash" />} />
+              <Route path="requests/:id" element={<RequestDetail />} />
+              <Route path="new" element={<NewRequest />} />
+              
+              <Route path="organisations" element={<OrganisationList />} />
+              <Route path="organisations/:id" element={<OrganisationDetail />} />
 
-            <Route path="profile" element={<ProfilePage />} />
-          </Route>
-          {/* Guest Portal Routes */}
-          <Route path="/p" element={<GuestLayout />}>
-             <Route path=":id" element={<PublicRequestView />} />
-          </Route>
-          <Route path="/api/v1/documentation" element={<APIDocs />} />
-        </Routes>
-      </AuthProvider>
-      </ThemeProvider>
-    </Router>
+              <Route path="profile" element={<ProfilePage />} />
+            </Route>
+
+            {/* Guest Portal — isolated error boundary so a crash here shows a portal-specific message */}
+            <Route path="/p" element={
+              <ErrorBoundary context="the Guest Portal">
+                <GuestLayout />
+              </ErrorBoundary>
+            }>
+               <Route path=":id" element={<PublicRequestView />} />
+            </Route>
+
+            <Route path="/api/v1/documentation" element={<APIDocs />} />
+          </Routes>
+        </AuthProvider>
+        </ThemeProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
