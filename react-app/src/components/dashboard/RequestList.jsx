@@ -90,6 +90,33 @@ const RequestList = ({ filterStatus }) => {
         }
     };
 
+    const handleRestoreAll = async () => {
+        if (!requests.length) return;
+        if (!window.confirm(`Restore all ${requests.length} trashed request(s) to Draft?`)) return;
+
+        setLoading(true);
+        try {
+            const allIds = requests.map(r => r.id);
+            const response = await fetch('/server/workflow_function/requests/batch-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: allIds, status: 'Draft' })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                fetchRequests(true);
+            } else {
+                alert('Restore failed: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Restore all failed:', error);
+            alert('An error occurred.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     const handleSelectAll = (e) => {
         if (e.target.checked) {
             setSelectedRequests(new Set(requests.map(r => r.id)));
@@ -214,10 +241,11 @@ const RequestList = ({ filterStatus }) => {
                                     <button
                                         className="btn"
                                         onClick={() => handleBatchAction('Draft')}
-                                        title="Restore to Draft"
-                                        style={{ padding: 8, color: 'var(--color-primary)', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}
+                                        title="Restore selected to Draft"
+                                        style={{ padding: '6px 10px', color: 'var(--color-primary)', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: 6 }}
                                     >
-                                        <RotateCcw size={16} />
+                                        <RotateCcw size={14} />
+                                        Restore
                                     </button>
                                 </>
                             ) : (
@@ -253,21 +281,40 @@ const RequestList = ({ filterStatus }) => {
                 </div>
 
                 {filterStatus === 'trash' && requests.length > 0 && (
-                    <button
-                        className="btn"
-                        onClick={() => setShowDeleteModal(true)}
-                        style={{
-                            background: '#fee2e2',
-                            color: '#dc3545',
-                            border: '1px solid #fecaca',
-                            display: 'flex',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <Trash2 size={14} style={{ marginRight: 6 }} />
-                        Empty Trash
-                    </button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                            className="btn"
+                            onClick={handleRestoreAll}
+                            style={{
+                                background: 'var(--color-bg-card)',
+                                color: 'var(--color-primary)',
+                                border: '1px solid var(--color-border)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}
+                        >
+                            <RotateCcw size={14} />
+                            Restore All
+                        </button>
+                        <button
+                            className="btn"
+                            onClick={() => setShowDeleteModal(true)}
+                            style={{
+                                background: '#fee2e2',
+                                color: '#dc3545',
+                                border: '1px solid #fecaca',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6
+                            }}
+                        >
+                            <Trash2 size={14} />
+                            Empty Trash
+                        </button>
+                    </div>
                 )}
+
             </div>
 
             {/* Search Bar */}

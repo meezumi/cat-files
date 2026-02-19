@@ -328,6 +328,7 @@ const OrganisationDetail = () => {
 // Simple Form for New Org
 const OrganisationForm = () => {
     const navigate = useNavigate();
+    const { refreshUser } = useAuth();
     const [formData, setFormData] = useState({ Name: '', Domain: '', Website: '', Address: '', Phone: '' });
 
     const handleSubmit = async () => {
@@ -339,6 +340,7 @@ const OrganisationForm = () => {
             });
             const result = await res.json();
             if (result.status === 'success') {
+                await refreshUser(); // Update Auth Context to reflect new Org
                 navigate(`/dashboard/organisations/${result.data.ROWID}`);
             } else {
                 alert("Error: " + result.message);

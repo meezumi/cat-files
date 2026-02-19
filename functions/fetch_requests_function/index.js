@@ -885,65 +885,77 @@ app.get('/analytics', async (req, res) => {
         let userId = req.headers['x-zc-user-id'];
 
         if (!userId) {
-             const currentUser = await catApp.userManagement().getCurrentUser();
-             if (currentUser) userId = currentUser.user_id;
+            try {
+                const currentUser = await catApp.userManagement().getCurrentUser();
+                if (currentUser) userId = currentUser.user_id;
+            } catch (e) {}
         }
 
         if (!userId) return res.status(401).json({ status: 'error', message: 'Authentication required' });
 
-        // Fetch ALL non-template requests for this user/org context
-        // (Reusing the extensive filtering logic from the main GET logic is ideal, 
-        // but for now, let's fetch based on UserID or Org Context simply)
-        
-        let requests = [];
-        
-        // Check org context
+        // Resolve org context using EXACTLY the same logic as the inbox (GET /)
+        // - Check OrganisationMembers for an active membership with a qualifying role
+        // - If found → filter by OrganisationID (sees all org requests)
+        // - If NOT found (owner without membership record, or personal user) → filter by CREATORID
+        // This ensures analytics always counts the same requests the inbox shows.
         let userOrgId = null;
+        let userRole = null;
         try {
-            const orgQuery = `SELECT OrganisationID FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active' LIMIT 1`;
-            const orgResult = await catApp.zcql().executeZCQLQuery(orgQuery);
-            if (orgResult.length > 0) userOrgId = orgResult[0].OrganisationMembers.OrganisationID;
-        } catch (e) {}
-
-        let query = "SELECT ROWID, Status, RecipientName, CREATEDTIME, MODIFIEDTIME FROM Requests WHERE IsTemplateMode = false";
-        
-        if (userOrgId) {
-             query += ` AND OrganisationID = '${userOrgId}'`;
-        } else {
-             query += ` AND CREATORID = '${userId}'`;
+            const memberQuery = `SELECT OrganisationID, Role FROM OrganisationMembers WHERE UserID = '${userId}' AND Status = 'Active' LIMIT 1`;
+            const memberResult = await catApp.zcql().executeZCQLQuery(memberQuery);
+            if (memberResult.length > 0) {
+                userOrgId = memberResult[0].OrganisationMembers.OrganisationID;
+                userRole = memberResult[0].OrganisationMembers.Role;
+                console.log(`Analytics: User ${userId} is member of org ${userOrgId} (Role: ${userRole})`);
+            } else {
+                console.log(`Analytics: User ${userId} has no org membership — scoping to CREATORID`);
+            }
+        } catch (e) {
+            console.warn('Analytics: Failed to resolve org context:', e.message);
         }
-        
-        // Note: Catalyst max fetch is 2000 via SDK/ZCQL usually. 
-        // For large datasets, pagination is needed. For MVP, we assume < 2000 active requests.
+
+        // Build query — mirror inbox scoping exactly
+        let query = `SELECT ROWID, Status, RecipientName, CREATEDTIME, MODIFIEDTIME FROM Requests WHERE IsTemplateMode = false AND Status != 'Trash'`;
+
+        if (userOrgId && (userRole === 'Super Admin' || userRole === 'Admin' || userRole === 'Viewer')) {
+            // Member with qualifying role → see all org requests
+            query += ` AND OrganisationID = '${userOrgId}'`;
+        } else {
+            // Owner (no membership record) or personal user → see own requests only
+            query += ` AND CREATORID = '${userId}'`;
+        }
+
         const result = await catApp.zcql().executeZCQLQuery(query);
         const allRequests = result.map(row => row.Requests);
+        console.log(`Analytics: Found ${allRequests.length} requests (scope: ${userOrgId && userRole ? `org ${userOrgId}` : 'personal/owner'})`);
 
-        // 1. Status Counts
+        // 1. Status Counts — track all statuses that appear in the inbox
         const statusCounts = {
             Total: allRequests.length,
             Sent: 0,
+            Seen: 0,
+            Responded: 0,
             Completed: 0,
             Archived: 0,
-            Responded: 0,
-            Draft: 0,
-            Expired: 0
+            Expired: 0,
+            Draft: 0
         };
 
-        // 2. Completion Time (Average in Days)
+        // 2. Completion Time (Average in Days) — Completed requests only
         let totalCompletionTimeMs = 0;
         let completedCount = 0;
 
-        // 3. Top Requesters (Recipients)
+        // 3. Top Recipients
         const recipientCounts = {};
 
         allRequests.forEach(r => {
-            // Status
-            if (statusCounts[r.Status] !== undefined) {
+            // Status counts
+            if (statusCounts.hasOwnProperty(r.Status)) {
                 statusCounts[r.Status]++;
             }
 
-            // Completion Time
-            if (r.Status === 'Completed' || r.Status === 'Archived') {
+            // Completion time
+            if (r.Status === 'Completed') {
                 const created = new Date(r.CREATEDTIME);
                 const modified = new Date(r.MODIFIEDTIME);
                 const diff = modified - created;
@@ -953,38 +965,38 @@ app.get('/analytics', async (req, res) => {
                 }
             }
 
-            // Top Recipients
-            const recipient = r.RecipientName || 'Unknown';
-            recipientCounts[recipient] = (recipientCounts[recipient] || 0) + 1;
+            // Top Recipients (skip blank names)
+            const recipient = r.RecipientName ? r.RecipientName.trim() : null;
+            if (recipient) {
+                recipientCounts[recipient] = (recipientCounts[recipient] || 0) + 1;
+            }
         });
 
-        // Calculate Average
-        const avgCompletionDays = completedCount > 0 
-            ? (totalCompletionTimeMs / completedCount / (1000 * 60 * 60 * 24)).toFixed(1) 
+        const avgCompletionDays = completedCount > 0
+            ? (totalCompletionTimeMs / completedCount / (1000 * 60 * 60 * 24)).toFixed(1)
             : 0;
 
-        // Sort Recipients
         const topRecipients = Object.entries(recipientCounts)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 5)
             .map(([name, count]) => ({ name, count }));
-            
-        // Monthly Trends (Current Year)
-        // Group by Month (Created vs Completed)
+
+        // 4. Monthly Trends (current year)
         const currentYear = new Date().getFullYear();
-        const monthlyData = Array(12).fill(0).map(() => ({ sent: 0, completed: 0 }));
-        
+        const monthlyData = Array(12).fill(0).map(() => ({ sent: 0, responded: 0, completed: 0 }));
+
         allRequests.forEach(r => {
             const created = new Date(r.CREATEDTIME);
+            const modified = new Date(r.MODIFIEDTIME);
+
             if (created.getFullYear() === currentYear) {
                 monthlyData[created.getMonth()].sent++;
             }
-            
-            if (r.Status === 'Completed' || r.Status === 'Archived') {
-                const modified = new Date(r.MODIFIEDTIME); // Approximate completion date
-                if (modified.getFullYear() === currentYear) {
-                     monthlyData[modified.getMonth()].completed++;
-                }
+            if (r.Status === 'Responded' && modified.getFullYear() === currentYear) {
+                monthlyData[modified.getMonth()].responded++;
+            }
+            if (r.Status === 'Completed' && modified.getFullYear() === currentYear) {
+                monthlyData[modified.getMonth()].completed++;
             }
         });
 
@@ -994,7 +1006,8 @@ app.get('/analytics', async (req, res) => {
                 statusCounts,
                 avgCompletionDays,
                 topRecipients,
-                monthlyData
+                monthlyData,
+                debug: { scope: userOrgId && userRole ? `org:${userOrgId}` : 'personal', total: allRequests.length }
             }
         });
 
@@ -1003,6 +1016,8 @@ app.get('/analytics', async (req, res) => {
         res.status(500).json({ status: 'error', message: err.message });
     }
 });
+
+
 
 // ============================================
 // NOTIFICATION ROUTES

@@ -4,6 +4,11 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .container {
     padding: 16px;
     background: var(--color-bg-card);
@@ -53,7 +58,7 @@
 
 .statusGrid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 12px;
 }
 
@@ -63,7 +68,7 @@
 
 .statValue {
     display: block;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1.2;
 }
@@ -154,14 +159,21 @@
 .bars {
     display: flex;
     align-items: flex-end;
-    gap: 4px;
+    gap: 3px;
     height: 100%;
-    width: 24px;
+    width: 36px;
 }
 
 .barSent {
     flex: 1;
     background-color: #3b82f6;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s ease;
+}
+
+.barResponded {
+    flex: 1;
+    background-color: #f59e0b;
     border-radius: 2px 2px 0 0;
     transition: height 0.3s ease;
 }
@@ -200,6 +212,13 @@
     height: 8px;
     border-radius: 2px;
     background-color: #3b82f6;
+}
+
+.dotResponded {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background-color: #f59e0b;
 }
 
 .dotComp {

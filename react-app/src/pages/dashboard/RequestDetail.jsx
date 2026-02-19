@@ -201,7 +201,7 @@ const RequestDetail = () => {
 
     const handleStatusChange = async (itemId, newStatus) => {
         try {
-            // Optimistic update
+            // Optimistic update for item status
             setRequest(prev => ({
                 ...prev,
                 sections: prev.sections.map(section => ({
@@ -219,7 +219,14 @@ const RequestDetail = () => {
             });
 
             if (!response.ok) throw new Error("Update failed");
-            toast.success("Item status updated");
+
+            // If item was rejected/returned, also update the request status in local state
+            if (newStatus === 'Returned') {
+                setRequest(prev => ({ ...prev, status: 'Sent' }));
+                toast.success("File rejected — request sent back to recipient for re-upload");
+            } else {
+                toast.success("Item status updated");
+            }
 
         } catch (error) {
             console.error("Status update error:", error);
@@ -227,6 +234,7 @@ const RequestDetail = () => {
             // Revert optimistic update (TODO: Implement proper revert)
         }
     };
+
 
     const updateRequestStatus = async (newStatus) => {
         try {
@@ -317,15 +325,25 @@ const RequestDetail = () => {
                     <h1>{request.subject}</h1>
                     <div className={styles.actions}>
                         {request.status === 'Archived' ? (
-                            // Archived requests only show Restore button
+                            // Archived: only show Restore button
                             <div className={styles.headerActions}>
                                 <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={() => updateRequestStatus('Unarchived')}>
                                     <Archive size={16} style={{ marginRight: 6 }} />
                                     Restore from Archive
                                 </button>
                             </div>
+                        ) : request.status === 'Completed' ? (
+                            // Completed: only show Download All (no share/remind/complete)
+                            !isViewer() && (
+                                <div className={styles.headerActions}>
+                                    <button className={styles.actionBtn} onClick={handleDownloadAll} disabled={isDownloading}>
+                                        <Download size={16} style={{ marginRight: 6 }} />
+                                        Download All
+                                    </button>
+                                </div>
+                            )
                         ) : (
-                            // Active requests show normal action buttons (hidden for Viewers)
+                            // Active requests: show full action set (hidden for Viewers)
                             !isViewer() && (
                                 <div className={styles.headerActions}>
                                     <button className={styles.actionBtn} onClick={handleShare}>
@@ -340,8 +358,8 @@ const RequestDetail = () => {
                                         <Clock size={16} style={{ marginRight: 6 }} />
                                         Send Reminder
                                     </button>
-                                    {/* Only show Mark Completed if status is NOT Draft and NOT already Completed */}
-                                    {request.status !== 'Draft' && request.status !== 'Completed' && (
+                                    {/* Mark Completed: only for non-Draft, non-Completed, non-Expired */}
+                                    {request.status !== 'Draft' && request.status !== 'Expired' && (
                                         <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={handleMarkCompleted}>
                                             <CheckCircle size={16} style={{ marginRight: 6 }} />
                                             Mark Completed
@@ -351,9 +369,12 @@ const RequestDetail = () => {
                             )
                         )}
 
-                        <button className={styles.iconBtn} onClick={() => updateRequestStatus('Trash')} title="Move to Trash">
-                            <Trash2 size={18} />
-                        </button>
+                        {/* Trash icon — hidden for Completed and Archived (they have dedicated actions) */}
+                        {request.status !== 'Completed' && request.status !== 'Archived' && (
+                            <button className={styles.iconBtn} onClick={() => updateRequestStatus('Trash')} title="Move to Trash">
+                                <Trash2 size={18} />
+                            </button>
+                        )}
 
                         <div style={{ position: 'relative' }}>
                             <button
@@ -368,6 +389,7 @@ const RequestDetail = () => {
                                 <>
                                     <div className={styles.bgOverlay} onClick={() => setShowDropdown(false)} />
                                     <div className={styles.dropdownMenu}>
+                                        {/* Edit & Save as Template always available */}
                                         <button className={styles.dropdownItem} onClick={() => navigate(`/dashboard/new?templateId=${id}`)}>
                                             <Edit size={14} />
                                             Edit Request
@@ -376,24 +398,36 @@ const RequestDetail = () => {
                                             <Copy size={14} />
                                             Save as Template
                                         </button>
-                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Unread')}>
-                                            <BookOpen size={14} />
-                                            Mark Unread
-                                        </button>
-                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Archived')}>
-                                            <Archive size={14} />
-                                            Archive Request
-                                        </button>
 
-                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Expired')}>
-                                            <Clock size={14} />
-                                            Expire Request
-                                        </button>
+                                        {/* Status-specific actions */}
+                                        {request.status !== 'Completed' && request.status !== 'Archived' && (
+                                            <>
+                                                <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Unread')}>
+                                                    <BookOpen size={14} />
+                                                    Mark Unread
+                                                </button>
+                                                <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Archived')}>
+                                                    <Archive size={14} />
+                                                    Archive Request
+                                                </button>
+                                                <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Expired')}>
+                                                    <Clock size={14} />
+                                                    Expire Request
+                                                </button>
+                                                <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Trash')} style={{ color: '#ef4444' }}>
+                                                    <Trash2 size={14} />
+                                                    Delete Request
+                                                </button>
+                                            </>
+                                        )}
 
-                                        <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Trash')} style={{ color: '#ef4444' }}>
-                                            <Trash2 size={14} />
-                                            Delete Request
-                                        </button>
+                                        {/* Completed: allow archiving */}
+                                        {request.status === 'Completed' && (
+                                            <button className={styles.dropdownItem} onClick={() => updateRequestStatus('Archived')}>
+                                                <Archive size={14} />
+                                                Archive Request
+                                            </button>
+                                        )}
                                     </div>
                                 </>
                             )}
