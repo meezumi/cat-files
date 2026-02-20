@@ -94,3 +94,33 @@
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* ── Mobile: bottom-sheet style ──────────────── */
+@media (max-width: 480px) {
+    .overlay {
+        align-items: flex-end;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        /* Animate up from the bottom */
+        animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .large {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* Actions stack vertically */
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}

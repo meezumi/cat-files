@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, Copy } from 'lucide-react';
+import { Book, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import styles from './APIDocs.module.css';
 
 const endpoints = [
@@ -71,9 +71,7 @@ const endpoints = [
 ];
 
 const getExampleBody = (item) => {
-    if (item.path.includes('create_request_function/tags')) {
-        return { name: "New Tag", color: "#FF5733" };
-    }
+    if (item.path.includes('create_request_function/tags')) return { name: "New Tag", color: "#FF5733" };
     if (item.name === "Create Request") {
         return {
             recipientName: "John Doe",
@@ -83,44 +81,50 @@ const getExampleBody = (item) => {
             dueDate: "2024-12-31",
             status: "Draft",
             tags: ["TAG_ID_1"],
-            sections: [
-                { title: "Personal Info", items: [{ title: "ID Card", type: "file" }] }
-            ]
+            sections: [{ title: "Personal Info", items: [{ title: "ID Card", type: "file" }] }]
         };
     }
-    if (item.name === "Batch Update Status") {
-        return { ids: ["REQ_ID_1", "REQ_ID_2"], status: "Archived" };
-    }
-    if (item.name === "Add CC Recipient") {
-        return { name: "Jane Doe", email: "jane@example.com" };
-    }
-    if (item.name === "Update Request Status") {
-        return { status: "Completed" };
-    }
-    if (item.name === "Update Request Details") {
-        return { dueDate: "2025-01-01" };
-    }
-    if (item.name === "Create Org") {
-        return { Name: "Acme Corp", Domain: "acme.com" };
-    }
-    if (item.name === "Add Member") {
-        return { targetUserId: "USER_ID", role: "Contributor", email: "user@example.com" }; // Email usually looked up, but mostly userID needed
-    }
-    if (item.name === "Create Contact") {
-        return { Name: "Client One", Email: "client@example.com", Role: "Client" };
-    }
-    if (item.method === 'POST' || item.method === 'PUT') {
-        return { key: "value" };
-    }
+    if (item.name === "Batch Update Status") return { ids: ["REQ_ID_1", "REQ_ID_2"], status: "Archived" };
+    if (item.name === "Add CC Recipient") return { name: "Jane Doe", email: "jane@example.com" };
+    if (item.name === "Update Request Status") return { status: "Completed" };
+    if (item.name === "Update Request Details") return { dueDate: "2025-01-01" };
+    if (item.name === "Create Org") return { Name: "Acme Corp", Domain: "acme.com" };
+    if (item.name === "Add Member") return { targetUserId: "USER_ID", role: "Contributor", email: "user@example.com" };
+    if (item.name === "Create Contact") return { Name: "Client One", Email: "client@example.com", Role: "Client" };
+    if (item.method === 'POST' || item.method === 'PUT') return { key: "value" };
     return null;
 };
 
 const APIDocs = () => {
     const [activeCategory, setActiveCategory] = useState(endpoints[0].category);
     const [activeEndpoint, setActiveEndpoint] = useState(endpoints[0].items[0]);
+    const [endpointPanelOpen, setEndpointPanelOpen] = useState(false);
+
+    const activeCategoryData = endpoints.find(e => e.category === activeCategory);
+
+    const handleCategoryClick = (cat) => {
+        if (cat === activeCategory) {
+            setEndpointPanelOpen(o => !o);
+        } else {
+            setActiveCategory(cat);
+            setActiveEndpoint(endpoints.find(e => e.category === cat).items[0]);
+            setEndpointPanelOpen(true);
+        }
+    };
+
+    const codeSnippet = `fetch('${activeEndpoint.path.replace(':id', '12345').replace(':memberId', '67890')}', {
+    method: '${activeEndpoint.method}',
+    headers: {
+        'Content-Type': 'application/json'
+    }${getExampleBody(activeEndpoint) ? `,
+    body: JSON.stringify(${JSON.stringify(getExampleBody(activeEndpoint), null, 4).replace(/\n/g, '\n    ')})` : ''}
+})
+.then(response => response.json())
+.then(data => console.log(data));`;
 
     return (
         <div className={styles.container}>
+            {/* ── Desktop sidebar ── */}
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarHeader}>
                     <Book size={24} color="var(--color-primary)" />
@@ -129,7 +133,10 @@ const APIDocs = () => {
                 <nav className={styles.nav}>
                     {endpoints.map(cat => (
                         <div key={cat.category} className={styles.category}>
-                            <h3 onClick={() => setActiveCategory(cat.category)} className={activeCategory === cat.category ? styles.activeCat : ''}>
+                            <h3
+                                onClick={() => setActiveCategory(cat.category)}
+                                className={activeCategory === cat.category ? styles.activeCat : ''}
+                            >
                                 {cat.category}
                             </h3>
                             {activeCategory === cat.category && (
@@ -151,6 +158,43 @@ const APIDocs = () => {
                 </nav>
             </aside>
 
+            {/* ── Mobile tab strip + endpoint panel (hidden on desktop via CSS) ── */}
+            <div className={styles.mobileTabs}>
+                <div className={styles.mobileTabStrip}>
+                    {endpoints.map(cat => (
+                        <button
+                            key={cat.category}
+                            className={`${styles.mobileTab} ${activeCategory === cat.category ? styles.mobileTabActive : ''}`}
+                            onClick={() => handleCategoryClick(cat.category)}
+                        >
+                            {cat.category}
+                            {activeCategory === cat.category
+                                ? <ChevronUp size={12} style={{ marginLeft: 4 }} />
+                                : <ChevronDown size={12} style={{ marginLeft: 4 }} />}
+                        </button>
+                    ))}
+                </div>
+
+                {endpointPanelOpen && activeCategoryData && (
+                    <div className={styles.mobileEndpointPanel}>
+                        {activeCategoryData.items.map(item => (
+                            <button
+                                key={item.name}
+                                className={`${styles.mobileEndpointItem} ${activeEndpoint === item ? styles.mobileEndpointActive : ''}`}
+                                onClick={() => {
+                                    setActiveEndpoint(item);
+                                    setEndpointPanelOpen(false);
+                                }}
+                            >
+                                <span className={`${styles.methodBadge} ${styles[item.method]}`}>{item.method}</span>
+                                {item.name}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* ── Main content ── */}
             <main className={styles.main}>
                 <div className={styles.header}>
                     <h1>{activeEndpoint.name}</h1>
@@ -158,7 +202,9 @@ const APIDocs = () => {
                 </div>
 
                 <div className={styles.endpointBar}>
-                    <span className={`${styles.methodBadgeLarge} ${styles[activeEndpoint.method]}`}>{activeEndpoint.method}</span>
+                    <span className={`${styles.methodBadgeLarge} ${styles[activeEndpoint.method]}`}>
+                        {activeEndpoint.method}
+                    </span>
                     <code className={styles.url}>{activeEndpoint.path}</code>
                 </div>
 
@@ -170,33 +216,14 @@ const APIDocs = () => {
                             <button
                                 className={styles.copyBtn}
                                 onClick={() => {
-                                    const code = `fetch('${activeEndpoint.path.replace(':id', '12345').replace(':memberId', '67890')}', {
-    method: '${activeEndpoint.method}',
-    headers: {
-        'Content-Type': 'application/json'
-    }${getExampleBody(activeEndpoint) ? `,
-    body: JSON.stringify(${JSON.stringify(getExampleBody(activeEndpoint), null, 4).replace(/\n/g, '\n    ')})` : ''}
-})
-.then(response => response.json())
-.then(data => console.log(data));`;
-                                    navigator.clipboard.writeText(code);
+                                    navigator.clipboard.writeText(codeSnippet);
                                     alert('Copied to clipboard!');
                                 }}
                             >
                                 <Copy size={14} /> Copy
                             </button>
                         </div>
-                        <pre>
-                            {`fetch('${activeEndpoint.path.replace(':id', '12345').replace(':memberId', '67890')}', {
-    method: '${activeEndpoint.method}',
-    headers: {
-        'Content-Type': 'application/json'
-    }${getExampleBody(activeEndpoint) ? `,
-    body: JSON.stringify(${JSON.stringify(getExampleBody(activeEndpoint), null, 4).replace(/\n/g, '\n    ')})` : ''}
-})
-.then(response => response.json())
-.then(data => console.log(data));`}
-                        </pre>
+                        <pre>{codeSnippet}</pre>
                     </div>
                 </div>
             </main>

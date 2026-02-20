@@ -489,3 +489,95 @@
     font-style: italic;
     font-size: 14px;
 }
+/* ── Mobile ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .container {
+        padding: 12px 16px 40px;
+    }
+
+    .titleRow {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .titleRow h1 {
+        font-size: 19px;
+        /* Allow it to take a full line if needed */
+        width: 100%;
+        order: 2;
+    }
+
+    /* Back button always first */
+    .backBtn {
+        order: 1;
+    }
+
+    /* Actions cluster moves to its own row */
+    .actions {
+        width: 100%;
+        order: 3;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    /* Action buttons become compact */
+    .headerActions {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-right: 8px;
+    }
+
+    .actionBtn {
+        font-size: 12px;
+        padding: 7px 12px;
+    }
+
+    /* Meta row — remove indent, allow wrap */
+    .metaRow {
+        padding-left: 0;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .content {
+        padding: 20px 16px;
+    }
+
+    /* Make tabs scrollable horizontally */
+    .tabContainer {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 0;
+        /* Hide scrollbar visually */
+        scrollbar-width: none;
+    }
+    .tabContainer::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tabBtn {
+        white-space: nowrap;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    /* Item cards */
+    .itemHeader {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .itemActions {
+        flex-wrap: wrap;
+    }
+
+    /* CC row stacks */
+    .ccInputRow {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ccInput {
+        width: 100%;
+    }
+}

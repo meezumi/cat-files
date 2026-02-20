@@ -8,6 +8,7 @@
 
 .sidebar {
     width: 280px;
+    flex-shrink: 0;
     background: var(--color-bg-card);
     border-right: 1px solid var(--color-border);
     display: flex;
@@ -101,6 +102,7 @@
     flex: 1;
     padding: 40px 60px;
     overflow-y: auto;
+    min-width: 0; /* prevent flex blowout */
 }
 
 .header {
@@ -128,6 +130,7 @@
     border: 1px solid var(--color-border);
     border-radius: 8px;
     margin-bottom: 32px;
+    flex-wrap: wrap;
 }
 
 .methodBadgeLarge {
@@ -135,12 +138,14 @@
     font-weight: 700;
     padding: 6px 12px;
     border-radius: 6px;
+    flex-shrink: 0;
 }
 
 .url {
     font-family: 'Fira Code', monospace;
     font-size: 15px;
     color: var(--color-text-main);
+    word-break: break-all;
 }
 
 .section {
@@ -194,4 +199,142 @@ pre {
     font-size: 14px;
     line-height: 1.6;
     overflow-x: auto;
+}
+
+/* ── Mobile tab strip (hidden on desktop) ────── */
+.mobileTabs {
+    display: none;
+}
+
+.mobileTabStrip {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+}
+.mobileTabStrip::-webkit-scrollbar { display: none; }
+
+.mobileTab {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.mobileTab:hover {
+    color: var(--color-text-main);
+}
+
+.mobileTabActive {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.mobileEndpointPanel {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
+    padding: 8px;
+    gap: 2px;
+}
+
+.mobileEndpointItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--color-text-main);
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+    width: 100%;
+}
+
+.mobileEndpointItem:hover {
+    background: var(--color-nav-hover);
+}
+
+.mobileEndpointActive {
+    background: var(--color-nav-active);
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Stack: tabs on top, content below */
+    .container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* Ensure sticky tabs always have a background */
+    .mobileTabStrip {
+        background: var(--color-bg-card);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* Hide desktop sidebar */
+    .sidebar {
+        display: none;
+    }
+
+    /* Show mobile tab strip */
+    .mobileTabs {
+        display: block;
+        /* sticky at top of the scroll viewport (topbar is outside scroll area) */
+        position: sticky;
+        top: 0;
+        z-index: 50;
+    }
+
+    /* Main content gets full width */
+    .main {
+        padding: 20px 16px 40px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .header p {
+        font-size: 14px;
+    }
+
+    /* URL bar stacks vertically */
+    .endpointBar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .url {
+        font-size: 12px;
+        word-break: break-all;
+    }
+
+    /* Code block smaller font */
+    pre {
+        font-size: 12px;
+        padding: 14px;
+    }
 }

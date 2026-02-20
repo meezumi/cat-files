@@ -107,3 +107,23 @@
   border-top: 1px solid var(--color-border);
   padding-top: 24px;
 }
+/* ── Mobile ──────────────────────────────────── */
+@media (max-width: 640px) {
+    .card {
+        padding: 20px 16px;
+    }
+
+    .stepContent h2 {
+        font-size: 16px;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+
+    .actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}

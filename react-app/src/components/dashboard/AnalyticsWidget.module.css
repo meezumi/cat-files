@@ -240,3 +240,71 @@
     color: var(--color-text-muted);
     font-size: 13px;
 }
+
+/* ── Mobile ──────────────────────────────────── */
+@media (max-width: 640px) {
+    .container {
+        padding: 12px;
+    }
+
+    /* Switch from flex to grid — 1 col, no overflow issues */
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    /* All cards fill the column; reset flex overrides */
+    .card {
+        flex: unset;
+        min-width: unset;
+        width: 100%;
+    }
+
+    /* Chart card still spans full width (same as 1 col = auto) */
+    .chartCard {
+        min-width: unset;
+        grid-column: 1 / -1;
+    }
+
+    /* Card header wraps on small screens so legend doesn't overflow */
+    .cardHeader {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .legend {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+        width: 100%;
+    }
+
+    /* Status grid: 3-col is fine — just reduce stat font */
+    .statValue {
+        font-size: 15px;
+    }
+
+    .statLabel {
+        font-size: 10px;
+    }
+
+    /* Bar chart: allow horizontal scroll so all 12 months are accessible */
+    .chartContainer {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        gap: 4px;
+        padding-bottom: 4px;
+    }
+
+    .barGroup {
+        flex: none;
+        min-width: 28px;
+    }
+
+    .bars {
+        width: 24px;
+    }
+}
