@@ -12,6 +12,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -20,10 +24,37 @@
   letter-spacing: 0.5px;
 }
 
+/* Hamburger — hidden on desktop, shown on mobile */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-header-text);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbarBtnLabel {
+  /* Text label next to icon in topbar buttons */
+}
+
 .mainWrapper {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+}
+
+/* Mobile backdrop overlay — covers content when sidebar is open */
+.sidebarBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
 }
 
 .sidebar {
@@ -34,6 +65,8 @@
   flex-direction: column;
   padding: 24px 0;
   transition: background-color 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+  overflow-y: auto;
 }
 
 .content {
@@ -41,7 +74,6 @@
   padding: 32px;
   overflow-y: auto;
   background-color: transparent;
-  /* Ensure children can create the glass effect */
   position: relative;
 }
 
@@ -195,7 +227,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: var(--color-border); /* Slightly darker than bg */
+    background-color: var(--color-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -228,7 +260,7 @@
     padding: 8px 12px;
     border: none;
     background: transparent;
-    color: var(--color-status-draft); /* Red warning color */
+    color: var(--color-status-draft);
     font-size: 14px;
     cursor: pointer;
     border-radius: 6px;
@@ -239,7 +271,6 @@
     background-color: #fee2e2;
 }
 
-/* Dark mode adjustment for hover red bg */
 :global([data-theme='dark']) .logoutBtn:hover {
     background-color: rgba(239, 68, 68, 0.15);
 }
@@ -297,4 +328,68 @@
 
 .managerActions svg:hover {
     color: var(--color-primary);
+}
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+    /* Show hamburger button */
+    .hamburger {
+        display: flex;
+    }
+
+    /* Sidebar becomes a fixed off-canvas drawer */
+    .sidebar {
+        position: fixed;
+        top: 60px;          /* below topbar */
+        left: 0;
+        bottom: 0;
+        z-index: 300;
+        width: 280px;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none;
+    }
+
+    /* When sidebarOpen, slide in */
+    .sidebarOpen {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Show the backdrop when sidebar is open */
+    .sidebarBackdrop {
+        display: block;
+        top: 60px; /* below topbar */
+    }
+
+    /* Reduce content padding */
+    .content {
+        padding: 16px;
+    }
+
+    /* Topbar padding */
+    .topbar {
+        padding: 0 16px;
+    }
+
+    /* Hide button labels in topbar to save space */
+    .topbarBtnLabel {
+        display: none;
+    }
+
+    .topbarBtn {
+        padding: 6px 10px !important;
+    }
+}
+
+/* Slightly more breathing room on tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .content {
+        padding: 24px;
+    }
+
+    .sidebar {
+        width: 220px;
+    }
 }

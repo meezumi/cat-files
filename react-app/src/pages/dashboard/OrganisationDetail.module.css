@@ -170,3 +170,34 @@
     font-size: 13px;
     color: var(--color-text-muted);
 }
+
+/* ── Mobile ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .container {
+        padding: 12px;
+    }
+
+    /* The 1fr 2fr side-by-side grid becomes a single column */
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .header {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .cardHeader {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}

@@ -28,7 +28,7 @@ import styles from './Layout.module.css';
 
 import ThemeToggle from './ThemeToggle';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
     const { user, logout, isViewer } = useAuth();
     const navigate = useNavigate();
     const [showTemplates, setShowTemplates] = React.useState(false);
@@ -75,7 +75,7 @@ const Sidebar = () => {
     }, [showTemplates, templates.length]);
 
     return (
-        <aside className={styles.sidebar}>
+        <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
             {!isViewer() && (
                 <div className={styles.newRequestWrapper}>
                     <div className={styles.newRequestWrapper} style={{ position: 'relative' }}>
